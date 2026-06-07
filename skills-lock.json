@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "golang-naming": {
+      "source": "samber/cc-skills-golang",
+      "sourceType": "github",
+      "skillPath": "skills/golang-naming/SKILL.md",
+      "computedHash": "ff16e3aaf991819ba51c4f3c4665c524990e710cdbcab65e772d081310293fea"
+    }
+  }
+}
