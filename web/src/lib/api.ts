@@ -3,7 +3,7 @@
 // return a `Slice` so callers (and the Paginator) stay ignorant of how each one
 // signals more pages.
 
-import type { Job, Company, CompanyListItem, ListMeta } from './types';
+import type { Job, Company, CompanyListItem, ListMeta, User } from './types';
 
 const BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:8080').replace(/\/$/, '');
 
@@ -58,4 +58,53 @@ export async function getCompany(
     `/api/v1/companies/${slug}${query(limit, offset)}`,
   );
   return body.data;
+}
+
+// --- Auth -------------------------------------------------------------------
+
+/** A non-2xx API response. Carries the HTTP status so callers can branch on it
+ *  (e.g. 401 invalid credentials, 409 email taken) instead of parsing strings. */
+export class ApiError extends Error {
+  constructor(public readonly status: number, message: string) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+/** What register/login return: the user plus a freshly signed token. */
+export interface AuthResult {
+  user: User;
+  token: string;
+}
+
+/** POST JSON and return the decoded `data`, throwing ApiError on non-2xx. */
+async function postAuth(path: string, body: unknown): Promise<AuthResult> {
+  const res = await fetch(`${BASE}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    throw new ApiError(res.status, `${res.status} ${res.statusText}`);
+  }
+  return ((await res.json()) as { data: AuthResult }).data;
+}
+
+export function register(email: string, password: string): Promise<AuthResult> {
+  return postAuth('/api/v1/auth/register', { email, password });
+}
+
+export function login(email: string, password: string): Promise<AuthResult> {
+  return postAuth('/api/v1/auth/login', { email, password });
+}
+
+/** Fetch the current user for a token. Throws ApiError(401) if it is rejected. */
+export async function me(token: string): Promise<User> {
+  const res = await fetch(`${BASE}/api/v1/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new ApiError(res.status, `${res.status} ${res.statusText}`);
+  }
+  return ((await res.json()) as { data: User }).data;
 }

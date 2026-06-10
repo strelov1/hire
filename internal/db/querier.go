@@ -15,6 +15,9 @@ type Querier interface {
 	ClaimEnrichmentBatch(ctx context.Context, arg ClaimEnrichmentBatchParams) ([]ClaimEnrichmentBatchRow, error)
 	CountCompanies(ctx context.Context) (int64, error)
 	CountJobs(ctx context.Context) (int64, error)
+	// Register a new account. email is stored as given (the handler lowercases it);
+	// the unique index on lower(email) rejects duplicates regardless of case.
+	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
 	DeleteEnrichmentEntry(ctx context.Context, id int64) error
 	// Idempotent backfill: enqueue every job that is unenriched or below the target
 	// schema version. ON CONFLICT keeps exactly one entry per (job_id, target_version),
@@ -22,6 +25,11 @@ type Querier interface {
 	EnqueuePendingJobs(ctx context.Context, targetVersion int32) (int64, error)
 	GetCompany(ctx context.Context, slug string) (Company, error)
 	GetJob(ctx context.Context, id int64) (Job, error)
+	// Login lookup. Case-insensitive on email; returns password_hash so the handler
+	// can verify the password (and reject accounts that have none).
+	GetUserByEmail(ctx context.Context, lower string) (User, error)
+	// Profile lookup for the authenticated user. Never selects password_hash.
+	GetUserByID(ctx context.Context, id int64) (GetUserByIDRow, error)
 	// Catalog page: companies with their job counts. The job count is computed on
 	// the fly (no denormalized counter yet). This is the one acknowledged place a
 	// join to jobs is acceptable; LEFT JOIN keeps companies with zero jobs visible.

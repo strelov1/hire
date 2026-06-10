@@ -37,3 +37,10 @@ export interface ListMeta {
   limit: number;
   offset: number;
 }
+
+/** An authenticated account, as returned by the auth endpoints. */
+export interface User {
+  id: number;
+  email: string;
+  created_at: string | null;
+}

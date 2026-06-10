@@ -46,3 +46,10 @@ type Job struct {
 	EnrichedAt        pgtype.Timestamptz `json:"enriched_at"`
 	EnrichmentVersion int32              `json:"enrichment_version"`
 }
+
+type User struct {
+	ID           int64              `json:"id"`
+	Email        string             `json:"email"`
+	PasswordHash pgtype.Text        `json:"password_hash"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+}

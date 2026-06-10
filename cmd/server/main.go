@@ -20,6 +20,11 @@ import (
 func main() {
 	cfg := config.Load()
 
+	// Never boot the auth surface with a guessable signing key.
+	if cfg.JWTSecret == "" {
+		log.Fatal("config: JWT_SECRET is required")
+	}
+
 	pool, err := database.Connect(context.Background(), cfg.DatabaseURL)
 	if err != nil {
 		log.Fatalf("database: %v", err)
@@ -35,7 +40,7 @@ func main() {
 	app.Use(recover.New())
 	app.Use(logger.New())
 
-	handler.Register(app, pool, cfg.FrontendOrigin)
+	handler.Register(app, pool, cfg.FrontendOrigin, cfg.JWTSecret, cfg.JWTTTL)
 
 	// Run the server in a goroutine so main can wait for a shutdown signal.
 	// Fiber's Listen returns nil on graceful shutdown, so any error is fatal.
