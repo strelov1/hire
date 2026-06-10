@@ -19,9 +19,10 @@ const (
 
 // Handler holds dependencies shared across HTTP handlers.
 type Handler struct {
-	pool    *pgxpool.Pool
-	queries *db.Queries
-	issuer  *auth.Issuer
+	pool         *pgxpool.Pool
+	queries      *db.Queries
+	issuer       *auth.Issuer
+	cookieSecure bool
 }
 
 // pageParams reads and clamps the shared limit/offset pagination query params.
@@ -35,14 +36,17 @@ func pageParams(c *fiber.Ctx) (limit, offset int) {
 
 // Register wires all routes onto the application. frontendOrigin is the single
 // browser origin allowed to call the API cross-origin; jwtSecret/jwtTTL
-// configure the token issuer used by the auth endpoints. The CORS defaults
-// allow POST (used by register/login) and reflect the requested headers, so the
-// SPA's Authorization bearer header passes preflight.
-func Register(app *fiber.App, pool *pgxpool.Pool, frontendOrigin, jwtSecret string, jwtTTL time.Duration) {
+// configure the token issuer behind the auth endpoints; cookieSecure marks the
+// auth cookie HTTPS-only. Auth is same-origin only: the SPA reaches the API
+// under one origin (a dev Vite proxy mirrors the production reverse proxy), so
+// the cookie rides along with no CORS. The CORS allowlist is not credentialed —
+// it only permits non-credentialed cross-origin reads of the public endpoints.
+func Register(app *fiber.App, pool *pgxpool.Pool, frontendOrigin, jwtSecret string, jwtTTL time.Duration, cookieSecure bool) {
 	h := &Handler{
-		pool:    pool,
-		queries: db.New(pool),
-		issuer:  auth.NewIssuer(jwtSecret, jwtTTL),
+		pool:         pool,
+		queries:      db.New(pool),
+		issuer:       auth.NewIssuer(jwtSecret, jwtTTL),
+		cookieSecure: cookieSecure,
 	}
 
 	app.Use(cors.New(cors.Config{AllowOrigins: frontendOrigin}))
@@ -55,9 +59,11 @@ func Register(app *fiber.App, pool *pgxpool.Pool, frontendOrigin, jwtSecret stri
 	api.Get("/companies", h.ListCompanies)
 	api.Get("/companies/:slug", h.GetCompany)
 
-	// Auth: register/login are public; me is guarded by the bearer-token check.
+	// Auth: register/login/logout are public (logout just clears the cookie);
+	// me is guarded by the auth-cookie check.
 	authGroup := api.Group("/auth")
 	authGroup.Post("/register", h.Register)
 	authGroup.Post("/login", h.Login)
+	authGroup.Post("/logout", h.Logout)
 	authGroup.Get("/me", auth.RequireAuth(h.issuer), h.Me)
 }

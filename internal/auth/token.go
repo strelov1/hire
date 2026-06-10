@@ -22,6 +22,10 @@ func NewIssuer(secret string, ttl time.Duration) *Issuer {
 	return &Issuer{secret: []byte(secret), ttl: ttl}
 }
 
+// TTL is the token lifetime; the cookie helpers use it as the cookie's max-age
+// so the browser and the token expire together.
+func (i *Issuer) TTL() time.Duration { return i.ttl }
+
 // Issue returns a signed token whose subject is userID, expiring after the
 // Issuer's TTL.
 func (i *Issuer) Issue(userID int64) (string, error) {

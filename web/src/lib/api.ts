@@ -5,7 +5,10 @@
 
 import type { Job, Company, CompanyListItem, ListMeta, User } from './types';
 
-const BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:8080').replace(/\/$/, '');
+// Relative base: the SPA and API share one origin (a dev Vite proxy forwards
+// /api to the backend), so the browser sends the httpOnly auth cookie with
+// every request. No absolute URL, no CORS.
+const BASE = '';
 
 /** A page of list items plus whether more remain after it. */
 export interface Slice<T> {
@@ -18,13 +21,33 @@ interface Page<T> {
   meta: ListMeta;
 }
 
-/** GET `path` and return the decoded JSON, throwing on network or non-2xx. */
-async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE}${path}`);
-  if (!res.ok) {
-    throw new Error(`${res.status} ${res.statusText}`);
+/** A non-2xx API response. Carries the HTTP status so callers can branch on it
+ *  (e.g. 401 invalid credentials, 409 email taken) instead of parsing strings. */
+export class ApiError extends Error {
+  constructor(public readonly status: number, message: string) {
+    super(message);
+    this.name = 'ApiError';
   }
-  return (await res.json()) as T;
+}
+
+/** The single place this module touches fetch. Always sends credentials so the
+ *  auth cookie rides along, and turns a non-2xx into an ApiError. */
+async function call(path: string, init?: RequestInit): Promise<Response> {
+  const res = await fetch(`${BASE}${path}`, { credentials: 'include', ...init });
+  if (!res.ok) {
+    throw new ApiError(res.status, `${res.status} ${res.statusText}`);
+  }
+  return res;
+}
+
+/** Call `path` and return the decoded JSON body. */
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  return (await call(path, init)).json() as Promise<T>;
+}
+
+/** GET `path` and return the decoded JSON. */
+function get<T>(path: string): Promise<T> {
+  return request<T>(path);
 }
 
 function query(limit: number, offset: number): string {
@@ -61,50 +84,37 @@ export async function getCompany(
 }
 
 // --- Auth -------------------------------------------------------------------
+//
+// register/login set the httpOnly auth cookie server-side and return the user;
+// the token never reaches JS. Subsequent calls (me) are authenticated by the
+// cookie the browser attaches automatically.
 
-/** A non-2xx API response. Carries the HTTP status so callers can branch on it
- *  (e.g. 401 invalid credentials, 409 email taken) instead of parsing strings. */
-export class ApiError extends Error {
-  constructor(public readonly status: number, message: string) {
-    super(message);
-    this.name = 'ApiError';
-  }
-}
-
-/** What register/login return: the user plus a freshly signed token. */
-export interface AuthResult {
-  user: User;
-  token: string;
-}
-
-/** POST JSON and return the decoded `data`, throwing ApiError on non-2xx. */
-async function postAuth(path: string, body: unknown): Promise<AuthResult> {
-  const res = await fetch(`${BASE}${path}`, {
+/** POST credentials and return the created/authenticated user. */
+async function postAuth(path: string, body: unknown): Promise<User> {
+  const res = await request<{ data: User }>(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  if (!res.ok) {
-    throw new ApiError(res.status, `${res.status} ${res.statusText}`);
-  }
-  return ((await res.json()) as { data: AuthResult }).data;
+  return res.data;
 }
 
-export function register(email: string, password: string): Promise<AuthResult> {
+export function register(email: string, password: string): Promise<User> {
   return postAuth('/api/v1/auth/register', { email, password });
 }
 
-export function login(email: string, password: string): Promise<AuthResult> {
+export function login(email: string, password: string): Promise<User> {
   return postAuth('/api/v1/auth/login', { email, password });
 }
 
-/** Fetch the current user for a token. Throws ApiError(401) if it is rejected. */
-export async function me(token: string): Promise<User> {
-  const res = await fetch(`${BASE}/api/v1/auth/me`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) {
-    throw new ApiError(res.status, `${res.status} ${res.statusText}`);
-  }
-  return ((await res.json()) as { data: User }).data;
+/** Clear the session cookie server-side. */
+export async function logout(): Promise<void> {
+  await call('/api/v1/auth/logout', { method: 'POST' });
+}
+
+/** Fetch the current user using the auth cookie. Throws ApiError(401) if it is
+ *  missing or rejected. */
+export async function me(): Promise<User> {
+  const res = await request<{ data: User }>('/api/v1/auth/me');
+  return res.data;
 }

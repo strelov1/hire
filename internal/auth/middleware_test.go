@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
@@ -32,7 +33,7 @@ func TestRequireAuth_ValidTokenGrantsAccessAndPropagatesID(t *testing.T) {
 	}
 
 	req := httptest.NewRequest(fiber.MethodGet, "/me", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	req.AddCookie(&http.Cookie{Name: CookieName, Value: token})
 
 	resp, err := protectedApp(iss).Test(req)
 	if err != nil {
@@ -59,20 +60,19 @@ func TestRequireAuth_RejectsUnauthorized(t *testing.T) {
 	expiredToken, _ := expired.Issue(7)
 
 	cases := []struct {
-		name   string
-		header string
+		name  string
+		token string // empty = no cookie set
 	}{
-		{"missing header", ""},
-		{"no bearer prefix", "abc.def.ghi"},
-		{"malformed token", "Bearer not-a-jwt"},
-		{"expired token", "Bearer " + expiredToken},
+		{"missing cookie", ""},
+		{"malformed token", "not-a-jwt"},
+		{"expired token", expiredToken},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			req := httptest.NewRequest(fiber.MethodGet, "/me", nil)
-			if tc.header != "" {
-				req.Header.Set("Authorization", tc.header)
+			if tc.token != "" {
+				req.AddCookie(&http.Cookie{Name: CookieName, Value: tc.token})
 			}
 			resp, err := protectedApp(iss).Test(req)
 			if err != nil {

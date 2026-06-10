@@ -1,26 +1,32 @@
 ## Context
 
 `hire` is an early backend: a Fiber v2 server over Postgres (sqlc, no ORM),
-serving read-only `jobs` and `companies` endpoints to a Svelte SPA that runs on
-a separate origin (`localhost:5173` → API `8080`, already CORS-enabled). There
-is no user concept anywhere. This change introduces the first authenticated
-surface. Per project conventions, sqlc is the only DB layer, migrations apply
-via Postgres initdb, and response shapes follow `{"data": ...}`.
+serving read-only `jobs` and `companies` endpoints to a Svelte SPA. There is no
+user concept anywhere. This change introduces the first authenticated surface.
+The SPA and API are deployed **same-origin** (a dev Vite proxy forwards `/api`
+to the backend, mirroring the production reverse-proxy), which shapes the
+session-transport decision below. Per project conventions, sqlc is the only DB
+layer, migrations apply via Postgres initdb, and response shapes follow
+`{"data": ...}`.
 
 ## Goals / Non-Goals
 
 **Goals:**
 - A `users` identity with secure password storage (bcrypt).
-- Stateless JWT auth that works cleanly cross-origin for the existing SPA.
-- `register`, `login`, `me` endpoints plus a reusable "require auth" middleware
-  that future protected routes can adopt without further wiring.
+- Stateless JWT auth delivered in an httpOnly cookie, XSS-safe under the
+  same-origin deployment.
+- `register`, `login`, `logout`, `me` endpoints plus a reusable "require auth"
+  middleware that future protected routes can adopt without further wiring.
 - Stay within existing conventions (sqlc, config-from-env, `handler.Register`).
 
 **Non-Goals:**
 - Roles/authorization tiers (admin vs user) — not needed until a mutating or
   privileged endpoint exists. Noted as a seam.
-- Refresh tokens / token revocation / logout — out of scope; the trade-off is
-  accepted below.
+- Refresh tokens / token revocation — out of scope; the trade-off is accepted
+  below. (Logout *is* in scope: it clears the cookie, though the JWT itself
+  stays valid until `exp`.)
+- A standalone CSRF-token mechanism — `SameSite=Lax` + same-origin covers the
+  current endpoints; revisit when cross-site or stricter needs appear.
 - Email verification, password reset, OAuth, magic-link — explicitly excluded
   this iteration (OAuth/magic-link are the announced *next* task; the data model
   is shaped to absorb them additively, but none of their tables or flows are
@@ -29,18 +35,26 @@ via Postgres initdb, and response shapes follow `{"data": ...}`.
 
 ## Decisions
 
-### Stateless JWT (HS256) over server-side sessions
+### Stateless JWT (HS256) in an httpOnly cookie
 
 Tokens are signed with a shared secret (`JWT_SECRET`) and carry the user id as
-`sub` plus an `exp`. The SPA stores the token and sends it as
-`Authorization: Bearer <token>`.
+`sub` plus an `exp`. Register/login set the token in an `HttpOnly`,
+`SameSite=Lax` cookie (`Secure` configurable via `COOKIE_SECURE`); the browser
+attaches it automatically, and the SPA never sees the token.
 
-*Why over DB-backed sessions:* the SPA is cross-origin, so cookie sessions would
-require `SameSite=None`, `Secure`, and CORS `AllowCredentials` — more moving
-parts and a CSRF surface. A bearer header sidesteps all of that and needs no new
-table. *Alternative considered:* opaque session IDs in a `sessions` table
-(revocable, but adds a table, a lookup per request, and the cookie/CORS
-complexity). Rejected for MVP.
+*Why a cookie over a JS-readable token:* an `HttpOnly` cookie is immune to token
+theft via XSS, which a `localStorage`/`Authorization: Bearer` token is not.
+*Why this works cleanly here:* the SPA and API are same-origin (Vite proxy in
+dev), so `SameSite=Lax` sends the cookie on the app's own requests while
+blocking it on cross-site requests — that *is* the CSRF defense, with no CORS
+`AllowCredentials` and no separate CSRF token needed for the current endpoints.
+A cross-origin SPA would have forced `SameSite=None; Secure` (losing the CSRF
+benefit) — hence the same-origin deployment decision.
+
+*Why still JWT, not DB sessions:* stateless validation, no per-request lookup,
+no `sessions` table. Trade-off: no server-side revocation (see Risks). The token
+remains transport-agnostic (only `sub`), so swapping to opaque session IDs later
+would not change handlers.
 
 *Library:* `github.com/golang-jwt/jwt/v5` — the de-facto Go JWT library;
 maintained, v5 has the safer parsing API.
@@ -59,14 +73,17 @@ A focused package owns the security primitives behind small interfaces:
 - password hashing/verification (`HashPassword`, `CheckPassword`),
 - token issue/verify (`Issuer` wrapping secret + TTL: `Issue(userID)` /
   `Parse(token) → userID`),
-- a Fiber middleware `RequireAuth` that validates the bearer token and stores
-  the user id in `c.Locals`.
+- the cookie transport (`CookieName`, `SetTokenCookie`, `ClearTokenCookie`) so
+  cookie attributes live in one place,
+- a Fiber middleware `RequireAuth` that reads and validates the auth cookie and
+  stores the user id in `c.Locals`.
 
 Handlers (`internal/handler/auth.go`) stay thin: parse/validate input, call
-sqlc + `internal/auth`, shape the `{"data": ...}` response. This keeps crypto
-and token logic testable in isolation (unit tests with no DB) and the security
-boundary easy to hold in context. `handler.Register` grows parameters for the
-JWT secret/TTL (mirroring how `frontendOrigin` is already threaded in).
+sqlc + `internal/auth`, set the cookie, shape the `{"data": ...}` response. This
+keeps crypto and token logic testable in isolation (unit tests with no DB) and
+the security boundary easy to hold in context. `handler.Register` grows
+parameters for the JWT secret/TTL and the cookie-secure flag (mirroring how
+`frontendOrigin` is already threaded in).
 
 ### Data model
 
@@ -120,17 +137,23 @@ without touching existing rows.
 
 ### Config
 
-Add `JWTSecret` and `JWTTTL` to `config.Settings`. `JWT_SECRET` has no safe
-default — startup MUST fail fast if it is empty, so a server never boots with a
-guessable signing key. `JWT_TTL` defaults to a sensible value (e.g. 24h).
+Add `JWTSecret`, `JWTTTL`, and `CookieSecure` to `config.Settings`. `JWT_SECRET`
+has no safe default — startup MUST fail fast if it is empty, so a server never
+boots with a guessable signing key. `JWT_TTL` defaults to a sensible value (e.g.
+24h). `COOKIE_SECURE` defaults to `false` so the cookie works over
+`http://localhost` in dev; set it `true` in any HTTPS deployment.
 
 ## Risks / Trade-offs
 
-- **No token revocation** (stateless JWT) → a leaked or post-logout token stays
-  valid until `exp`. Mitigation: keep TTL modest (24h); the refresh/revocation
-  design is a known seam — if revocation becomes a requirement, introduce a
-  short access TTL + a `refresh_tokens` table without changing the public
-  contract.
+- **No token revocation** (stateless JWT) → logout clears the cookie, but the
+  JWT itself stays valid until `exp` if it was captured. Mitigation: keep TTL
+  modest (24h) and the cookie `HttpOnly` (so capture needs more than XSS); the
+  refresh/revocation design is a known seam — a short access TTL + a
+  `refresh_tokens` table can be added without changing the public contract.
+- **CSRF** → cookies are auto-sent by the browser. Mitigation: `SameSite=Lax`
+  plus the same-origin deployment blocks the cookie on cross-site requests, so
+  state-changing requests can't be forged from other origins. If a future need
+  forces `SameSite=None` (cross-site) or stricter guarantees, add a CSRF token.
 - **Single shared secret** → rotating it invalidates all live tokens.
   Acceptable at MVP; mitigation is fail-fast on empty secret so it is always set
   deliberately via env.
@@ -148,7 +171,8 @@ guessable signing key. `JWT_TTL` defaults to a sensible value (e.g. 24h).
 2. Add the new go deps, `users.sql` queries, run `make sqlc`, commit generated
    code.
 3. Implement `internal/auth`, then handlers, then wire `Register`.
-4. Set `JWT_SECRET` in the environment / compose before running the server.
+4. Set `JWT_SECRET` (and `COOKIE_SECURE=true` on HTTPS) before running the
+   server; in dev, the Vite proxy forwards `/api` so the SPA is same-origin.
 
 Rollback: the change is additive (new table, new routes, new package). Reverting
 the code and dropping the `users` table fully removes it; no existing data or

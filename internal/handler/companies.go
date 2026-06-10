@@ -1,10 +1,7 @@
 package handler
 
 import (
-	"errors"
-
 	"github.com/gofiber/fiber/v2"
-	"github.com/jackc/pgx/v5"
 
 	"github.com/strelov1/hire/internal/db"
 )
@@ -44,11 +41,9 @@ func (h *Handler) GetCompany(c *fiber.Ctx) error {
 	slug := c.Params("slug")
 
 	company, err := h.queries.GetCompany(c.Context(), slug)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return fiber.NewError(fiber.StatusNotFound, "company not found")
-	}
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "failed to get company")
+		// ErrorHandler maps pgx.ErrNoRows to 404, anything else to 500.
+		return err
 	}
 
 	limit, offset := pageParams(c)

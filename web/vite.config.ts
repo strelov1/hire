@@ -13,5 +13,14 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: false,
+    // Proxy the API so the browser only ever talks to this origin. That makes
+    // dev match the same-origin production deployment, so the SameSite=Lax auth
+    // cookie is sent and no CORS is needed. Target overridable via VITE_API_URL.
+    proxy: {
+      '/api': {
+        target: process.env.VITE_API_URL ?? 'http://localhost:8080',
+        changeOrigin: true,
+      },
+    },
   },
 });

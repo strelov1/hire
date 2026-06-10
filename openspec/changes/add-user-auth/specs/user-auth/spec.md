@@ -3,19 +3,18 @@
 ### Requirement: User registration
 
 The system SHALL allow a new user to register with an email and password,
-creating exactly one account per email and returning a signed authentication
-token on success.
+creating exactly one account per email and starting a session on success.
 
 - Email MUST be unique (case-insensitive); the stored form is lowercased.
 - Password MUST be at least 8 characters; it is stored only as a bcrypt hash,
   never in plaintext and never returned in any response.
-- On success the system returns the created user (id, email, created_at) and a
-  signed JWT.
+- On success the system returns the created user (id, email, created_at) and
+  sets the httpOnly session cookie carrying a signed JWT.
 
 #### Scenario: Successful registration
 
 - **WHEN** a client POSTs a unique, well-formed email and an 8+ character password to `/api/v1/auth/register`
-- **THEN** the system creates the user, stores a bcrypt hash of the password, and responds `201` with the user (no password hash) and a signed JWT
+- **THEN** the system creates the user, stores a bcrypt hash of the password, and responds `201` with the user (no password hash) and a `Set-Cookie` carrying the session token
 
 #### Scenario: Duplicate email
 
@@ -29,19 +28,19 @@ token on success.
 
 ### Requirement: User login
 
-The system SHALL authenticate an existing user by email and password and return
-a signed authentication token, without revealing whether the email or the
-password was the failing factor.
+The system SHALL authenticate an existing user by email and password and start a
+session, without revealing whether the email or the password was the failing
+factor.
 
 #### Scenario: Successful login
 
 - **WHEN** a client POSTs a registered email and the correct password to `/api/v1/auth/login`
-- **THEN** the system responds `200` with the user and a signed JWT
+- **THEN** the system responds `200` with the user and sets the httpOnly session cookie
 
 #### Scenario: Wrong password
 
 - **WHEN** a client submits a registered email with an incorrect password
-- **THEN** the system responds `401` with a generic "invalid credentials" message and issues no token
+- **THEN** the system responds `401` with a generic "invalid credentials" message and sets no cookie
 
 #### Scenario: Unknown email
 
@@ -53,35 +52,51 @@ password was the failing factor.
 - **WHEN** a client attempts password login for an account that has no stored password hash (e.g. one created through a future passwordless sign-in method)
 - **THEN** the system responds `401` with the same generic "invalid credentials" message, never treating an absent password as a match
 
-### Requirement: Stateless token authentication
+### Requirement: Stateless cookie session
 
-The system SHALL issue stateless JWTs (HS256) on register and login, and SHALL
-validate them on protected requests via the `Authorization: Bearer <token>`
-header.
+The system SHALL issue stateless JWTs (HS256) on register and login, delivered
+in an httpOnly cookie, and SHALL validate that cookie on protected requests.
 
 - The token SHALL encode the user id as its subject and carry an expiry.
+- The cookie SHALL be `HttpOnly` and `SameSite=Lax`, with `Secure` configurable
+  (set in HTTPS deployments) and a max-age matching the token expiry.
 - A protected handler MUST be able to resolve the authenticated user's id from
-  the validated token.
+  the validated cookie.
 
-#### Scenario: Valid token grants access
+#### Scenario: Valid cookie grants access
 
-- **WHEN** a client calls a protected endpoint with a valid, unexpired Bearer token
-- **THEN** the system resolves the user from the token and serves the request
+- **WHEN** a client calls a protected endpoint with a valid, unexpired session cookie
+- **THEN** the system resolves the user from the cookie and serves the request
 
-#### Scenario: Missing or malformed token
+#### Scenario: Missing cookie
 
-- **WHEN** a client calls a protected endpoint without an `Authorization: Bearer` header or with a malformed token
+- **WHEN** a client calls a protected endpoint with no session cookie
 - **THEN** the system responds `401` and does not serve the protected resource
 
 #### Scenario: Expired or invalid signature
 
-- **WHEN** a client calls a protected endpoint with an expired token or one whose signature does not verify against the server secret
+- **WHEN** a client calls a protected endpoint with an expired cookie or one whose signature does not verify against the server secret
 - **THEN** the system responds `401`
+
+### Requirement: Session logout
+
+The system SHALL expose `POST /api/v1/auth/logout` that clears the session
+cookie. It is public and idempotent.
+
+#### Scenario: Logout clears the session
+
+- **WHEN** a client calls `POST /api/v1/auth/logout`
+- **THEN** the system responds with a `Set-Cookie` that expires the session cookie, so subsequent protected requests are unauthenticated
+
+#### Scenario: Logout without a session
+
+- **WHEN** a client calls `POST /api/v1/auth/logout` with no (or an already-expired) cookie
+- **THEN** the system still responds successfully, treating it as a no-op
 
 ### Requirement: Current user endpoint
 
 The system SHALL expose `GET /api/v1/auth/me` that returns the authenticated
-user's profile and is only reachable with a valid token.
+user's profile and is only reachable with a valid session cookie.
 
 #### Scenario: Authenticated request
 
@@ -90,7 +105,7 @@ user's profile and is only reachable with a valid token.
 
 #### Scenario: Unauthenticated request
 
-- **WHEN** a client calls `GET /api/v1/auth/me` without a valid token
+- **WHEN** a client calls `GET /api/v1/auth/me` without a valid session cookie
 - **THEN** the system responds `401`
 
 ### Requirement: Web client authentication
@@ -99,28 +114,29 @@ The Svelte SPA SHALL let a user register, log in, and log out from the
 application layout, persist the session across reloads, and reflect the current
 auth state in the top bar.
 
-- The auth token SHALL be persisted in `localStorage` and re-loaded on boot; a
-  stored token SHALL be validated on startup via `GET /me`, and a token that
-  fails validation SHALL be discarded so the user appears signed out.
-- Authenticated API requests SHALL attach the token as `Authorization: Bearer`;
-  the public jobs/companies requests SHALL remain unauthenticated.
+- The session SHALL live entirely in the httpOnly cookie; the SPA SHALL hold no
+  token (it cannot read the cookie) and SHALL use no `localStorage`. On boot it
+  SHALL resolve the session via `GET /me`; failure SHALL leave the user signed
+  out without error.
+- The SPA SHALL send credentials (the cookie) with API requests; the public
+  jobs/companies requests SHALL remain unauthenticated either way.
 - The top bar SHALL show the signed-in user's email and a logout action when
   authenticated, and Login/Register actions when not.
 
 #### Scenario: Sign in from the layout
 
 - **WHEN** a signed-out user submits valid credentials in the login (or register) form opened from the top bar
-- **THEN** the SPA stores the returned token, shows the user's email with a logout action in the top bar, and keeps the user signed in across a page reload
+- **THEN** the SPA shows the user's email with a logout action in the top bar, and the session (cookie) keeps the user signed in across a page reload
 
 #### Scenario: Log out
 
 - **WHEN** a signed-in user activates the logout action
-- **THEN** the SPA clears the stored token and returns the top bar to its Login/Register state
+- **THEN** the SPA calls the logout endpoint to clear the cookie and returns the top bar to its Login/Register state
 
-#### Scenario: Stale token on boot
+#### Scenario: Stale cookie on boot
 
-- **WHEN** the SPA boots with a stored token that the server rejects (expired or invalid)
-- **THEN** the SPA discards the token and presents the signed-out state without error
+- **WHEN** the SPA boots and `GET /me` is rejected (expired or invalid cookie)
+- **THEN** the SPA presents the signed-out state without error
 
 ### Requirement: Public endpoints remain unauthenticated
 

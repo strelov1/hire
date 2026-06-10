@@ -29,7 +29,8 @@ type credentials struct {
 	Password string `json:"password"`
 }
 
-// Register creates an account and returns the user plus a signed token.
+// Register creates an account, starts a session (auth cookie), and returns the
+// user.
 func (h *Handler) Register(c *fiber.Ctx) error {
 	var in credentials
 	if err := c.BodyParser(&in); err != nil {
@@ -60,44 +61,60 @@ func (h *Handler) Register(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to create user")
 	}
 
-	token, err := h.issuer.Issue(row.ID)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "failed to issue token")
+	if err := h.setSession(c, row.ID); err != nil {
+		return err
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"data": fiber.Map{
-			"user":  userResponse{ID: row.ID, Email: row.Email, CreatedAt: row.CreatedAt},
-			"token": token,
-		},
+		"data": userResponse{ID: row.ID, Email: row.Email, CreatedAt: row.CreatedAt},
 	})
 }
 
-// Login verifies credentials and returns the user plus a signed token. Unknown
-// email, wrong password, and passwordless accounts all yield the same generic
-// 401 so the response never reveals which factor failed.
+// Login verifies credentials, starts a session (auth cookie), and returns the
+// user. Unknown email, wrong password, and passwordless accounts all yield the
+// same generic 401 so the response never reveals which factor failed.
 func (h *Handler) Login(c *fiber.Ctx) error {
 	var in credentials
 	if err := c.BodyParser(&in); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
 	}
 
-	user, err := h.queries.GetUserByEmail(c.Context(), in.Email)
+	// Normalize through the same seam as Register so the Go layer is the single
+	// normalizer; a malformed email simply has no account (generic 401).
+	email, err := normalizeEmail(in.Email)
+	if err != nil {
+		return fiber.NewError(fiber.StatusUnauthorized, "invalid credentials")
+	}
+
+	user, err := h.queries.GetUserByEmail(c.Context(), email)
 	if err != nil || !user.PasswordHash.Valid || auth.CheckPassword(user.PasswordHash.String, in.Password) != nil {
 		return fiber.NewError(fiber.StatusUnauthorized, "invalid credentials")
 	}
 
-	token, err := h.issuer.Issue(user.ID)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "failed to issue token")
+	if err := h.setSession(c, user.ID); err != nil {
+		return err
 	}
 
 	return c.JSON(fiber.Map{
-		"data": fiber.Map{
-			"user":  userResponse{ID: user.ID, Email: user.Email, CreatedAt: user.CreatedAt},
-			"token": token,
-		},
+		"data": userResponse{ID: user.ID, Email: user.Email, CreatedAt: user.CreatedAt},
 	})
+}
+
+// Logout clears the auth cookie. It is public and idempotent: clearing an
+// absent or already-expired cookie is a no-op.
+func (h *Handler) Logout(c *fiber.Ctx) error {
+	auth.ClearTokenCookie(c, h.cookieSecure)
+	return c.SendStatus(fiber.StatusNoContent)
+}
+
+// setSession issues a token for userID and writes it as the auth cookie.
+func (h *Handler) setSession(c *fiber.Ctx, userID int64) error {
+	token, err := h.issuer.Issue(userID)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to start session")
+	}
+	auth.SetTokenCookie(c, token, h.issuer.TTL(), h.cookieSecure)
+	return nil
 }
 
 // Me returns the authenticated user. It runs behind auth.RequireAuth, which has
@@ -110,10 +127,12 @@ func (h *Handler) Me(c *fiber.Ctx) error {
 
 	user, err := h.queries.GetUserByID(c.Context(), id)
 	if errors.Is(err, pgx.ErrNoRows) {
+		// Valid token, but the user is gone: unauthorized, not 404.
 		return fiber.NewError(fiber.StatusUnauthorized, "unauthorized")
 	}
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "failed to get user")
+		// Other failures fall through to ErrorHandler (500).
+		return err
 	}
 
 	return c.JSON(fiber.Map{"data": userResponse{ID: user.ID, Email: user.Email, CreatedAt: user.CreatedAt}})

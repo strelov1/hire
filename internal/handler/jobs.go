@@ -1,11 +1,9 @@
 package handler
 
 import (
-	"errors"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/jackc/pgx/v5"
 
 	"github.com/strelov1/hire/internal/db"
 )
@@ -45,11 +43,9 @@ func (h *Handler) GetJob(c *fiber.Ctx) error {
 	}
 
 	job, err := h.queries.GetJob(c.Context(), id)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return fiber.NewError(fiber.StatusNotFound, "job not found")
-	}
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "failed to get job")
+		// ErrorHandler maps pgx.ErrNoRows to 404, anything else to 500.
+		return err
 	}
 
 	return c.JSON(fiber.Map{"data": job})

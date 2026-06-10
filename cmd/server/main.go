@@ -35,12 +35,13 @@ func main() {
 		AppName:      "hire",
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
+		ErrorHandler: handler.ErrorHandler,
 	})
 
 	app.Use(recover.New())
 	app.Use(logger.New())
 
-	handler.Register(app, pool, cfg.FrontendOrigin, cfg.JWTSecret, cfg.JWTTTL)
+	handler.Register(app, pool, cfg.FrontendOrigin, cfg.JWTSecret, cfg.JWTTTL, cfg.CookieSecure)
 
 	// Run the server in a goroutine so main can wait for a shutdown signal.
 	// Fiber's Listen returns nil on graceful shutdown, so any error is fatal.

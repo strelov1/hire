@@ -46,7 +46,7 @@
     <div class="ml-auto flex items-center gap-3">
       {#if authStore.isAuthenticated}
         <span class="text-sm text-muted-foreground">{authStore.user?.email}</span>
-        <Button variant="ghost" size="sm" onclick={() => authStore.logout()}>Log out</Button>
+        <Button variant="ghost" size="sm" onclick={() => void authStore.logout()}>Log out</Button>
       {:else}
         <Button variant="ghost" size="sm" onclick={() => open('login')}>Sign in</Button>
         <Button variant="primary" size="sm" onclick={() => open('register')}>Register</Button>

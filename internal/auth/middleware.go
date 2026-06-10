@@ -1,28 +1,23 @@
 package auth
 
-import (
-	"strings"
-
-	"github.com/gofiber/fiber/v2"
-)
+import "github.com/gofiber/fiber/v2"
 
 // localsUserID is the c.Locals key under which RequireAuth stores the
 // authenticated user id. Handlers read it via UserID.
 const localsUserID = "auth.userID"
 
-// RequireAuth returns middleware that validates the `Authorization: Bearer`
-// token and stores the resolved user id in the request locals. It responds 401
-// on a missing, malformed, expired, or invalid token.
+// RequireAuth returns middleware that validates the auth cookie and stores the
+// resolved user id in the request locals. It responds 401 on a missing,
+// expired, or invalid token.
 func RequireAuth(iss *Issuer) fiber.Handler {
-	const prefix = "Bearer "
 	return func(c *fiber.Ctx) error {
-		h := c.Get(fiber.HeaderAuthorization)
-		if !strings.HasPrefix(h, prefix) {
-			return fiber.NewError(fiber.StatusUnauthorized, "missing or malformed authorization header")
+		token := c.Cookies(CookieName)
+		if token == "" {
+			return fiber.NewError(fiber.StatusUnauthorized, "not authenticated")
 		}
-		id, err := iss.Parse(strings.TrimPrefix(h, prefix))
+		id, err := iss.Parse(token)
 		if err != nil {
-			return fiber.NewError(fiber.StatusUnauthorized, "invalid or expired token")
+			return fiber.NewError(fiber.StatusUnauthorized, "invalid or expired session")
 		}
 		c.Locals(localsUserID, id)
 		return c.Next()

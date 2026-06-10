@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -17,6 +18,11 @@ type Settings struct {
 	// the server entry point, not here.
 	JWTSecret string
 	JWTTTL    time.Duration
+
+	// CookieSecure marks the auth cookie Secure (HTTPS-only). Default false so
+	// the cookie works over http://localhost in dev; set COOKIE_SECURE=true in
+	// any HTTPS deployment.
+	CookieSecure bool
 }
 
 // Load reads configuration from the environment, falling back to sensible defaults.
@@ -27,6 +33,7 @@ func Load() Settings {
 		FrontendOrigin: env("FRONTEND_ORIGIN", "http://localhost:5173"),
 		JWTSecret:      os.Getenv("JWT_SECRET"),
 		JWTTTL:         envDuration("JWT_TTL", 24*time.Hour),
+		CookieSecure:   envBool("COOKIE_SECURE", false),
 	}
 }
 
@@ -42,6 +49,14 @@ func envDuration(key string, fallback time.Duration) time.Duration {
 	// also falls back.
 	if d, err := time.ParseDuration(env(key, "")); err == nil {
 		return d
+	}
+	return fallback
+}
+
+func envBool(key string, fallback bool) bool {
+	// Same "unset or empty -> fallback" rule; only an explicit "true" enables.
+	if b, err := strconv.ParseBool(env(key, "")); err == nil {
+		return b
 	}
 	return fallback
 }
