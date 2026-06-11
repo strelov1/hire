@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { FacetOption } from '$lib/facets';
-  import { cn } from '$lib/utils';
+  import { pillClass } from './pill';
 
   // A searchable multi-select: a filter field over the options rendered as a
   // scrollable pill list. Selected options sort to the front. Used for the larger
@@ -40,12 +40,7 @@
       <button
         type="button"
         onclick={() => onToggle(opt.value)}
-        class={cn(
-          'rounded-full border px-2.5 py-1 text-sm transition-colors active:translate-y-px',
-          !active && 'border-transparent bg-secondary text-secondary-foreground hover:bg-accent',
-          active && !exclude && 'border-transparent bg-primary text-primary-foreground',
-          active && exclude && 'border-destructive/30 bg-destructive/15 text-destructive line-through',
-        )}
+        class={pillClass(active, exclude, 'px-2.5 py-1 text-sm')}
       >
         {opt.label}
       </button>
