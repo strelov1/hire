@@ -8,9 +8,13 @@
   // min salary) that aren't multi-value facets.
   let { store }: { store: FilterStore } = $props();
 
+  // Slider bounds for the min-salary filter. 0 means "no minimum".
+  const SALARY_MAX = 300000;
+  const SALARY_STEP = 5000;
+
   function onSalaryInput(e: Event) {
-    const raw = (e.currentTarget as HTMLInputElement).value;
-    store.setSalaryMin(raw === '' ? null : Number(raw));
+    const n = Number((e.currentTarget as HTMLInputElement).value);
+    store.setSalaryMin(n === 0 ? null : n);
   }
 </script>
 
@@ -42,16 +46,25 @@
   </div>
 
   <div>
-    <h3 class="mb-2 text-sm font-semibold tracking-tight">Min salary</h3>
+    <div class="mb-2 flex items-center justify-between">
+      <h3 class="text-sm font-semibold tracking-tight">Min salary</h3>
+      <span class="text-xs font-medium text-muted-foreground">
+        {store.value.salaryMin ? `${store.value.salaryMin.toLocaleString('en-US')}+` : 'Any'}
+      </span>
+    </div>
     <input
-      type="number"
-      inputmode="numeric"
+      type="range"
       min="0"
-      step="1000"
-      placeholder="0"
-      value={store.value.salaryMin ?? ''}
+      max={SALARY_MAX}
+      step={SALARY_STEP}
+      value={store.value.salaryMin ?? 0}
       oninput={onSalaryInput}
-      class="h-9 w-full rounded-lg border border-input bg-transparent px-3 text-sm transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
+      aria-label="Minimum salary"
+      class="w-full accent-primary"
     />
+    <div class="mt-1 flex justify-between text-[10px] text-muted-foreground">
+      <span>Any</span>
+      <span>{SALARY_MAX.toLocaleString('en-US')}+</span>
+    </div>
   </div>
 </div>
