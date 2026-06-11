@@ -27,7 +27,7 @@
 
 <header class="border-b border-border">
   <div class="mx-auto flex h-14 max-w-3xl items-center gap-6 px-4">
-    <a href="/" class="text-sm font-semibold tracking-tight">hire</a>
+    <a href="/" class="text-sm font-semibold tracking-tight">freehire</a>
 
     <nav class="flex items-center gap-4 text-sm">
       {#each links as link (link.href)}

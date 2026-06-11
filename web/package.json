@@ -1,9 +1,9 @@
 {
-  "name": "hire-web",
+  "name": "freehire-web",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Web frontend for the hire job aggregator.",
+  "description": "Web frontend for the freehire job aggregator.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
