@@ -8,18 +8,15 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/strelov1/freehire/internal/db"
+	"github.com/strelov1/freehire/internal/jobview"
 )
 
-// The jobs read endpoints return a jobResponse (mapped from db.Job) via c.JSON,
-// so jobResponse's JSON encoding IS the API contract. These tests lock two
-// requirements: the internal numeric id is never exposed and the public slug is
-// (specs/job-public-identity), and the enrichment passthrough is preserved
-// (specs/job-enrichment).
-//
-// The "{} not null" guarantee rests on jobs.enrichment being NOT NULL DEFAULT
-// '{}': a row read from the DB always carries json.RawMessage("{}"), never nil.
-// A nil RawMessage marshals to null and would break the contract — this test
-// holds the line.
+// The jobs read endpoints return a jobview.Job (mapped from db.Job) via c.JSON,
+// so its JSON encoding IS the API contract. These tests lock two requirements:
+// the internal numeric id is never exposed and the public slug is
+// (specs/job-public-identity), and the enrichment payload survives the mapping
+// (specs/job-enrichment): an unenriched job serializes enrichment as {} (not
+// null), and an enriched payload keeps its fields.
 
 // The internal bigint id must not leak; the public slug must be present.
 func TestJobResponseHidesIDExposesSlug(t *testing.T) {
@@ -62,8 +59,8 @@ func TestUnenrichedJobSerialization(t *testing.T) {
 	}
 }
 
-// Enriched job: the JSONB blob passes through as a raw object (not re-encoded
-// as a base64 string), enriched_at is the timestamp, version is set.
+// Enriched job: the JSONB payload survives the typed decode/encode round-trip,
+// enriched_at is the timestamp, version is set.
 func TestEnrichedJobSerialization(t *testing.T) {
 	var enrichedAt pgtype.Timestamptz
 	if err := enrichedAt.Scan(time.Date(2026, 6, 9, 12, 0, 0, 0, time.UTC)); err != nil {
@@ -85,7 +82,7 @@ func TestEnrichedJobSerialization(t *testing.T) {
 		t.Fatalf("enrichment is not a JSON object: %v", err)
 	}
 	if enrichment["seniority"] != "senior" || enrichment["work_mode"] != "remote" {
-		t.Errorf("enrichment payload not passed through verbatim: %v", enrichment)
+		t.Errorf("enrichment payload not preserved: %v", enrichment)
 	}
 	if got := string(fields["enriched_at"]); got != `"2026-06-09T12:00:00Z"` {
 		t.Errorf("enriched_at: want the timestamp, got %s", got)
@@ -99,7 +96,11 @@ func TestEnrichedJobSerialization(t *testing.T) {
 // JSON fields — the actual public contract for the jobs endpoints.
 func marshalToFields(t *testing.T, job db.Job) map[string]json.RawMessage {
 	t.Helper()
-	data, err := json.Marshal(toJobResponse(job))
+	view, err := jobview.FromRow(job)
+	if err != nil {
+		t.Fatalf("FromRow: %v", err)
+	}
+	data, err := json.Marshal(view)
 	if err != nil {
 		t.Fatalf("marshal: %v", err)
 	}

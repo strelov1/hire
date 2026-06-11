@@ -215,6 +215,60 @@ func (q *Queries) ListJobsByCompany(ctx context.Context, arg ListJobsByCompanyPa
 	return items, nil
 }
 
+const listJobsByIDAfter = `-- name: ListJobsByIDAfter :many
+SELECT id, source, external_id, url, title, company, location, remote, description, posted_at, created_at, updated_at, company_slug, enrichment, enriched_at, enrichment_version, public_slug
+FROM jobs
+WHERE id > $1
+ORDER BY id
+LIMIT $2
+`
+
+type ListJobsByIDAfterParams struct {
+	AfterID   int64 `json:"after_id"`
+	BatchSize int32 `json:"batch_size"`
+}
+
+// Keyset scan for the reindex command: pages by the immutable primary key, so
+// concurrent inserts/updates (which shift posted_at ordering) cannot make the
+// scan skip or repeat rows the way OFFSET pagination would.
+func (q *Queries) ListJobsByIDAfter(ctx context.Context, arg ListJobsByIDAfterParams) ([]Job, error) {
+	rows, err := q.db.Query(ctx, listJobsByIDAfter, arg.AfterID, arg.BatchSize)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Job{}
+	for rows.Next() {
+		var i Job
+		if err := rows.Scan(
+			&i.ID,
+			&i.Source,
+			&i.ExternalID,
+			&i.URL,
+			&i.Title,
+			&i.Company,
+			&i.Location,
+			&i.Remote,
+			&i.Description,
+			&i.PostedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CompanySlug,
+			&i.Enrichment,
+			&i.EnrichedAt,
+			&i.EnrichmentVersion,
+			&i.PublicSlug,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const setJobEnrichment = `-- name: SetJobEnrichment :exec
 UPDATE jobs
 SET enrichment         = $1,

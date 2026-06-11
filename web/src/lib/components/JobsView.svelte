@@ -25,7 +25,12 @@
     timer = setTimeout(() => run(query), 300);
   }
 
-  onMount(() => jobs.start());
+  onMount(() => {
+    jobs.start();
+    // Cleanup: a debounce timer left running after unmount would fire run()
+    // and start a fetch for a component that no longer exists.
+    return () => clearTimeout(timer);
+  });
 </script>
 
 <div class="mb-4">

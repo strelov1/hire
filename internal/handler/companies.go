@@ -4,18 +4,15 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/strelov1/freehire/internal/db"
+	"github.com/strelov1/freehire/internal/jobview"
 )
 
 // companyDetailResponse is the public shape of a company together with a page of
-// its jobs. Its Jobs field is []jobResponse, not []db.Job, so the internal job
+// its jobs. Its Jobs field is []jobview.Job, not []db.Job, so the internal job
 // id cannot leak through this endpoint — the type enforces the DTO mapping.
 type companyDetailResponse struct {
 	Company db.Company    `json:"company"`
-	Jobs    []jobResponse `json:"jobs"`
-}
-
-func newCompanyDetailResponse(company db.Company, jobs []db.Job) companyDetailResponse {
-	return companyDetailResponse{Company: company, Jobs: toJobResponses(jobs)}
+	Jobs    []jobview.Job `json:"jobs"`
 }
 
 // ListCompanies returns a page of companies with their job counts. Counts are
@@ -28,12 +25,12 @@ func (h *Handler) ListCompanies(c *fiber.Ctx) error {
 		Offset: int32(offset),
 	})
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "failed to list companies")
+		return err
 	}
 
 	total, err := h.queries.CountCompanies(c.Context())
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "failed to count companies")
+		return err
 	}
 
 	return c.JSON(fiber.Map{
@@ -66,8 +63,13 @@ func (h *Handler) GetCompany(c *fiber.Ctx) error {
 		Offset:      int32(offset),
 	})
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "failed to list company jobs")
+		return err
 	}
 
-	return c.JSON(fiber.Map{"data": newCompanyDetailResponse(company, jobs)})
+	views, err := jobview.FromRows(jobs)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(fiber.Map{"data": companyDetailResponse{Company: company, Jobs: views}})
 }

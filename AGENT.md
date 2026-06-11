@@ -32,6 +32,7 @@ internal/
   database/          pgxpool connection pool
   db/                GENERATED sqlc code (do not edit) + queries/*.sql (hand-written)
   handler/           HTTP handlers (Handler struct + Register wires routes); auth.go holds register/login/logout/me; user_jobs.go holds the view/apply interaction endpoints; errors.go is the central ErrorHandler
+  jobview/           the single public wire shape of a job (shared by list/detail/company/search responses and the search index)
   auth/              security primitives: bcrypt password hashing, JWT Issuer (issue/verify), the httpOnly cookie transport, and the RequireAuth Fiber middleware
   enrich/            enrichment contract (typed Enrichment + controlled vocabularies), the LLM Provider abstraction, and the queue-draining Runner
   normalize/         slug normalization

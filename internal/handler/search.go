@@ -6,6 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
+	"github.com/strelov1/freehire/internal/jobview"
 	"github.com/strelov1/freehire/internal/search"
 )
 
@@ -69,12 +70,14 @@ func (h *Handler) SearchJobs(c *fiber.Ctx) error {
 		SemanticRatio: ratio,
 	})
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "search failed")
+		// ErrorHandler renders a generic 500; returning the error keeps the
+		// Meilisearch failure cause visible to logging instead of swallowing it.
+		return err
 	}
 
-	views := make([]search.JobView, len(res.Hits))
+	views := make([]jobview.Job, len(res.Hits))
 	for i, hit := range res.Hits {
-		views[i] = hit.JobView
+		views[i] = hit.Job
 	}
 
 	return c.JSON(fiber.Map{

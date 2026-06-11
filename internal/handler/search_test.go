@@ -8,6 +8,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
+	"github.com/strelov1/freehire/internal/jobview"
 	"github.com/strelov1/freehire/internal/search"
 )
 
@@ -50,7 +51,7 @@ func TestSearchJobs_DisabledReturns503(t *testing.T) {
 
 func TestSearchJobs_PassesParamsAndShapesResponse(t *testing.T) {
 	fake := &fakeSearcher{res: search.SearchResult{
-		Hits:  []search.JobDocument{{ID: 1, JobView: search.JobView{PublicSlug: "go-dev-acme-x", Title: "Go Dev"}}},
+		Hits:  []search.JobDocument{{ID: 1, Job: jobview.Job{PublicSlug: "go-dev-acme-x", Title: "Go Dev"}}},
 		Total: 5,
 	}}
 	app := searchApp(fake)

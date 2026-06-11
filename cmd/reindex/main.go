@@ -43,17 +43,19 @@ func main() {
 }
 
 // reindexAll ensures the index and streams every job through it in batches,
-// returning the number of jobs indexed.
+// returning the number of jobs indexed. It pages by keyset (id > last seen), so
+// rows inserted or re-ordered during the run cannot be skipped or repeated.
 func reindexAll(ctx context.Context, q *db.Queries, client *search.Client) (int, error) {
 	if err := client.EnsureIndex(ctx); err != nil {
 		return 0, err
 	}
 
 	indexed := 0
-	for offset := 0; ; offset += reindexBatchSize {
-		jobs, err := q.ListJobs(ctx, db.ListJobsParams{
-			Limit:  reindexBatchSize,
-			Offset: int32(offset),
+	var afterID int64
+	for {
+		jobs, err := q.ListJobsByIDAfter(ctx, db.ListJobsByIDAfterParams{
+			AfterID:   afterID,
+			BatchSize: reindexBatchSize,
 		})
 		if err != nil {
 			return indexed, err
@@ -61,6 +63,7 @@ func reindexAll(ctx context.Context, q *db.Queries, client *search.Client) (int,
 		if len(jobs) == 0 {
 			break
 		}
+		afterID = jobs[len(jobs)-1].ID
 
 		docs := make([]search.JobDocument, 0, len(jobs))
 		for _, j := range jobs {

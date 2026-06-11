@@ -4,6 +4,16 @@ FROM jobs
 ORDER BY posted_at DESC NULLS LAST, id DESC
 LIMIT $1 OFFSET $2;
 
+-- name: ListJobsByIDAfter :many
+-- Keyset scan for the reindex command: pages by the immutable primary key, so
+-- concurrent inserts/updates (which shift posted_at ordering) cannot make the
+-- scan skip or repeat rows the way OFFSET pagination would.
+SELECT *
+FROM jobs
+WHERE id > sqlc.arg(after_id)
+ORDER BY id
+LIMIT sqlc.arg(batch_size);
+
 -- name: GetJob :one
 SELECT *
 FROM jobs

@@ -1,67 +1,15 @@
 package handler
 
 import (
-	"encoding/json"
-
 	"github.com/gofiber/fiber/v2"
-	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/strelov1/freehire/internal/db"
+	"github.com/strelov1/freehire/internal/jobview"
 )
 
-// jobResponse is the public wire shape of a job. It carries the public_slug and
-// deliberately omits the internal numeric id, which must never be exposed: the
-// id is enumerable and its growth leaks inventory size and fill rate. All other
-// source fields pass through unchanged, including the enrichment passthrough.
-type jobResponse struct {
-	Source            string             `json:"source"`
-	ExternalID        string             `json:"external_id"`
-	URL               string             `json:"url"`
-	Title             string             `json:"title"`
-	Company           string             `json:"company"`
-	CompanySlug       string             `json:"company_slug"`
-	Location          string             `json:"location"`
-	Remote            bool               `json:"remote"`
-	Description       string             `json:"description"`
-	PostedAt          pgtype.Timestamptz `json:"posted_at"`
-	CreatedAt         pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
-	PublicSlug        string             `json:"public_slug"`
-	Enrichment        json.RawMessage    `json:"enrichment"`
-	EnrichedAt        pgtype.Timestamptz `json:"enriched_at"`
-	EnrichmentVersion int32              `json:"enrichment_version"`
-}
-
-func toJobResponse(j db.Job) jobResponse {
-	return jobResponse{
-		Source:            j.Source,
-		ExternalID:        j.ExternalID,
-		URL:               j.URL,
-		Title:             j.Title,
-		Company:           j.Company,
-		CompanySlug:       j.CompanySlug,
-		Location:          j.Location,
-		Remote:            j.Remote,
-		Description:       j.Description,
-		PostedAt:          j.PostedAt,
-		CreatedAt:         j.CreatedAt,
-		UpdatedAt:         j.UpdatedAt,
-		PublicSlug:        j.PublicSlug,
-		Enrichment:        j.Enrichment,
-		EnrichedAt:        j.EnrichedAt,
-		EnrichmentVersion: j.EnrichmentVersion,
-	}
-}
-
-func toJobResponses(jobs []db.Job) []jobResponse {
-	out := make([]jobResponse, len(jobs))
-	for i, j := range jobs {
-		out[i] = toJobResponse(j)
-	}
-	return out
-}
-
-// ListJobs returns a page of jobs using limit/offset pagination.
+// ListJobs returns a page of jobs using limit/offset pagination. Jobs are
+// served in the shared jobview wire shape (public_slug, no internal id) — the
+// same shape the detail and search endpoints use.
 func (h *Handler) ListJobs(c *fiber.Ctx) error {
 	limit, offset := pageParams(c)
 
@@ -70,16 +18,21 @@ func (h *Handler) ListJobs(c *fiber.Ctx) error {
 		Offset: int32(offset),
 	})
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "failed to list jobs")
+		return err
 	}
 
 	total, err := h.queries.CountJobs(c.Context())
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "failed to count jobs")
+		return err
+	}
+
+	views, err := jobview.FromRows(jobs)
+	if err != nil {
+		return err
 	}
 
 	return c.JSON(fiber.Map{
-		"data": toJobResponses(jobs),
+		"data": views,
 		"meta": fiber.Map{
 			"total":  total,
 			"limit":  limit,
@@ -96,5 +49,10 @@ func (h *Handler) GetJob(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.JSON(fiber.Map{"data": toJobResponse(job)})
+	view, err := jobview.FromRow(job)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(fiber.Map{"data": view})
 }

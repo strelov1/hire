@@ -43,6 +43,10 @@ type Querier interface {
 	ListCompanies(ctx context.Context, arg ListCompaniesParams) ([]ListCompaniesRow, error)
 	ListJobs(ctx context.Context, arg ListJobsParams) ([]Job, error)
 	ListJobsByCompany(ctx context.Context, arg ListJobsByCompanyParams) ([]Job, error)
+	// Keyset scan for the reindex command: pages by the immutable primary key, so
+	// concurrent inserts/updates (which shift posted_at ordering) cannot make the
+	// scan skip or repeat rows the way OFFSET pagination would.
+	ListJobsByIDAfter(ctx context.Context, arg ListJobsByIDAfterParams) ([]Job, error)
 	// Mark a job as applied for a user. Idempotent and independent of a prior view:
 	// it inserts the row (viewed_at defaults) or updates applied_at in place.
 	MarkJobApplied(ctx context.Context, arg MarkJobAppliedParams) (UserJob, error)

@@ -5,17 +5,22 @@ import (
 	"testing"
 
 	"github.com/strelov1/freehire/internal/db"
+	"github.com/strelov1/freehire/internal/jobview"
 )
 
 // GetCompany returns a company together with a page of its jobs. The jobs must
 // go through the same public DTO as the jobs endpoints — the internal numeric id
 // must not leak here either. A typed companyDetailResponse whose Jobs field is
-// []jobResponse makes that a compile-time guarantee; this test locks the wire
+// []jobview.Job makes that a compile-time guarantee; this test locks the wire
 // contract (no "id", a "public_slug" per job).
 func TestCompanyDetailHidesJobID(t *testing.T) {
-	resp := newCompanyDetailResponse(db.Company{Slug: "acme", Name: "Acme"}, []db.Job{
+	views, err := jobview.FromRows([]db.Job{
 		{ID: 123, Title: "Go Developer", PublicSlug: "go-developer-acme-t35nijto"},
 	})
+	if err != nil {
+		t.Fatalf("FromRows: %v", err)
+	}
+	resp := companyDetailResponse{Company: db.Company{Slug: "acme", Name: "Acme"}, Jobs: views}
 
 	data, err := json.Marshal(resp)
 	if err != nil {
