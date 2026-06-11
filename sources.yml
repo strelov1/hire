@@ -3,14 +3,157 @@
 # Adding a company is an edit here; adding a platform is a new adapter in
 # internal/sources plus one line in sources.All.
 sources:
+  # --- Greenhouse (board = slug in boards-api.greenhouse.io/v1/boards/<board>/jobs) ---
   - company: Dropbox
     provider: greenhouse
     board: dropbox
 
+  - company: Anthropic
+    provider: greenhouse
+    board: anthropic
+
+  - company: Vercel
+    provider: greenhouse
+    board: vercel
+
+  - company: Temporal
+    provider: greenhouse
+    board: temporal
+
+  - company: PlanetScale
+    provider: greenhouse
+    board: planetscale
+
+  - company: Arize AI
+    provider: greenhouse
+    board: arizeai
+
+  - company: Runway
+    provider: greenhouse
+    board: runwayml
+
+  - company: Hightouch
+    provider: greenhouse
+    board: hightouch
+
+  - company: Augment Code
+    provider: greenhouse
+    board: augmentcomputing
+
+  - company: RunPod
+    provider: greenhouse
+    board: runpod
+
+  - company: GitLab
+    provider: greenhouse
+    board: gitlab
+
+  - company: Grafana Labs
+    provider: greenhouse
+    board: grafanalabs
+
+  - company: Postman
+    provider: greenhouse
+    board: postman
+
+  - company: Airtable
+    provider: greenhouse
+    board: airtable
+
+  - company: Glean
+    provider: greenhouse
+    board: gleanwork
+
+  - company: Intercom
+    provider: greenhouse
+    board: intercom
+
+  # --- Lever (board = slug in jobs.lever.co/<board>) ---
   - company: Spotify
     provider: lever
     board: spotify
 
+  - company: Mistral AI
+    provider: lever
+    board: mistral
+
+  - company: Weights & Biases
+    provider: lever
+    board: wandb
+
+  # --- Ashby (board = slug in jobs.ashbyhq.com/<board>) ---
   - company: Ashby
     provider: ashby
     board: ashby
+
+  - company: Cohere
+    provider: ashby
+    board: cohere
+
+  - company: ElevenLabs
+    provider: ashby
+    board: elevenlabs
+
+  - company: Supabase
+    provider: ashby
+    board: supabase
+
+  - company: Inngest
+    provider: ashby
+    board: inngest
+
+  - company: LangChain
+    provider: ashby
+    board: langchain
+
+  - company: Pinecone
+    provider: ashby
+    board: pinecone
+
+  - company: WorkOS
+    provider: ashby
+    board: workos
+
+  - company: Zapier
+    provider: ashby
+    board: zapier
+
+  - company: n8n
+    provider: ashby
+    board: n8n
+
+  - company: Clay Labs
+    provider: ashby
+    board: claylabs
+
+  - company: Vapi
+    provider: ashby
+    board: vapi
+
+  - company: Deel
+    provider: ashby
+    board: deel
+
+  - company: Render
+    provider: ashby
+    board: render
+
+  - company: Replit
+    provider: ashby
+    board: replit
+
+  - company: Baseten
+    provider: ashby
+    board: baseten
+
+  - company: Browserbase
+    provider: ashby
+    board: browserbase
+
+  - company: Perplexity
+    provider: ashby
+    board: perplexity
+
+  - company: Lovable
+    provider: ashby
+    board: lovable
