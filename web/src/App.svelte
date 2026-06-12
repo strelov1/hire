@@ -1,6 +1,5 @@
 <script lang="ts">
   import { router } from '$lib/router.svelte';
-  import { cn } from '$lib/utils';
   import TopBar from '$lib/components/TopBar.svelte';
   import JobsView from '$lib/components/JobsView.svelte';
   import JobView from '$lib/components/JobView.svelte';
@@ -32,16 +31,22 @@
 
 <TopBar />
 
-<main class={cn('mx-auto px-4 py-6', route.name === 'jobs' ? 'max-w-6xl' : 'max-w-3xl')}>
+<!-- The outer container is the same width on every page so the header never
+     jumps between routes; narrow reading views center themselves inside it. -->
+<main class="mx-auto max-w-6xl px-4 py-6">
   {#if route.name === 'jobs'}
     <JobsView />
-  {:else if route.name === 'job'}
-    <JobView slug={route.slug} />
-  {:else if route.name === 'companies'}
-    <CompaniesView />
-  {:else if route.name === 'company'}
-    <CompanyView slug={route.slug} />
   {:else}
-    <p class="py-12 text-center text-sm text-muted-foreground">Page not found.</p>
+    <div class="mx-auto max-w-3xl">
+      {#if route.name === 'job'}
+        <JobView slug={route.slug} />
+      {:else if route.name === 'companies'}
+        <CompaniesView />
+      {:else if route.name === 'company'}
+        <CompanyView slug={route.slug} />
+      {:else}
+        <p class="py-12 text-center text-sm text-muted-foreground">Page not found.</p>
+      {/if}
+    </div>
   {/if}
 </main>
