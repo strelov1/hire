@@ -11,7 +11,7 @@ import (
 
 // Eq builds an equality fragment `attr = "value"` with the value quoted and
 // escaped. Quoting is mandatory: an unescaped value could otherwise inject
-// filter logic (e.g. `senior" OR remote = true`).
+// filter logic (e.g. `senior" OR work_mode = "remote`).
 func Eq(attr, value string) string {
 	return attr + " = " + quote(value)
 }

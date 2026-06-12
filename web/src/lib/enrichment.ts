@@ -202,7 +202,7 @@ export function summaryFacets(e: Enrichment): Facet[] {
   };
 
   push('Work format', e.work_mode && label(WORK_MODE, e.work_mode));
-  push('Remote', remoteReach(e));
+  push('Reach', remoteReach(e));
   push('Work type', e.employment_type && label(EMPLOYMENT, e.employment_type));
   push('Grade', e.seniority && label(SENIORITY, e.seniority));
   push(
