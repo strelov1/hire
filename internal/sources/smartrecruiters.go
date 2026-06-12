@@ -54,10 +54,9 @@ func (s smartRecruiters) Fetch(ctx context.Context, e CompanyEntry) ([]Job, erro
 	}
 
 	// Each posting's description comes from its own detail request. Fan out with a
-	// bounded worker pool; a failed detail leaves a zero Job that is dropped below, so
-	// one bad posting never aborts the board.
-	jobs := make([]Job, len(postings))
-	found := make([]bool, len(postings))
+	// bounded worker pool, writing each result into its own slot; a failed detail
+	// leaves a nil slot that is dropped below, so one bad posting never aborts the board.
+	jobs := make([]*Job, len(postings))
 	sem := make(chan struct{}, smartRecruitersDetailWorkers)
 	var wg sync.WaitGroup
 	for i, p := range postings {
@@ -67,17 +66,16 @@ func (s smartRecruiters) Fetch(ctx context.Context, e CompanyEntry) ([]Job, erro
 			defer wg.Done()
 			defer func() { <-sem }()
 			if j, ok := s.detail(ctx, e, p); ok {
-				jobs[i] = j
-				found[i] = true
+				jobs[i] = &j
 			}
 		}(i, p)
 	}
 	wg.Wait()
 
 	out := make([]Job, 0, len(jobs))
-	for i, j := range jobs {
-		if found[i] {
-			out = append(out, j)
+	for _, j := range jobs {
+		if j != nil { // nil = detail fetch failed, skipped
+			out = append(out, *j)
 		}
 	}
 	return out, nil

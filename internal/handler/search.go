@@ -83,14 +83,7 @@ func (h *Handler) SearchJobs(c *fiber.Ctx) error {
 		views[i] = hit.Job
 	}
 
-	return c.JSON(fiber.Map{
-		"data": views,
-		"meta": fiber.Map{
-			"total":  res.Total,
-			"limit":  limit,
-			"offset": offset,
-		},
-	})
+	return listResponse(c, views, res.Total, limit, offset)
 }
 
 // searchSort builds the Meilisearch sort directive from ?sort=<field>&order=<dir>.

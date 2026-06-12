@@ -55,7 +55,8 @@ func (h *Handler) MarkApplied(c *fiber.Ctx) error {
 
 // interactionParams resolves the authenticated user id and the internal job id
 // for the view/apply handlers. The job is addressed publicly by its :slug, which
-// is resolved to the internal bigint id (the user_jobs FK) via GetJobBySlug. The
+// is resolved to the internal bigint id (the user_jobs FK) via GetJobIDBySlug — a
+// slim id-only lookup, since this hot path never needs the wide job columns. The
 // user id is always present behind RequireAuth; an unknown slug surfaces as
 // pgx.ErrNoRows, which ErrorHandler maps to 404.
 func (h *Handler) interactionParams(c *fiber.Ctx) (int64, int64, error) {
@@ -63,9 +64,9 @@ func (h *Handler) interactionParams(c *fiber.Ctx) (int64, int64, error) {
 	if !ok {
 		return 0, 0, fiber.NewError(fiber.StatusUnauthorized, "unauthorized")
 	}
-	job, err := h.queries.GetJobBySlug(c.Context(), c.Params("slug"))
+	jobID, err := h.queries.GetJobIDBySlug(c.Context(), c.Params("slug"))
 	if err != nil {
 		return 0, 0, err
 	}
-	return userID, job.ID, nil
+	return userID, jobID, nil
 }

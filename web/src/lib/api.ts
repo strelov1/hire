@@ -42,14 +42,9 @@ async function call(path: string, init?: RequestInit): Promise<Response> {
   return res;
 }
 
-/** Call `path` and return the decoded JSON body. */
+/** Call `path` and return the decoded JSON body. A bare call (no init) is a GET. */
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return (await call(path, init)).json() as Promise<T>;
-}
-
-/** GET `path` and return the decoded JSON. */
-function get<T>(path: string): Promise<T> {
-  return request<T>(path);
 }
 
 function query(limit: number, offset: number): string {
@@ -66,11 +61,11 @@ function toSlice<T>(page: Page<T>, offset: number): Slice<T> {
 }
 
 export async function listJobs(limit: number, offset: number): Promise<Slice<Job>> {
-  return toSlice(await get<Page<Job>>(`/api/v1/jobs${query(limit, offset)}`), offset);
+  return toSlice(await request<Page<Job>>(`/api/v1/jobs${query(limit, offset)}`), offset);
 }
 
 export async function getJob(slug: string): Promise<Job> {
-  const body = await get<{ data: Job }>(`/api/v1/jobs/${slug}`);
+  const body = await request<{ data: Job }>(`/api/v1/jobs/${slug}`);
   return body.data;
 }
 
@@ -88,7 +83,7 @@ export async function searchJobs(facets: URLSearchParams, limit: number, offset:
   params.set('semantic_ratio', '0');
   params.set('limit', String(limit));
   params.set('offset', String(offset));
-  return toSlice(await get<Page<Job>>(`/api/v1/jobs/search?${params}`), offset);
+  return toSlice(await request<Page<Job>>(`/api/v1/jobs/search?${params}`), offset);
 }
 
 /** List companies, optionally filtered by a name query `q` (a case-insensitive
@@ -99,7 +94,7 @@ export async function listCompanies(q: string, limit: number, offset: number): P
   if (q) params.set('q', q);
   params.set('limit', String(limit));
   params.set('offset', String(offset));
-  return toSlice(await get<Page<CompanyListItem>>(`/api/v1/companies?${params}`), offset);
+  return toSlice(await request<Page<CompanyListItem>>(`/api/v1/companies?${params}`), offset);
 }
 
 export async function getCompany(
@@ -107,7 +102,7 @@ export async function getCompany(
   limit: number,
   offset: number,
 ): Promise<{ company: Company; jobs: Job[] }> {
-  const body = await get<{ data: { company: Company; jobs: Job[] } }>(
+  const body = await request<{ data: { company: Company; jobs: Job[] } }>(
     `/api/v1/companies/${slug}${query(limit, offset)}`,
   );
   return body.data;

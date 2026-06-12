@@ -43,7 +43,6 @@ func (s *dbStore) Claim(ctx context.Context, batch, leaseSeconds int) ([]enrich.
 			OutboxID:      r.ID,
 			JobID:         r.JobID,
 			TargetVersion: int(r.TargetVersion),
-			Attempts:      int(r.Attempts),
 		}
 	}
 	return out, nil

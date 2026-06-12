@@ -31,14 +31,7 @@ func (h *Handler) ListJobs(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.JSON(fiber.Map{
-		"data": views,
-		"meta": fiber.Map{
-			"total":  total,
-			"limit":  limit,
-			"offset": offset,
-		},
-	})
+	return listResponse(c, views, total, limit, offset)
 }
 
 // GetJob returns a single job addressed by its public slug.

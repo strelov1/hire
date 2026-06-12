@@ -38,6 +38,21 @@ func pageParams(c *fiber.Ctx) (limit, offset int) {
 	return limit, offset
 }
 
+// listResponse writes the shared paginated-list envelope: the data slice plus a
+// meta block carrying the filtered total and the limit/offset echoed back. It is
+// the single source of the list wire shape, so the jobs/companies/search list
+// endpoints cannot drift from one another.
+func listResponse(c *fiber.Ctx, data any, total int64, limit, offset int) error {
+	return c.JSON(fiber.Map{
+		"data": data,
+		"meta": fiber.Map{
+			"total":  total,
+			"limit":  limit,
+			"offset": offset,
+		},
+	})
+}
+
 // Register wires all routes onto the application. frontendOrigin is the single
 // browser origin allowed to call the API cross-origin; jwtSecret/jwtTTL
 // configure the token issuer behind the auth endpoints; cookieSecure marks the

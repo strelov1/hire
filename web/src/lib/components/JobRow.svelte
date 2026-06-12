@@ -2,6 +2,7 @@
   import CompanyLogo from './CompanyLogo.svelte';
   import { cardTags, formatSalary } from '$lib/enrichment';
   import type { Job } from '$lib/types';
+  import { Badge } from '$lib/ui';
   import { timeAgo } from '$lib/utils';
 
   // Single source of truth for how a job appears in any list (jobs list and
@@ -30,7 +31,7 @@
         {job.company || 'Unknown company'}
       </span>
       {#each tags as tag (tag)}
-        <span class="rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">{tag}</span>
+        <Badge variant="secondary">{tag}</Badge>
       {/each}
     </div>
     {#if posted}
@@ -43,7 +44,7 @@
   <div class="mt-3 flex items-end justify-between gap-3">
     <div class="flex min-w-0 flex-wrap items-center gap-1.5">
       {#each shownSkills as skill (skill)}
-        <span class="rounded-md bg-secondary px-2 py-0.5 text-xs text-secondary-foreground">{skill}</span>
+        <Badge variant="secondary">{skill}</Badge>
       {/each}
       {#if extraSkills > 0}
         <span class="text-xs text-muted-foreground">+{extraSkills} skills</span>

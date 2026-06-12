@@ -8,7 +8,6 @@ package search
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/meilisearch/meilisearch-go"
@@ -80,16 +79,6 @@ func (c *Client) IndexJobs(ctx context.Context, docs []JobDocument) error {
 	task, err := c.index.UpdateDocumentsWithContext(ctx, docs, &meilisearch.DocumentOptions{PrimaryKey: &pk})
 	if err != nil {
 		return fmt.Errorf("search: index documents: %w", err)
-	}
-	return c.awaitTask(ctx, task.TaskUID)
-}
-
-// DeleteJob removes a job document by id. It is the write path for a future
-// real-time/outbox delete; reindex itself does not delete.
-func (c *Client) DeleteJob(ctx context.Context, id int64) error {
-	task, err := c.index.DeleteDocumentWithContext(ctx, strconv.FormatInt(id, 10), nil)
-	if err != nil {
-		return fmt.Errorf("search: delete document: %w", err)
 	}
 	return c.awaitTask(ctx, task.TaskUID)
 }

@@ -34,6 +34,11 @@ type Querier interface {
 	GetCompany(ctx context.Context, slug string) (Company, error)
 	GetJob(ctx context.Context, id int64) (Job, error)
 	GetJobBySlug(ctx context.Context, publicSlug string) (Job, error)
+	// Slim slug->id lookup for the view/apply interaction path, which needs only the
+	// internal id (the user_jobs FK) and must not drag the wide description/enrichment
+	// columns over the wire on every silent view. GetJobBySlug (SELECT *) stays for the
+	// public detail handler that renders the whole row.
+	GetJobIDBySlug(ctx context.Context, publicSlug string) (int64, error)
 	// Login lookup. Case-insensitive on email; returns password_hash so the handler
 	// can verify the password (and reject accounts that have none).
 	GetUserByEmail(ctx context.Context, lower string) (User, error)

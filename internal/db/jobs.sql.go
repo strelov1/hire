@@ -113,6 +113,23 @@ func (q *Queries) GetJobBySlug(ctx context.Context, publicSlug string) (Job, err
 	return i, err
 }
 
+const getJobIDBySlug = `-- name: GetJobIDBySlug :one
+SELECT id
+FROM jobs
+WHERE public_slug = $1
+`
+
+// Slim slug->id lookup for the view/apply interaction path, which needs only the
+// internal id (the user_jobs FK) and must not drag the wide description/enrichment
+// columns over the wire on every silent view. GetJobBySlug (SELECT *) stays for the
+// public detail handler that renders the whole row.
+func (q *Queries) GetJobIDBySlug(ctx context.Context, publicSlug string) (int64, error) {
+	row := q.db.QueryRow(ctx, getJobIDBySlug, publicSlug)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const listJobs = `-- name: ListJobs :many
 SELECT id, source, external_id, url, title, company, location, remote, description, posted_at, created_at, updated_at, company_slug, enrichment, enriched_at, enrichment_version, public_slug
 FROM jobs

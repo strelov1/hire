@@ -38,14 +38,7 @@ func (h *Handler) ListCompanies(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.JSON(fiber.Map{
-		"data": companies,
-		"meta": fiber.Map{
-			"total":  total,
-			"limit":  limit,
-			"offset": offset,
-		},
-	})
+	return listResponse(c, companies, total, limit, offset)
 }
 
 // GetCompany returns a single company together with a page of its jobs. The

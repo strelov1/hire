@@ -4,6 +4,7 @@
   import { Paginator } from '$lib/paginated.svelte';
   import { FilterStore, filtersToParams } from '$lib/filters.svelte';
   import { router } from '$lib/router.svelte';
+  import { Input } from '$lib/ui';
   import FiltersPanel from './FiltersPanel.svelte';
   import States from './States.svelte';
   import JobRow from './JobRow.svelte';
@@ -60,13 +61,13 @@
 
   <div class="min-w-0 flex-1">
     <div class="mb-4 flex items-center gap-2">
-      <input
+      <Input
         type="search"
         value={filters.value.q}
         oninput={(e) => filters.setQuery(e.currentTarget.value)}
         placeholder="Search jobs…"
         aria-label="Search jobs"
-        class="h-9 min-w-0 flex-1 rounded-lg border border-input bg-transparent px-3 text-sm transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
+        class="min-w-0 flex-1"
       />
       <button
         type="button"

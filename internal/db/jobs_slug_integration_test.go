@@ -73,3 +73,39 @@ func TestJobPublicSlug(t *testing.T) {
 		t.Errorf("GetJobBySlug(unknown) error = %v, want pgx.ErrNoRows", err)
 	}
 }
+
+// TestGetJobIDBySlug covers the slim id-only lookup used by the view/apply
+// interaction path: it resolves a known slug to the internal id and surfaces an
+// unknown slug as pgx.ErrNoRows (which the handler maps to 404).
+func TestGetJobIDBySlug(t *testing.T) {
+	pool := startPostgres(t)
+	q := New(pool)
+	ctx := context.Background()
+	truncate(t, pool)
+
+	slug := normalize.JobSlug("Staff Engineer", "Globex", "manual", "7")
+	job, err := q.UpsertJob(ctx, UpsertJobParams{
+		Source:      "manual",
+		ExternalID:  "7",
+		URL:         "http://example.test/7",
+		Title:       "Staff Engineer",
+		Company:     "Globex",
+		CompanySlug: "globex",
+		PublicSlug:  slug,
+	})
+	if err != nil {
+		t.Fatalf("upsert: %v", err)
+	}
+
+	id, err := q.GetJobIDBySlug(ctx, slug)
+	if err != nil {
+		t.Fatalf("GetJobIDBySlug: %v", err)
+	}
+	if id != job.ID {
+		t.Errorf("GetJobIDBySlug = %d, want %d", id, job.ID)
+	}
+
+	if _, err := q.GetJobIDBySlug(ctx, "no-such-slug"); !errors.Is(err, pgx.ErrNoRows) {
+		t.Errorf("GetJobIDBySlug(unknown) error = %v, want pgx.ErrNoRows", err)
+	}
+}

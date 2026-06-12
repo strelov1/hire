@@ -2,35 +2,40 @@
 // reactive store that mirrors the filters into the URL query so they survive
 // reloads, sharing, and back/forward. Param names match what the search API
 // (GET /api/v1/jobs/search) expects, including the `<param>_exclude` and
-// `skills_mode=and` conventions.
+// `<param>_mode=and` conventions.
 
 import { router } from './router.svelte';
 import { FACETS } from './facets';
 
-/** One facet's selection plus whether it filters by inclusion or exclusion. */
+/** One facet's selection: the chosen values, whether it filters by inclusion or
+ *  exclusion, and (for facets that allow it) whether selected values are ANDed
+ *  (match all) instead of ORed (match any). */
 export interface FacetState {
   values: string[];
   exclude: boolean;
+  matchAll: boolean;
 }
 
 export interface JobFilters {
   q: string;
   /** Facet state keyed by the facet's query param (see FACETS). */
   facets: Record<string, FacetState>;
-  /** Match all selected skills (AND) instead of any (OR). */
-  skillsAnd: boolean;
   visa: boolean;
   salaryMin: number | null;
 }
 
+function emptyFacet(): FacetState {
+  return { values: [], exclude: false, matchAll: false };
+}
+
 function emptyFacets(): Record<string, FacetState> {
   const out: Record<string, FacetState> = {};
-  for (const f of FACETS) out[f.param] = { values: [], exclude: false };
+  for (const f of FACETS) out[f.param] = emptyFacet();
   return out;
 }
 
 export function emptyFilters(): JobFilters {
-  return { q: '', facets: emptyFacets(), skillsAnd: false, visa: false, salaryMin: null };
+  return { q: '', facets: emptyFacets(), visa: false, salaryMin: null };
 }
 
 /** Serialize filters to URL query params (the shape the search API reads). */
@@ -42,10 +47,10 @@ export function filtersToParams(f: JobFilters): URLSearchParams {
     if (!st || st.values.length === 0) continue;
     const key = st.exclude ? `${def.param}_exclude` : def.param;
     for (const v of st.values) p.append(key, v);
-  }
-  const skills = f.facets.skills;
-  if (f.skillsAnd && skills && !skills.exclude && skills.values.length > 1) {
-    p.set('skills_mode', 'and');
+    // AND-mode is per facet and only meaningful with more than one included value.
+    if (st.matchAll && !st.exclude && st.values.length > 1) {
+      p.set(`${def.param}_mode`, 'and');
+    }
   }
   if (f.visa) p.set('visa_sponsorship', 'true');
   if (f.salaryMin != null) p.set('salary_min', String(f.salaryMin));
@@ -60,10 +65,10 @@ export function filtersFromParams(p: URLSearchParams): JobFilters {
   for (const def of FACETS) {
     const exclude = p.getAll(`${def.param}_exclude`);
     const include = p.getAll(def.param);
-    if (exclude.length > 0) f.facets[def.param] = { values: exclude, exclude: true };
-    else if (include.length > 0) f.facets[def.param] = { values: include, exclude: false };
+    const matchAll = p.get(`${def.param}_mode`) === 'and';
+    if (exclude.length > 0) f.facets[def.param] = { values: exclude, exclude: true, matchAll };
+    else if (include.length > 0) f.facets[def.param] = { values: include, exclude: false, matchAll };
   }
-  f.skillsAnd = p.get('skills_mode') === 'and';
   f.visa = p.get('visa_sponsorship') === 'true';
   const salary = Number(p.get('salary_min'));
   f.salaryMin = p.get('salary_min') && !Number.isNaN(salary) ? salary : null;
@@ -93,7 +98,7 @@ export class FilterStore {
   }
 
   facet(param: string): FacetState {
-    return this.value.facets[param] ?? { values: [], exclude: false };
+    return this.value.facets[param] ?? emptyFacet();
   }
 
   setQuery(q: string) {
@@ -111,9 +116,9 @@ export class FilterStore {
     this.#commit();
   }
 
-  setSkillsAnd(on: boolean) {
-    this.value = { ...this.value, skillsAnd: on };
-    this.#commit();
+  /** Toggle a facet between match-all (AND) and match-any (OR) of its values. */
+  setMatchAll(param: string, on: boolean) {
+    this.#setFacet(param, { ...this.facet(param), matchAll: on });
   }
 
   /** Add the value to a facet if absent, remove it if present (pills). */
@@ -138,7 +143,7 @@ export class FilterStore {
 
   /** Reset a single facet (values + exclude mode) — the per-section clear. */
   clearFacet(param: string) {
-    this.#setFacet(param, { values: [], exclude: false });
+    this.#setFacet(param, emptyFacet());
   }
 
   /** Switch a facet between include and exclude mode (the "Исключить" link). */

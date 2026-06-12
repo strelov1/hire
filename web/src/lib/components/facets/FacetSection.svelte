@@ -26,11 +26,11 @@
       {#if showMatch}
         <button
           type="button"
-          onclick={() => store.setSkillsAnd(!store.value.skillsAnd)}
-          title="Match any of / all of the selected skills"
+          onclick={() => store.setMatchAll(def.param, !st.matchAll)}
+          title="Match any of / all of the selected values"
           class="rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
-          Match: {store.value.skillsAnd ? 'All' : 'Any'}
+          Match: {st.matchAll ? 'All' : 'Any'}
         </button>
       {/if}
     </div>

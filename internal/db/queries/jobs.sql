@@ -24,6 +24,15 @@ SELECT *
 FROM jobs
 WHERE public_slug = $1;
 
+-- name: GetJobIDBySlug :one
+-- Slim slug->id lookup for the view/apply interaction path, which needs only the
+-- internal id (the user_jobs FK) and must not drag the wide description/enrichment
+-- columns over the wire on every silent view. GetJobBySlug (SELECT *) stays for the
+-- public detail handler that renders the whole row.
+SELECT id
+FROM jobs
+WHERE public_slug = $1;
+
 -- name: CountJobs :one
 SELECT count(*)
 FROM jobs;
