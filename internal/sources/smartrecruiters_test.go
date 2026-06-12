@@ -1,0 +1,132 @@
+package sources
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"strings"
+	"sync"
+	"testing"
+)
+
+// routedHTTP is a test HTTPClient that returns a different canned body per URL,
+// matching the first route whose substring is contained in the requested URL. It is
+// concurrency-safe so the SmartRecruiters adapter can fan out detail fetches.
+type routedHTTP struct {
+	routes []struct{ match, body string }
+	mu     sync.Mutex
+	calls  int
+}
+
+func (r *routedHTTP) route(match, body string) *routedHTTP {
+	r.routes = append(r.routes, struct{ match, body string }{match, body})
+	return r
+}
+
+func (r *routedHTTP) GetJSON(_ context.Context, url string, v any) error {
+	r.mu.Lock()
+	r.calls++
+	r.mu.Unlock()
+	for _, rt := range r.routes {
+		if strings.Contains(url, rt.match) {
+			return json.Unmarshal([]byte(rt.body), v)
+		}
+	}
+	return fmt.Errorf("routedHTTP: no route for %s", url)
+}
+
+func detailBody(id, title string) string {
+	return fmt.Sprintf(`{
+		"id": %q,
+		"postingUrl": "https://jobs.smartrecruiters.com/Acme/%s",
+		"jobAd": {"sections": {
+			"companyDescription": {"title": "Company", "text": "<p>boilerplate</p>"},
+			"jobDescription": {"title": "Job", "text": "<p>%s do the job.</p>"},
+			"qualifications": {"title": "Qualifications", "text": "<ul><li>Go</li></ul>"},
+			"additionalInformation": {"title": "More", "text": "<p>EEO notice.</p>"}
+		}}
+	}`, id, id, title)
+}
+
+func TestSmartRecruitersProvider(t *testing.T) {
+	if got := NewSmartRecruiters(nil).Provider(); got != "smartrecruiters" {
+		t.Errorf("Provider() = %q, want %q", got, "smartrecruiters")
+	}
+}
+
+func TestSmartRecruitersFetchPaginatesAndFetchesDetail(t *testing.T) {
+	fake := (&routedHTTP{}).
+		route("offset=0", `{"totalFound": 3, "content": [
+			{"id": "P1", "name": "Backend Engineer", "releasedDate": "2024-06-11T15:19:46.134Z", "location": {"city": "Berlin", "region": "", "country": "de", "remote": true}},
+			{"id": "P2", "name": "Frontend Engineer", "releasedDate": "2024-06-11T15:19:46.134Z", "location": {"city": "Remote", "country": "us", "remote": true}}
+		]}`).
+		route("offset=2", `{"totalFound": 3, "content": [
+			{"id": "P3", "name": "Data Engineer", "releasedDate": "2024-06-11T15:19:46.134Z", "location": {"city": "NYC", "country": "us", "remote": false}}
+		]}`).
+		route("/postings/P1", detailBody("P1", "P1")).
+		route("/postings/P2", detailBody("P2", "P2")).
+		route("/postings/P3", detailBody("P3", "P3"))
+
+	jobs, err := NewSmartRecruiters(fake).Fetch(context.Background(), CompanyEntry{
+		Company: "Acme", Provider: "smartrecruiters", Board: "Acme",
+	})
+	if err != nil {
+		t.Fatalf("Fetch: %v", err)
+	}
+	if len(jobs) != 3 {
+		t.Fatalf("len(jobs) = %d, want 3 across two pages", len(jobs))
+	}
+
+	byID := map[string]Job{}
+	for _, j := range jobs {
+		byID[j.ExternalID] = j
+	}
+	j, ok := byID["P1"]
+	if !ok {
+		t.Fatal("posting P1 missing")
+	}
+	if j.Title != "Backend Engineer" {
+		t.Errorf("Title = %q", j.Title)
+	}
+	if j.URL != "https://jobs.smartrecruiters.com/Acme/P1" {
+		t.Errorf("URL = %q, want the postingUrl from detail", j.URL)
+	}
+	if j.Location != "Berlin, de" {
+		t.Errorf("Location = %q, want city/country joined", j.Location)
+	}
+	if !j.Remote {
+		t.Error("Remote = false, want true from location.remote")
+	}
+	for _, want := range []string{"do the job.", "Go", "EEO notice."} {
+		if !strings.Contains(j.Description, want) {
+			t.Errorf("Description missing %q, got %q", want, j.Description)
+		}
+	}
+	if strings.Contains(j.Description, "boilerplate") {
+		t.Errorf("Description should exclude companyDescription, got %q", j.Description)
+	}
+	if j.PostedAt == nil || j.PostedAt.UTC().Year() != 2024 {
+		t.Errorf("PostedAt = %v, want parsed releasedDate (2024)", j.PostedAt)
+	}
+}
+
+func TestSmartRecruitersFetchSkipsFailedDetail(t *testing.T) {
+	// P2 has no detail route -> its detail fetch errors and the posting is skipped,
+	// but P1 still comes through.
+	fake := (&routedHTTP{}).
+		route("offset=0", `{"totalFound": 2, "content": [
+			{"id": "P1", "name": "Engineer", "releasedDate": "2024-06-11T15:19:46.134Z", "location": {"city": "Berlin", "country": "de", "remote": false}},
+			{"id": "P2", "name": "Broken", "releasedDate": "2024-06-11T15:19:46.134Z", "location": {"city": "NYC", "country": "us", "remote": false}}
+		]}`).
+		route("/postings/P1", detailBody("P1", "P1"))
+
+	jobs, err := NewSmartRecruiters(fake).Fetch(context.Background(), CompanyEntry{
+		Company: "Acme", Provider: "smartrecruiters", Board: "Acme",
+	})
+	if err != nil {
+		t.Fatalf("Fetch should not abort the board on one failed detail: %v", err)
+	}
+	if len(jobs) != 1 || jobs[0].ExternalID != "P1" {
+		t.Fatalf("want only P1 to survive, got %d jobs", len(jobs))
+	}
+}

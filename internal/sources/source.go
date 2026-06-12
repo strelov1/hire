@@ -46,6 +46,9 @@ func All(c HTTPClient) map[string]Source {
 		NewGreenhouse(c),
 		NewLever(c),
 		NewAshby(c),
+		NewWorkable(c),
+		NewRecruitee(c),
+		NewSmartRecruiters(c),
 	)
 }
 
@@ -66,6 +69,47 @@ func parseRFC3339(s string) *time.Time {
 		return nil
 	}
 	return &t
+}
+
+// parseDate parses a date-only platform timestamp ("2006-01-02") into a posted_at,
+// returning nil on an empty or unparseable value (posted_at is nullable).
+func parseDate(s string) *time.Time {
+	if s == "" {
+		return nil
+	}
+	t, err := time.Parse("2006-01-02", s)
+	if err != nil {
+		return nil
+	}
+	return &t
+}
+
+// parseSpaceTime parses a space-separated, zone-named timestamp
+// ("2006-01-02 15:04:05 MST", as Recruitee emits) into a posted_at, returning nil
+// on an empty or unparseable value (posted_at is nullable). Recruitee emits UTC; an
+// unrecognized zone abbreviation would be read as offset 0, which is acceptable for an
+// approximate posted_at.
+func parseSpaceTime(s string) *time.Time {
+	if s == "" {
+		return nil
+	}
+	t, err := time.Parse("2006-01-02 15:04:05 MST", s)
+	if err != nil {
+		return nil
+	}
+	return &t
+}
+
+// joinNonEmpty joins the non-empty parts with ", ", so a location built from
+// separate city/state/country fields skips blanks.
+func joinNonEmpty(parts ...string) string {
+	var kept []string
+	for _, p := range parts {
+		if strings.TrimSpace(p) != "" {
+			kept = append(kept, p)
+		}
+	}
+	return strings.Join(kept, ", ")
 }
 
 // parseEpochMillis converts a Unix-millisecond timestamp into a posted_at, returning
