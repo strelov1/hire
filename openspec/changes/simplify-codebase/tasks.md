@@ -17,8 +17,8 @@ first (RED). Web tasks verify via `svelte-check` + lint (no unit runner).
 
 ## 3. Dead code: remove unused `pipeline.Runner.Concurrency` knob
 
-- [ ] 3.1 Delete the `Concurrency int` field and the `limit := r.Concurrency; if limit <= 0 { ... }` fallback in `internal/pipeline/pipeline.go`; build the semaphore directly as `make(chan struct{}, defaultConcurrency)`. Update the two doc comments referencing the field.
-- [ ] 3.2 `go build ./... && go vet ./... && go test ./...` green.
+- [x] 3.1 Delete the `Concurrency int` field and the `limit := r.Concurrency; if limit <= 0 { ... }` fallback in `internal/pipeline/pipeline.go`; build the semaphore directly as `make(chan struct{}, defaultConcurrency)`. Update the two doc comments referencing the field.
+- [x] 3.2 `go build ./... && go vet ./... && go test ./...` green.
 
 ## 4. Dedup: one `listResponse` helper for the list envelope
 

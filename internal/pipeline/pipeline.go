@@ -13,8 +13,7 @@ import (
 	"github.com/strelov1/freehire/internal/sources"
 )
 
-// defaultConcurrency bounds how many boards are fetched at once when the Runner does
-// not set Concurrency.
+// defaultConcurrency bounds how many boards are fetched at once.
 const defaultConcurrency = 8
 
 // Job is a normalized posting ready to persist: the pipeline has set the platform as
@@ -49,28 +48,22 @@ type Stats struct {
 }
 
 // Runner drives ingest: for each configured board it looks up the adapter, fetches,
-// normalizes, and saves. Boards run concurrently up to Concurrency; a board failure is
-// isolated and never aborts the run.
+// normalizes, and saves. Boards run concurrently up to defaultConcurrency; a board
+// failure is isolated and never aborts the run.
 type Runner struct {
-	Registry    map[string]sources.Source
-	Store       Store
-	Concurrency int
+	Registry map[string]sources.Source
+	Store    Store
 }
 
 // Run ingests every configured board and returns the aggregate stats. It returns an
 // error only for a context cancellation, never for a single board's failure.
 func (r Runner) Run(ctx context.Context, entries []sources.CompanyEntry) (Stats, error) {
-	limit := r.Concurrency
-	if limit <= 0 {
-		limit = defaultConcurrency
-	}
-
 	var (
 		mu    sync.Mutex
 		stats Stats
 		wg    sync.WaitGroup
 	)
-	sem := make(chan struct{}, limit)
+	sem := make(chan struct{}, defaultConcurrency)
 
 	for _, e := range entries {
 		wg.Add(1)
