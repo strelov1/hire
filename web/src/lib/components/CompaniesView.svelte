@@ -9,14 +9,13 @@
   import CompanyLogo from './CompanyLogo.svelte';
 
   // Search lives in the URL (?q=) so it survives reload, sharing, and
-  // back/forward — the same pattern as the jobs list, scaled down to a single
-  // field (no FilterStore, which models job-only facets).
+  // back/forward — the jobs-list pattern scaled down to a single field (no
+  // FilterStore, which models job-only facets).
   let q = $state(router.query.get('q') ?? '');
 
   const makePaginator = () => new Paginator((limit, offset) => listCompanies(q, limit, offset));
 
   let companies = $state(makePaginator());
-  let started = false;
   let timer: ReturnType<typeof setTimeout>;
 
   onMount(() => {
@@ -26,30 +25,34 @@
     return () => clearTimeout(timer);
   });
 
-  // Browser back/forward changes the URL query — pull it back into q. Reading
-  // router.query (a derived over router.search) is what tracks this effect. The
-  // guard makes our own setQuery write-back (below) a no-op, breaking the loop.
-  $effect(() => {
-    const urlQ = router.query.get('q') ?? '';
-    if (urlQ !== q) q = urlQ;
-  });
+  function reload() {
+    companies = makePaginator();
+    companies.start();
+  }
 
-  // q changed: mirror it to the URL and re-query, debounced. Building params
-  // reads q first, so the effect tracks it even on the initial run, which we
-  // then skip — it is already loaded by onMount.
-  $effect(() => {
+  // Typing: update q and mirror it to the URL *synchronously* in this handler,
+  // then re-query debounced. Writing the URL here rather than in an effect keeps
+  // q and the URL in lockstep within the same tick, so the back/forward effect
+  // below never runs mid-keystroke against a stale URL and reverts the input.
+  function search(value: string) {
+    q = value;
     const params = new URLSearchParams();
     if (q) params.set('q', q);
-    if (!started) {
-      started = true;
-      return;
-    }
     router.setQuery(params);
     clearTimeout(timer);
-    timer = setTimeout(() => {
-      companies = makePaginator();
-      companies.start();
-    }, 300);
+    timer = setTimeout(reload, 300);
+  }
+
+  // Browser back/forward changes the URL externally — pull it into q and
+  // re-query. No-ops on initial mount (q is seeded from the same URL) and while
+  // typing (search() already synced the URL), so it fires only on real navigation.
+  $effect(() => {
+    const urlQ = router.query.get('q') ?? '';
+    if (urlQ !== q) {
+      q = urlQ;
+      clearTimeout(timer);
+      reload();
+    }
   });
 </script>
 
@@ -57,7 +60,7 @@
   <input
     type="search"
     value={q}
-    oninput={(e) => (q = e.currentTarget.value)}
+    oninput={(e) => search(e.currentTarget.value)}
     placeholder="Search companies…"
     aria-label="Search companies"
     class="h-9 w-full rounded-lg border border-input bg-transparent px-3 text-sm transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
