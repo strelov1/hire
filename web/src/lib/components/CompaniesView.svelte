@@ -3,7 +3,7 @@
   import { listCompanies } from '$lib/api';
   import { Paginator } from '$lib/paginated.svelte';
   import { router } from '$lib/router.svelte';
-  import { Badge } from '$lib/ui';
+  import { Badge, Input } from '$lib/ui';
   import States from './States.svelte';
   import LoadMore from './LoadMore.svelte';
   import CompanyLogo from './CompanyLogo.svelte';
@@ -57,13 +57,13 @@
 </script>
 
 <div class="mb-4">
-  <input
+  <Input
     type="search"
     value={q}
     oninput={(e) => search(e.currentTarget.value)}
     placeholder="Search companies…"
     aria-label="Search companies"
-    class="h-9 w-full rounded-lg border border-input bg-transparent px-3 text-sm transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
+    class="w-full"
   />
 </div>
 

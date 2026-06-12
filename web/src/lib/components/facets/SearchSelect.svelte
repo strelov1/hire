@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { FacetOption } from '$lib/facets';
+  import { Input } from '$lib/ui';
   import { pillClass } from './pill';
 
   // A searchable multi-select: a filter field over the options rendered as a
@@ -29,11 +30,7 @@
 </script>
 
 <div class="flex flex-col gap-2">
-  <input
-    bind:value={filter}
-    {placeholder}
-    class="h-9 w-full rounded-lg border border-input bg-transparent px-3 text-sm transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30"
-  />
+  <Input bind:value={filter} {placeholder} class="w-full" />
   <div class="flex max-h-44 flex-wrap gap-1.5 overflow-y-auto">
     {#each shown as opt (opt.value)}
       {@const active = selected.includes(opt.value)}

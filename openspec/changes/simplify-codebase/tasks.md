@@ -45,9 +45,9 @@ first (RED). Web tasks verify via `svelte-check` + lint (no unit runner).
 
 ## 8. Frontend: extract `ui/input.svelte` primitive
 
-- [ ] 8.1 Add `web/src/lib/ui/input.svelte` mirroring `button.svelte`/`badge.svelte`: shared class constant merged via `cn`, `...rest` spread, `value = $bindable()` for `bind:value`. Export from `web/src/lib/ui/index.ts`.
-- [ ] 8.2 Replace the three duplicated inputs (`JobsView.svelte`, `CompaniesView.svelte` via `value`+`oninput`; `facets/SearchSelect.svelte` via `bind:value`) with `<Input .../>`, passing the width override via `class`. Keep debounce/URL logic in the call sites. Leave `TokenInput` alone.
-- [ ] 8.3 `npm run check` + lint clean; visual glance at jobs/companies search + facet filter.
+- [x] 8.1 Add `web/src/lib/ui/input.svelte` mirroring `button.svelte`/`badge.svelte`: shared class constant merged via `cn`, `...rest` spread, `value = $bindable()` for `bind:value`. Export from `web/src/lib/ui/index.ts`.
+- [x] 8.2 Replace the three duplicated inputs (`JobsView.svelte`, `CompaniesView.svelte` via `value`+`oninput`; `facets/SearchSelect.svelte` via `bind:value`) with `<Input .../>`, passing the width override via `class`. Keep debounce/URL logic in the call sites. Leave `TokenInput` alone.
+- [x] 8.3 `npm run check` clean; no new lint errors on touched files (CompaniesView:39 pre-existing). Live type-test deferred to final verification.
 
 ## 9. Frontend: `Badge variant="secondary"` for JobRow chips
 
