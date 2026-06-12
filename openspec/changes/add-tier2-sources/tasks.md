@@ -1,42 +1,51 @@
 ## 1. Personio adapter (single-request, XML)
 
-- [ ] 1.1 Add a `GetXML` method to `HTTPClient` (mirror `GetJSON`, stdlib `encoding/xml`) with a test
-- [ ] 1.2 Capture a real `…jobs.personio.com/xml` response (a board with ≥1 `<position>`) as a test fixture
-- [ ] 1.3 Write a failing table-driven `personio_test.go`: maps `<position>` → `Job`, description from `jobDescriptions` decoded + sanitized, empty feed → zero jobs no error
-- [ ] 1.4 Implement `internal/sources/personio.go` (provider `personio`) until tests pass; register in `sources.All`
+- [x] 1.1 Add a `GetXML` method to `HTTPClient` (mirror `GetJSON`, stdlib `encoding/xml`) with a test
+- [x] 1.2 Capture the real `…jobs.personio.com/xml` `<position>` schema (used to shape the test)
+- [x] 1.3 Write a failing `personio_test.go`: maps `<position>` → `Job`, description from `jobDescriptions` sanitized, empty feed → zero jobs no error
+- [x] 1.4 Implement `internal/sources/personio.go` (provider `personio`) until tests pass; register in `sources.All`
 
-## 2. Breezy adapter (single-request, JSON)
+## 2. Breezy adapter — DEFERRED (reclassified)
 
-- [ ] 2.1 Capture a real `…breezy.hr/json` response as a fixture
-- [ ] 2.2 Write a failing `breezy_test.go`: maps posting → `Job`, inline body sanitized, empty list → zero jobs no error
-- [ ] 2.3 Implement `internal/sources/breezy.go` (provider `breezy`) until tests pass; register in `sources.All`
+Live probe found Breezy's `/json` list carries **no description**; the body lives in a
+`JobPosting` **JSON-LD** block on each posting's HTML page — a different transport class
+(raw HTML + ld+json extraction) than this change's clean JSON/XML adapters, shared with
+the deferred gem/jazzhr/recruiterbox. Moved to a future "open-web JSON-LD source" change.
+
+- [ ] 2.1 (deferred) Build Breezy in the JSON-LD source change, not here
 
 ## 3. Pinpoint adapter (single-request, JSON)
 
-- [ ] 3.1 Capture a real `…pinpointhq.com/postings.json` response as a fixture
-- [ ] 3.2 Write a failing `pinpoint_test.go`: maps `data[]` → `Job`, inline body sanitized, empty data → zero jobs no error
-- [ ] 3.3 Implement `internal/sources/pinpoint.go` (provider `pinpoint`) until tests pass; register in `sources.All`
+- [x] 3.1 Capture the real `…pinpointhq.com/postings.json` shape (location/workplace_type/body sections)
+- [x] 3.2 Write a failing `pinpoint_test.go`: maps `data[]` → `Job`, inline body sanitized, remote from `workplace_type`
+- [x] 3.3 Implement `internal/sources/pinpoint.go` (provider `pinpoint`) until tests pass; register in `sources.All`
 
 ## 4. Rippling adapter (list + per-posting detail)
 
-- [ ] 4.1 Capture a real board list (`api.rippling.com/.../board/{board}/jobs`) and one posting detail as fixtures
-- [ ] 4.2 Write a failing `rippling_test.go`: list mapped, per-`uuid` detail fetched for description, description sanitized, detail fan-out is bounded
-- [ ] 4.3 Implement `internal/sources/rippling.go` (provider `rippling`, reuse the smartrecruiters bounded-concurrency pattern) until tests pass; register in `sources.All`
+- [x] 4.1 Capture the real board list and one posting detail (description is `{company,role}`; role only)
+- [x] 4.2 Write a failing `rippling_test.go`: list mapped, per-`uuid` detail for description, company boilerplate excluded, bounded fan-out, failed detail skipped
+- [x] 4.3 Implement `internal/sources/rippling.go` (provider `rippling`) until tests pass; register in `sources.All`
 
 ## 5. BambooHR adapter (list + per-posting detail)
 
-- [ ] 5.1 Capture a real `…/careers/list` and one `…/careers/{id}/detail` as fixtures
-- [ ] 5.2 Write a failing `bamboohr_test.go`: list mapped, per-`id` detail fetched for description, location from `joinNonEmpty(city,state,country)`, bounded fan-out
-- [ ] 5.3 Implement `internal/sources/bamboohr.go` (provider `bamboohr`) until tests pass; register in `sources.All`
+- [x] 5.1 Capture the real `…/careers/list` (carries `isRemote`) and `…/careers/{id}/detail` shapes
+- [x] 5.2 Write a failing `bamboohr_test.go`: list mapped, per-`id` detail for description, location from `joinNonEmpty(city,state,country)`, bounded fan-out, failed detail skipped
+- [x] 5.3 Implement `internal/sources/bamboohr.go` (provider `bamboohr`) until tests pass; register in `sources.All`
 
-## 6. Join.com adapter (discovery-then-build)
+## 6. Shared detail fan-out refactor (emerged under green)
 
-- [ ] 6.1 Capture join.com's postings request for a board (prefer the GraphQL `candidate-api` operation; fall back to `__NEXT_DATA__`); freeze the response as a fixture. If no stable, ToS-clean request exists, drop join.com from this change and note it in the proposal/design
-- [ ] 6.2 Write a failing `joincom_test.go` against the captured fixture: postings mapped, description sanitized, empty → zero jobs no error
-- [ ] 6.3 Implement `internal/sources/joincom.go` (provider `join.com`) until tests pass; register in `sources.All`
+- [x] 6.1 Extract the bounded detail fan-out into a generic `fetchDetails[P]` in `source.go`
+- [x] 6.2 Converge smartrecruiters, rippling, and bamboohr onto it; tests stay green
 
-## 7. Seed boards and verification
+## 7. Join.com adapter — DEFERRED to its own change
 
-- [ ] 7.1 Add a few live-validated boards per new provider to `sources.yml` (each confirmed to return ≥1 posting)
-- [ ] 7.2 `go build ./... && go vet ./... && go test ./...` all green
-- [ ] 7.3 Run `go run ./cmd/ingest` against a dev DB and confirm postings from the new providers are ingested with sanitized descriptions
+Decision: join.com (GraphQL `candidate-api` / `__NEXT_DATA__`, ~23k companies, ToS check)
+ships as a separate change `add-joincom-source`, not here.
+
+- [ ] 7.1 (deferred) Plan and build `add-joincom-source` separately
+
+## 8. Seed boards and verification
+
+- [x] 8.1 Add live-validated boards per new provider to `sources.yml` (3 each; each confirmed ≥1 posting)
+- [x] 8.2 `go build ./... && go vet ./... && go test ./...` all green
+- [x] 8.3 Ran `cmd/ingest` against a throwaway worktree DB (:5433): 496 jobs ingested, 0 failed, descriptions sanitized HTML (no script/onclick/img), external_id namespaced

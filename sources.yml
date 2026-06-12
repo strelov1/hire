@@ -4800,3 +4800,56 @@ sources:
   - company: "Yggdrasil Gaming Ltd"
     provider: smartrecruiters
     board: "YggdrasilSandbox"
+
+
+  # --- Personio (board = slug in <board>.jobs.personio.com); slugs validated live ---
+  - company: "1KOMMA5"
+    provider: personio
+    board: "1komma5grad"
+
+  - company: "1NCE"
+    provider: personio
+    board: "1nce"
+
+  - company: "4screen"
+    provider: personio
+    board: "4screen"
+
+  # --- Pinpoint (board = slug in <board>.pinpointhq.com); slugs validated live ---
+  - company: "Augustine Consulting Inc."
+    provider: pinpoint
+    board: "aciedge"
+
+  - company: "Anne Arundel Workforce Development Corporation (AAWDC)"
+    provider: pinpoint
+    board: "aawdc"
+
+  - company: "Actica Consulting"
+    provider: pinpoint
+    board: "actica"
+
+  # --- Rippling (board = slug in ats.rippling.com/<board>); slugs validated live ---
+  - company: "360 Fire Flood"
+    provider: rippling
+    board: "360-fire-flood"
+
+  - company: "3MS Services LLC"
+    provider: rippling
+    board: "3msservicesllc"
+
+  - company: "11:FS Group Ltd"
+    provider: rippling
+    board: "11fs-group-ltd"
+
+  # --- BambooHR (board = slug in <board>.bamboohr.com); slugs validated live ---
+  - company: "321theagency"
+    provider: bamboohr
+    board: "321theagency"
+
+  - company: "3clife"
+    provider: bamboohr
+    board: "3clife"
+
+  - company: "10web"
+    provider: bamboohr
+    board: "10web"
