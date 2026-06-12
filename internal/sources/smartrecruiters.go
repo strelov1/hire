@@ -29,6 +29,11 @@ func NewSmartRecruiters(c HTTPClient) Source { return smartRecruiters{http: c} }
 
 func (smartRecruiters) Provider() string { return "smartrecruiters" }
 
+// srSection is one HTML section of a posting's job ad (the description lives here).
+type srSection struct {
+	Text string `json:"text"`
+}
+
 // smartRecruitersPosting is one item from the postings list (no description here).
 type smartRecruitersPosting struct {
 	ID           string `json:"id"`
@@ -112,15 +117,9 @@ func (s smartRecruiters) detail(ctx context.Context, e CompanyEntry, p smartRecr
 		PostingURL string `json:"postingUrl"`
 		JobAd      struct {
 			Sections struct {
-				JobDescription struct {
-					Text string `json:"text"`
-				} `json:"jobDescription"`
-				Qualifications struct {
-					Text string `json:"text"`
-				} `json:"qualifications"`
-				AdditionalInformation struct {
-					Text string `json:"text"`
-				} `json:"additionalInformation"`
+				JobDescription        srSection `json:"jobDescription"`
+				Qualifications        srSection `json:"qualifications"`
+				AdditionalInformation srSection `json:"additionalInformation"`
 			} `json:"sections"`
 		} `json:"jobAd"`
 	}
@@ -128,11 +127,9 @@ func (s smartRecruiters) detail(ctx context.Context, e CompanyEntry, p smartRecr
 		return Job{}, false
 	}
 
+	// companyDescription is intentionally excluded — it is boilerplate, not the role.
 	sec := d.JobAd.Sections
-	var body strings.Builder
-	body.WriteString(sec.JobDescription.Text)
-	body.WriteString(sec.Qualifications.Text)
-	body.WriteString(sec.AdditionalInformation.Text)
+	body := sec.JobDescription.Text + sec.Qualifications.Text + sec.AdditionalInformation.Text
 
 	return Job{
 		ExternalID:  p.ID,
@@ -140,7 +137,7 @@ func (s smartRecruiters) detail(ctx context.Context, e CompanyEntry, p smartRecr
 		Title:       strings.TrimSpace(p.Name),
 		Company:     e.Company,
 		Location:    joinNonEmpty(p.Location.City, p.Location.Region, p.Location.Country),
-		Description: sanitizeHTML(body.String()),
+		Description: sanitizeHTML(body),
 		Remote:      p.Location.Remote,
 		PostedAt:    parseRFC3339(p.ReleasedDate),
 	}, true

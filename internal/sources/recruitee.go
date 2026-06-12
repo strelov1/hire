@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"strings"
 )
 
 // recruiteeBaseURL templates the Recruitee public offers API; each board is its own
@@ -44,17 +43,14 @@ func (r recruitee) Fetch(ctx context.Context, e CompanyEntry) ([]Job, error) {
 
 	jobs := make([]Job, 0, len(resp.Offers))
 	for _, o := range resp.Offers {
-		var body strings.Builder
-		body.WriteString(o.Description)
-		body.WriteString(o.Requirements)
-
+		// Recruitee splits the body across separate description and requirements HTML.
 		jobs = append(jobs, Job{
 			ExternalID:  strconv.FormatInt(o.ID, 10),
 			URL:         o.CareersURL,
 			Title:       o.Title,
 			Company:     e.Company,
 			Location:    o.Location,
-			Description: sanitizeHTML(body.String()),
+			Description: sanitizeHTML(o.Description + o.Requirements),
 			Remote:      o.Remote,
 			PostedAt:    parseSpaceTime(o.CreatedAt),
 		})

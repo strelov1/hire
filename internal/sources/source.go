@@ -58,47 +58,30 @@ func isRemote(location string) bool {
 	return strings.Contains(strings.ToLower(location), "remote")
 }
 
-// parseRFC3339 parses a platform timestamp into a posted_at, returning nil on an
-// empty or unparseable value (posted_at is nullable — a missing date is not an error).
-func parseRFC3339(s string) *time.Time {
+// parseLayout parses a platform timestamp with the given layout into a posted_at,
+// returning nil on an empty or unparseable value (posted_at is nullable — a missing or
+// malformed date is not an error).
+func parseLayout(layout, s string) *time.Time {
 	if s == "" {
 		return nil
 	}
-	t, err := time.Parse(time.RFC3339, s)
+	t, err := time.Parse(layout, s)
 	if err != nil {
 		return nil
 	}
 	return &t
 }
 
-// parseDate parses a date-only platform timestamp ("2006-01-02") into a posted_at,
-// returning nil on an empty or unparseable value (posted_at is nullable).
-func parseDate(s string) *time.Time {
-	if s == "" {
-		return nil
-	}
-	t, err := time.Parse("2006-01-02", s)
-	if err != nil {
-		return nil
-	}
-	return &t
-}
+// parseRFC3339 parses an RFC3339 timestamp (the common ATS format).
+func parseRFC3339(s string) *time.Time { return parseLayout(time.RFC3339, s) }
 
-// parseSpaceTime parses a space-separated, zone-named timestamp
-// ("2006-01-02 15:04:05 MST", as Recruitee emits) into a posted_at, returning nil
-// on an empty or unparseable value (posted_at is nullable). Recruitee emits UTC; an
-// unrecognized zone abbreviation would be read as offset 0, which is acceptable for an
-// approximate posted_at.
-func parseSpaceTime(s string) *time.Time {
-	if s == "" {
-		return nil
-	}
-	t, err := time.Parse("2006-01-02 15:04:05 MST", s)
-	if err != nil {
-		return nil
-	}
-	return &t
-}
+// parseDate parses a date-only timestamp ("2006-01-02", as Workable emits).
+func parseDate(s string) *time.Time { return parseLayout("2006-01-02", s) }
+
+// parseSpaceTime parses a space-separated, zone-named timestamp ("2006-01-02 15:04:05
+// MST", as Recruitee emits). Recruitee emits UTC; an unrecognized zone abbreviation
+// would be read as offset 0, acceptable for an approximate posted_at.
+func parseSpaceTime(s string) *time.Time { return parseLayout("2006-01-02 15:04:05 MST", s) }
 
 // joinNonEmpty joins the non-empty parts with ", ", so a location built from
 // separate city/state/country fields skips blanks.
