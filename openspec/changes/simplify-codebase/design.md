@@ -78,6 +78,9 @@ None. Pure refactor; each task is independently revertable. No deploy ordering.
 
 ## Open Questions
 
-- #11 (vocab guard): comment-only, or comment + fixture test? Default to comment +
-  a minimal fixture test for the faceted lists; drop the test if it reads as
-  ceremony once written.
+- #11 (vocab guard): comment-only, or comment + fixture test? **Resolved: comment-only.**
+  A Go fixture test would assert the Go `*Values` slices against a checked-in copy
+  in the test — guarding Go-against-itself, not the actual Go↔web `facets.ts` drift
+  (a Go test can't read the TS list). That is ceremony, not a guard, so it was
+  dropped per this section's own escape hatch. The honest cheap guard is a
+  source-of-truth comment in `facets.ts` plus the existing `humanize()` fallback.

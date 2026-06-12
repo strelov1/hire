@@ -63,9 +63,9 @@ first (RED). Web tasks verify via `svelte-check` + lint (no unit runner).
 
 ## 11. Guard: enum vocab drift (Go ↔ web `facets.ts`)
 
-- [ ] 11.1 RED — add a Go test in `internal/enrich` asserting each faceted closed `*Values` list matches a checked-in expected set (fails on drift). Drop the test only if it reads as ceremony once written.
-- [ ] 11.2 Add a one-line source-of-truth comment in `web/src/lib/facets.ts` pointing at `internal/enrich/enrichment.go`. Do NOT build a codegen pipeline.
-- [ ] 11.3 `go test ./internal/enrich/...` green; `npm run check` clean.
+- [x] 11.1 Go fixture test evaluated and deliberately SKIPPED: a Go test asserting `*Values` against a checked-in copy guards Go-against-itself, not the actual Go↔web `facets.ts` drift (a Go test cannot read the TS list), so it would be ceremony — which design.md's open question explicitly allows dropping. Parsing `facets.ts` from a test is the codegen-adjacent infra the audit rejected.
+- [x] 11.2 Add a SOURCE-OF-TRUTH comment block in `web/src/lib/facets.ts` naming `internal/enrich/enrichment.go`, the sync obligation, and the `humanize()` fallback safety net. No codegen pipeline.
+- [x] 11.3 `npm run check` clean; `facets.ts` lint clean. (No Go change → no new Go test to run.)
 
 ## 12. Final verification
 

@@ -2,8 +2,14 @@
 // query param (matching the backend search API), section label, the control to
 // render, its options (for pills/select), and whether it supports an "exclude"
 // mode. The panel iterates this list; the store keys facet state by `param`.
-// Enum option values mirror the controlled vocabularies the backend enrichment
-// validates (internal/enrich).
+//
+// SOURCE OF TRUTH for the closed-vocabulary option values below (work mode,
+// seniority, category, employment type, domains, relocation, English level,
+// company type/size, salary period): internal/enrich/enrichment.go, which the
+// enrichment worker validates against. When a vocabulary changes there, update
+// the matching list here. Drift is not fatal — enrichment.ts's humanize()
+// renders an unknown value as a readable label rather than blank — but the facet
+// would silently stop offering it as a filter.
 
 export interface FacetOption {
   value: string;
@@ -18,7 +24,7 @@ export interface FacetDef {
   control: FacetControl;
   options?: FacetOption[];
   excludable: boolean;
-  /** Skills-style AND/OR toggle between selected values. */
+  /** Show a per-facet AND/OR toggle (match all vs match any) over selected values. */
   hasAndOr?: boolean;
   placeholder?: string;
 }
