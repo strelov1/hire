@@ -11,7 +11,6 @@ type Claimed struct {
 	OutboxID      int64
 	JobID         int64
 	TargetVersion int
-	Attempts      int
 }
 
 // Store is the persistence the runner needs, expressed in domain terms so the

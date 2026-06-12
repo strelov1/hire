@@ -26,7 +26,7 @@ UPDATE enrichment_outbox o
 SET claimed_at = now()
 FROM claimable c
 WHERE o.id = c.id
-RETURNING o.id, o.job_id, o.target_version, o.attempts
+RETURNING o.id, o.job_id, o.target_version
 `
 
 type ClaimEnrichmentBatchParams struct {
@@ -38,7 +38,6 @@ type ClaimEnrichmentBatchRow struct {
 	ID            int64 `json:"id"`
 	JobID         int64 `json:"job_id"`
 	TargetVersion int32 `json:"target_version"`
-	Attempts      int32 `json:"attempts"`
 }
 
 // Claim a batch of live, unleased entries by stamping claimed_at. SKIP LOCKED lets
@@ -53,12 +52,7 @@ func (q *Queries) ClaimEnrichmentBatch(ctx context.Context, arg ClaimEnrichmentB
 	items := []ClaimEnrichmentBatchRow{}
 	for rows.Next() {
 		var i ClaimEnrichmentBatchRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.JobID,
-			&i.TargetVersion,
-			&i.Attempts,
-		); err != nil {
+		if err := rows.Scan(&i.ID, &i.JobID, &i.TargetVersion); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

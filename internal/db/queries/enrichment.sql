@@ -26,7 +26,7 @@ UPDATE enrichment_outbox o
 SET claimed_at = now()
 FROM claimable c
 WHERE o.id = c.id
-RETURNING o.id, o.job_id, o.target_version, o.attempts;
+RETURNING o.id, o.job_id, o.target_version;
 
 -- name: DeleteEnrichmentEntry :exec
 DELETE FROM enrichment_outbox

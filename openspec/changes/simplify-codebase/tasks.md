@@ -11,9 +11,9 @@ first (RED). Web tasks verify via `svelte-check` + lint (no unit runner).
 
 ## 2. Dead code: remove `enrich` `Claimed.Attempts` field
 
-- [ ] 2.1 Drop `Attempts int` from the `Claimed` struct (`internal/enrich/runner.go`), drop the `Attempts: int(r.Attempts)` mapping (`cmd/enrich/store.go`), and remove `o.attempts` from the `ClaimEnrichmentBatch` RETURNING clause (`internal/db/queries/enrichment.sql`) keeping `id, job_id, target_version`. Do NOT touch `RecordEnrichmentFailure`'s `RETURNING attempts` (it is read).
-- [ ] 2.2 Run `make sqlc` and commit the regenerated `internal/db/enrichment.sql.go`.
-- [ ] 2.3 `go build ./... && go vet ./... && go test ./...` green (incl. `runner_test.go`).
+- [x] 2.1 Drop `Attempts int` from the `Claimed` struct (`internal/enrich/runner.go`), drop the `Attempts: int(r.Attempts)` mapping (`cmd/enrich/store.go`), and remove `o.attempts` from the `ClaimEnrichmentBatch` RETURNING clause (`internal/db/queries/enrichment.sql`) keeping `id, job_id, target_version`. Do NOT touch `RecordEnrichmentFailure`'s `RETURNING attempts` (it is read).
+- [x] 2.2 Run `make sqlc` and commit the regenerated `internal/db/enrichment.sql.go`.
+- [x] 2.3 `go build ./... && go vet ./... && go test ./...` green (incl. `runner_test.go`); enrichment queue integration test green (`-tags=integration`).
 
 ## 3. Dead code: remove unused `pipeline.Runner.Concurrency` knob
 
