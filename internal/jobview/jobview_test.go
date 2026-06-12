@@ -102,6 +102,17 @@ func TestJobJSON_HidesIDExposesSlug(t *testing.T) {
 	}
 }
 
+// The raw remote flag is demoted to an internal enrichment hint and must not
+// appear in the public job object — "remote" is expressed solely through
+// enrichment.work_mode / regions.
+func TestJobJSON_OmitsRawRemoteFlag(t *testing.T) {
+	fields := marshalToFields(t, db.Job{ID: 1, Title: "x", PublicSlug: "x-1", Remote: true})
+
+	if _, present := fields["remote"]; present {
+		t.Error("public job object must not include the raw remote flag")
+	}
+}
+
 // Un-enriched job: enrichment is {} (not null), enriched_at is null,
 // enrichment_version is 0.
 func TestJobJSON_Unenriched(t *testing.T) {

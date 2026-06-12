@@ -82,6 +82,7 @@ func buildSystemPrompt() string {
 		fmt.Fprintf(&b, "- %s: %s\n", field, strings.Join(vals, ", "))
 	}
 	enum("work_mode", WorkModeValues)
+	enum("regions (array)", RegionValues)
 	enum("employment_type", EmploymentTypeValues)
 	enum("relocation", RelocationValues)
 	enum("salary_period", SalaryPeriodValues)
@@ -100,6 +101,11 @@ func buildSystemPrompt() string {
 	b.WriteString("experience_years_min (non-negative int), ")
 	b.WriteString("skills (array of lowercase tokens, e.g. go, postgresql), ")
 	b.WriteString("posting_language (ISO 639-1, e.g. en, uk, ru).\n")
+
+	b.WriteString("\nregions is the remote role's reach (only when work_mode is remote; omit otherwise): ")
+	b.WriteString("use 'global' ONLY when the posting explicitly says the role is open worldwide / ")
+	b.WriteString("anywhere / from any country; otherwise list the region(s) or country code(s) ")
+	b.WriteString("the role is open to, from the allowed values. Omit when unstated (unknown is not global).\n")
 	return b.String()
 }
 
@@ -108,6 +114,8 @@ func userPrompt(job JobInput) string {
 	fmt.Fprintf(&b, "Title: %s\n", job.Title)
 	fmt.Fprintf(&b, "Company: %s\n", job.Company)
 	fmt.Fprintf(&b, "Location: %s\n", job.Location)
+	// Source-provided remote hint (from the ATS API or the location text) — a
+	// prior for the model, not a guarantee of scope.
 	fmt.Fprintf(&b, "Remote flag: %t\n", job.Remote)
 	fmt.Fprintf(&b, "Description:\n%s\n", job.Description)
 	return b.String()

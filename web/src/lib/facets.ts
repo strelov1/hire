@@ -29,6 +29,16 @@ const WORK_MODE: FacetOption[] = [
   { value: 'onsite', label: 'On-site' },
 ];
 
+// A curated, extensible subset of the backend's `regions` reach vocabulary. Its
+// values mix levels by design (global / region / country); the field's full
+// vocabulary holds more than these pills surface.
+const REGION: FacetOption[] = [
+  { value: 'global', label: 'Global' },
+  { value: 'ru', label: 'Russia' },
+  { value: 'eu', label: 'Europe' },
+  { value: 'us', label: 'USA' },
+];
+
 const SENIORITY: FacetOption[] = [
   { value: 'intern', label: 'Intern' },
   { value: 'junior', label: 'Junior' },
@@ -125,6 +135,7 @@ const DOMAINS: FacetOption[] = [
 
 export const FACETS: FacetDef[] = [
   { param: 'work_mode', label: 'Work format', control: 'pills', options: WORK_MODE, excludable: true },
+  { param: 'regions', label: 'Region', control: 'pills', options: REGION, excludable: true },
   { param: 'seniority', label: 'Seniority', control: 'pills', options: SENIORITY, excludable: true },
   { param: 'category', label: 'Specialization', control: 'select', options: CATEGORY, excludable: true, placeholder: 'Search specializations' },
   { param: 'skills', label: 'Skills', control: 'tokens', excludable: true, hasAndOr: true, placeholder: 'Add a skill, press Enter' },

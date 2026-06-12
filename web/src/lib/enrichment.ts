@@ -34,6 +34,23 @@ const WORK_MODE: Record<string, string> = {
   onsite: 'On-site',
 };
 
+// Reach codes (enrichment.regions) → readable labels. Unmapped codes humanize.
+const REGION: Record<string, string> = {
+  global: 'Global',
+  eu: 'Europe',
+  emea: 'EMEA',
+  eea: 'EEA',
+  uk: 'UK',
+  americas: 'Americas',
+  north_america: 'North America',
+  latam: 'LATAM',
+  apac: 'APAC',
+  mena: 'MENA',
+  africa: 'Africa',
+  us: 'USA',
+  ru: 'Russia',
+};
+
 const RELOCATION: Record<string, string> = {
   not_supported: 'Not supported',
   supported: 'Supported',
@@ -135,14 +152,22 @@ export function formatSalary(e: Enrichment): string | null {
 
 /**
  * The work-arrangement label for compact contexts (list cards): the enriched
- * `work_mode` when known, else the legacy `remote` flag. Null when neither marks
- * the job remote. This is the single source of truth that keeps the list card
- * and the detail page from disagreeing when the flag and enrichment differ.
+ * `work_mode`, or null when unenriched. "Remote" is purely an enrichment concept
+ * now — there is no raw flag to fall back to.
  */
-export function workArrangement(job: { remote: boolean; enrichment?: Enrichment }): string | null {
+export function workArrangement(job: { enrichment?: Enrichment }): string | null {
   const mode = job.enrichment?.work_mode;
-  if (mode) return label(WORK_MODE, mode);
-  return job.remote ? 'Remote' : null;
+  return mode ? label(WORK_MODE, mode) : null;
+}
+
+/**
+ * A remote role's geographic reach as a concise label from `regions` — e.g.
+ * `Global`, `Europe`, `USA`. Null when the job is not a known remote role or its
+ * reach is unknown (empty `regions` is unknown, not global).
+ */
+export function remoteReach(e: Enrichment | undefined): string | null {
+  if (!e || e.work_mode !== 'remote' || !e.regions?.length) return null;
+  return e.regions.map((r) => label(REGION, r)).join(', ');
 }
 
 /**
@@ -150,14 +175,14 @@ export function workArrangement(job: { remote: boolean; enrichment?: Enrichment 
  * country, employment type, and grade — only those that are stated, in that
  * order. Compact by design (the full facet set lives on the detail page).
  */
-export function cardTags(job: { remote: boolean; enrichment?: Enrichment }): string[] {
+export function cardTags(job: { enrichment?: Enrichment }): string[] {
   const e = job.enrichment;
   const tags: string[] = [];
 
   const arrangement = workArrangement(job);
   if (arrangement) tags.push(arrangement);
-  const country = e?.countries?.[0];
-  if (country) tags.push(country.toUpperCase());
+  const reach = remoteReach(e);
+  if (reach) tags.push(reach);
   if (e?.employment_type) tags.push(label(EMPLOYMENT, e.employment_type));
   if (e?.seniority) tags.push(label(SENIORITY, e.seniority));
 
@@ -177,6 +202,7 @@ export function summaryFacets(e: Enrichment): Facet[] {
   };
 
   push('Work format', e.work_mode && label(WORK_MODE, e.work_mode));
+  push('Reach', remoteReach(e));
   push('Work type', e.employment_type && label(EMPLOYMENT, e.employment_type));
   push('Grade', e.seniority && label(SENIORITY, e.seniority));
   push(

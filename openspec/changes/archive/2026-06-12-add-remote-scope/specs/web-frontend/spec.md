@@ -1,26 +1,4 @@
-# web-frontend Specification
-
-## Purpose
-TBD - created by archiving change add-web-frontend. Update Purpose after archive.
-## Requirements
-### Requirement: API permits cross-origin browser access
-
-The HTTP API SHALL respond with CORS headers that allow a browser running on a
-different origin to call the read endpoints, so the frontend can fetch data
-directly without a proxy.
-
-#### Scenario: Browser preflight is allowed
-
-- **WHEN** a browser sends an `OPTIONS` preflight to `/api/v1/jobs` with an
-  `Origin` header
-- **THEN** the response includes `Access-Control-Allow-Origin` matching the
-  configured frontend origin and the request succeeds
-
-#### Scenario: Cross-origin GET returns data
-
-- **WHEN** the frontend issues a cross-origin `GET /api/v1/jobs`
-- **THEN** the response carries `Access-Control-Allow-Origin` and the JSON body
-  is readable by the browser
+## ADDED Requirements
 
 ### Requirement: Region (remote reach) filter facet
 
@@ -42,6 +20,8 @@ vocabulary.
 
 - **WHEN** a user excludes the "USA" pill
 - **THEN** the search request excludes `regions=us` and such jobs are omitted
+
+## MODIFIED Requirements
 
 ### Requirement: Jobs list with pagination
 
@@ -92,62 +72,3 @@ convey reach from `enrichment.regions` rather than a raw `remote` flag.
 
 - **WHEN** a job has `work_mode=remote` and `regions=[eu]`
 - **THEN** the detail view conveys a Europe reach rather than only "Remote"
-
-### Requirement: Companies list
-
-The frontend SHALL present companies from `GET /api/v1/companies`, showing each
-company's name and its job count, with each row linking to the company detail.
-
-#### Scenario: Companies are listed
-
-- **WHEN** a user opens `/companies`
-- **THEN** a page of companies is fetched and rendered with job counts
-
-### Requirement: Company detail
-
-The frontend SHALL show a single company from `GET /api/v1/companies/:slug`
-together with its jobs, reusing the same job row presentation as the jobs list.
-
-#### Scenario: Company detail is shown
-
-- **WHEN** a user navigates to `/companies/:slug`
-- **THEN** the company info and its jobs are fetched and displayed
-
-### Requirement: Light and dark theme
-
-The frontend SHALL support light, dark, and system themes, applying dark mode via
-a `.dark` class on the document root, persisting the choice in localStorage, and
-tracking `prefers-color-scheme` when in system mode.
-
-#### Scenario: User toggles theme
-
-- **WHEN** a user activates the theme toggle
-- **THEN** the interface switches between light and dark and the choice persists
-  across reloads
-
-#### Scenario: System mode follows OS preference
-
-- **WHEN** the theme is set to system
-- **THEN** the effective theme matches the OS `prefers-color-scheme` and updates
-  if the OS preference changes
-
-### Requirement: Async load states
-
-Every data-driven view SHALL render distinct loading, empty, and error states so
-the user is never shown broken or blank content during or after a fetch.
-
-#### Scenario: Loading state
-
-- **WHEN** a view's request is in flight
-- **THEN** a loading indicator is shown until data or an error arrives
-
-#### Scenario: Empty state
-
-- **WHEN** a successful response contains no items
-- **THEN** an empty-state message is shown instead of an empty list
-
-#### Scenario: Error state
-
-- **WHEN** a request fails (network or non-2xx)
-- **THEN** an error message is shown
-

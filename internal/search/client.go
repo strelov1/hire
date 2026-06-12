@@ -159,9 +159,9 @@ func indexSettings() *meilisearch.Settings {
 		SearchableAttributes: []string{"title", "company", "description", "location"},
 		// Enrichment facets are nested, so they are filtered via dot paths.
 		FilterableAttributes: []string{
-			"source", "remote", "company_slug",
+			"source", "company_slug",
 			"enrichment.work_mode", "enrichment.employment_type", "enrichment.seniority",
-			"enrichment.category", "enrichment.domains", "enrichment.countries",
+			"enrichment.category", "enrichment.domains", "enrichment.regions", "enrichment.countries",
 			"enrichment.company_type", "enrichment.company_size", "enrichment.visa_sponsorship",
 			"enrichment.salary_currency", "enrichment.salary_period", "enrichment.skills",
 			"enrichment.salary_min", "enrichment.salary_max", "enrichment.experience_years_min",

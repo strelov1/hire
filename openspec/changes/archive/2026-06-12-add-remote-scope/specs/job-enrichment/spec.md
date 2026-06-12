@@ -1,32 +1,4 @@
-# job-enrichment
-
-## Purpose
-
-Capture AI-derived, additive metadata for each job — seniority, work mode,
-skills, salary, location descriptors, and company descriptors — in a typed,
-versioned enrichment payload, so jobs can be filtered and presented richly
-without altering the raw source fields ingested by parsers.
-
-## Requirements
-
-### Requirement: Jobs store an additive enrichment payload
-
-The system SHALL store a structured enrichment payload per job in a
-`jobs.enrichment` JSONB column that defaults to an empty object. Enrichment SHALL
-be additive: writing it SHALL NOT modify any raw source field (`title`,
-`company`, `location`, `remote`, `description`, `posted_at`, `company_slug`).
-
-#### Scenario: New job defaults to an empty payload
-
-- **WHEN** a job is upserted without an enrichment payload
-- **THEN** its `enrichment` reads back as an empty object (`{}`) and its raw
-  fields are stored unchanged
-
-#### Scenario: Enrichment is stored without altering raw fields
-
-- **WHEN** a job is upserted with an enrichment payload
-- **THEN** the payload is persisted under `enrichment` and the job's raw fields
-  remain exactly as supplied
+## MODIFIED Requirements
 
 ### Requirement: Enrichment fields follow a typed contract with controlled vocabularies
 
@@ -83,36 +55,6 @@ against the vocabulary.
   `regions`
 - **THEN** the two payloads are distinguishable: the first denotes open-anywhere,
   the second denotes unknown reach
-
-### Requirement: Enrichment provenance is tracked per job
-
-The system SHALL track enrichment provenance with two job columns: `enriched_at`
-(nullable timestamp) and `enrichment_version` (integer, default 0). A job that
-has never been enriched SHALL have `enriched_at` null and `enrichment_version` 0,
-so un-enriched rows are identifiable for later processing.
-
-#### Scenario: Un-enriched job is identifiable
-
-- **WHEN** a job has never been enriched
-- **THEN** its `enriched_at` is null and its `enrichment_version` is 0
-
-#### Scenario: Provenance reflects a completed enrichment
-
-- **WHEN** a job is written with an enrichment payload produced at schema
-  version N
-- **THEN** its `enriched_at` is set and its `enrichment_version` equals N
-
-### Requirement: Company descriptors are captured as job enrichment fields
-
-The system SHALL capture company descriptors (`company_type`, `company_size`) as
-fields of the job's enrichment payload, not as columns on the `companies` table.
-Writing them SHALL NOT alter any `companies` row.
-
-#### Scenario: Company descriptors live in the job payload
-
-- **WHEN** a job is upserted with enrichment including `company_type=product`
-- **THEN** the value is stored in that job's `enrichment` and no `companies` row
-  is created or modified by it
 
 ### Requirement: The jobs read API exposes enrichment and provenance
 

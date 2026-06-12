@@ -1,8 +1,5 @@
-# job-search Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change add-job-search. Update Purpose after archive.
-## Requirements
 ### Requirement: Searchable jobs index
 
 The system SHALL maintain a Meilisearch index of jobs with one document per job,
@@ -45,27 +42,6 @@ indexed and findable by its text fields.
 
 - **WHEN** a job with `work_mode=remote` and `regions=[eu]` is indexed
 - **THEN** it is returned by a filter on `enrichment.regions = "eu"`
-
-### Requirement: Hybrid keyword and semantic search
-
-The `jobs` index SHALL be configured with an embedder whose model runs inside
-Meilisearch (source `huggingFace`), requiring no external API key. Search
-requests SHALL accept a semantic ratio that blends keyword and semantic ranking.
-A ratio of 0 SHALL behave as pure keyword search; higher ratios SHALL weight
-semantic similarity more. Keyword search SHALL remain fully functional
-independent of the embedder.
-
-#### Scenario: Pure keyword search
-
-- **WHEN** a client searches with semantic ratio 0 for an exact term present in a
-  job's text
-- **THEN** the matching job is returned by keyword ranking
-
-#### Scenario: Semantic blend returns related results
-
-- **WHEN** a client searches with a non-zero semantic ratio for a query that is
-  semantically related but not a literal substring of a job's text
-- **THEN** semantically similar jobs are eligible to rank into the results
 
 ### Requirement: Public job search endpoint
 
@@ -112,25 +88,3 @@ other public job reads.
 - **WHEN** a job is returned by `GET /api/v1/jobs/search`
 - **THEN** the result carries the job's `public_slug` and omits the internal
   numeric `id`
-
-### Requirement: Batch reindex keeps the index in sync
-
-The system SHALL provide a batch command that reads jobs from Postgres and
-writes their documents to the Meilisearch `jobs` index in batches, suitable for
-scheduled execution. The command SHALL ensure the index and its settings
-(attributes, ranking rules, embedder) exist before indexing. Reindexing SHALL be
-idempotent: running it again with unchanged data SHALL leave the index
-representing the same set of jobs.
-
-#### Scenario: Reindex populates the index
-
-- **WHEN** the reindex command runs against a database containing jobs
-- **THEN** the `jobs` index exists with the configured settings and contains one
-  document per job
-
-#### Scenario: Reindex is idempotent
-
-- **WHEN** the reindex command runs twice with no change to the underlying jobs
-- **THEN** the index represents the same set of job documents after the second
-  run as after the first
-

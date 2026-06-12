@@ -28,6 +28,7 @@ const defaultSemanticRatio = 0.5
 var searchStringFacets = map[string]string{
 	"source":           "source",
 	"company_slug":     "company_slug",
+	"regions":          "enrichment.regions",
 	"work_mode":        "enrichment.work_mode",
 	"employment_type":  "enrichment.employment_type",
 	"seniority":        "enrichment.seniority",
@@ -135,9 +136,6 @@ func buildSearchFilter(c *fiber.Ctx) any {
 		}
 	}
 
-	if raw := c.Query("remote"); raw != "" {
-		groups = append(groups, []string{search.EqBool("remote", raw == "true")})
-	}
 	if raw := c.Query("visa_sponsorship"); raw != "" {
 		groups = append(groups, []string{search.EqBool("enrichment.visa_sponsorship", raw == "true")})
 	}
