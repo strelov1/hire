@@ -10,7 +10,7 @@
 
 ## 2. API: save/unsave endpoints
 
-- [ ] 2.1 `POST /api/v1/jobs/:slug/save` and `DELETE /api/v1/jobs/:slug/save`
+- [x] 2.1 `POST /api/v1/jobs/:slug/save` and `DELETE /api/v1/jobs/:slug/save`
       behind `RequireAuth`, slug-resolved, returning `{"data": interaction}`;
       `saved_at` added to `interactionResponse`; handler tests (auth, unknown
       slug 404, idempotency, unsave-without-row)

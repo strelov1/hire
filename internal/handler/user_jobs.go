@@ -1,7 +1,10 @@
 package handler
 
 import (
+	"errors"
+
 	"github.com/gofiber/fiber/v2"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/strelov1/freehire/internal/auth"
@@ -9,16 +12,17 @@ import (
 )
 
 // interactionResponse is the public shape of a user's interaction with a job. It
-// omits user_id (the caller is the user) and carries applied_at as null until the
-// job is applied to.
+// omits user_id (the caller is the user) and carries saved_at/applied_at as null
+// until the job is saved/applied to.
 type interactionResponse struct {
 	JobID     int64              `json:"job_id"`
 	ViewedAt  pgtype.Timestamptz `json:"viewed_at"`
+	SavedAt   pgtype.Timestamptz `json:"saved_at"`
 	AppliedAt pgtype.Timestamptz `json:"applied_at"`
 }
 
 func toInteraction(row db.UserJob) interactionResponse {
-	return interactionResponse{JobID: row.JobID, ViewedAt: row.ViewedAt, AppliedAt: row.AppliedAt}
+	return interactionResponse{JobID: row.JobID, ViewedAt: row.ViewedAt, SavedAt: row.SavedAt, AppliedAt: row.AppliedAt}
 }
 
 // RecordView records that the authenticated user viewed a job and returns the
@@ -46,6 +50,43 @@ func (h *Handler) MarkApplied(c *fiber.Ctx) error {
 	}
 
 	row, err := h.queries.MarkJobApplied(c.Context(), db.MarkJobAppliedParams{UserID: userID, JobID: jobID})
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(fiber.Map{"data": toInteraction(row)})
+}
+
+// SaveJob saves (bookmarks) a job for the authenticated user and returns the
+// updated interaction.
+func (h *Handler) SaveJob(c *fiber.Ctx) error {
+	userID, jobID, err := h.interactionParams(c)
+	if err != nil {
+		return err
+	}
+
+	row, err := h.queries.SaveJob(c.Context(), db.SaveJobParams{UserID: userID, JobID: jobID})
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(fiber.Map{"data": toInteraction(row)})
+}
+
+// UnsaveJob clears a job's saved mark for the authenticated user. The interaction
+// row (view/apply history) survives; if no row exists at all, unsaving is a no-op
+// that answers with the zero interaction state — DELETE is idempotent, so "already
+// not saved" is success, not an error.
+func (h *Handler) UnsaveJob(c *fiber.Ctx) error {
+	userID, jobID, err := h.interactionParams(c)
+	if err != nil {
+		return err
+	}
+
+	row, err := h.queries.UnsaveJob(c.Context(), db.UnsaveJobParams{UserID: userID, JobID: jobID})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return c.JSON(fiber.Map{"data": interactionResponse{JobID: jobID}})
+	}
 	if err != nil {
 		return err
 	}
