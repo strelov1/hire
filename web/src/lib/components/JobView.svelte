@@ -7,6 +7,7 @@
   import { Badge, Button } from '$lib/ui';
   import { formatDate } from '$lib/utils';
   import States from './States.svelte';
+  import CompanyLogo from './CompanyLogo.svelte';
 
   let { slug }: { slug: string } = $props();
 
@@ -82,21 +83,24 @@
   <article class="flex flex-col gap-6">
     <header class="flex flex-col gap-4">
       <div class="flex items-start justify-between gap-4">
-        <div class="flex flex-col gap-1">
-          <p class="text-sm text-muted-foreground">
-            {#if job.company_slug}
-              <a
-                href={`/companies/${job.company_slug}`}
-                class="hover:text-foreground hover:underline"
-              >
+        <div class="flex items-start gap-3">
+          <CompanyLogo name={job.company} size="size-10" />
+          <div class="flex flex-col gap-1">
+            <p class="text-sm text-muted-foreground">
+              {#if job.company_slug}
+                <a
+                  href={`/companies/${job.company_slug}`}
+                  class="hover:text-foreground hover:underline"
+                >
+                  {job.company || 'Unknown company'}
+                </a>
+              {:else}
                 {job.company || 'Unknown company'}
-              </a>
-            {:else}
-              {job.company || 'Unknown company'}
-            {/if}
-            {#if job.location}· {job.location}{/if}
-          </p>
-          <h1 class="text-2xl font-semibold tracking-tight">{job.title}</h1>
+              {/if}
+              {#if job.location}· {job.location}{/if}
+            </p>
+            <h1 class="text-2xl font-semibold tracking-tight">{job.title}</h1>
+          </div>
         </div>
 
         <div class="flex shrink-0 flex-col items-end gap-2">
@@ -186,8 +190,14 @@
 
   .job-description :global(li) {
     display: list-item;
-    list-style: disc inside;
+    list-style: disc outside;
     margin: 0.25rem 0;
+  }
+
+  /* ATS boards (e.g. Greenhouse) wrap each <li> in a block <p>; collapse its
+     margins so the bullet sits beside the text instead of on its own line. */
+  .job-description :global(li) > :global(p) {
+    margin: 0;
   }
 
   .job-description :global(a) {

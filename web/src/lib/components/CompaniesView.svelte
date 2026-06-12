@@ -5,6 +5,7 @@
   import { Badge } from '$lib/ui';
   import States from './States.svelte';
   import LoadMore from './LoadMore.svelte';
+  import CompanyLogo from './CompanyLogo.svelte';
 
   const companies = new Paginator(listCompanies);
   onMount(() => companies.start());
@@ -23,7 +24,10 @@
         href={`/companies/${company.slug}`}
         class="flex items-center justify-between rounded-lg border border-border px-4 py-3 transition-colors hover:bg-accent"
       >
-        <span class="truncate font-medium">{company.name}</span>
+        <span class="flex min-w-0 items-center gap-2.5">
+          <CompanyLogo name={company.name} size="size-6" />
+          <span class="truncate font-medium">{company.name}</span>
+        </span>
         <Badge variant="outline">{company.job_count} jobs</Badge>
       </a>
     {/each}
