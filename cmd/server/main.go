@@ -12,6 +12,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 
+	"github.com/strelov1/freehire/internal/auth/oauth"
 	"github.com/strelov1/freehire/internal/config"
 	"github.com/strelov1/freehire/internal/database"
 	"github.com/strelov1/freehire/internal/handler"
@@ -49,7 +50,12 @@ func main() {
 		searchClient = search.NewClient(cfg.MeiliURL, cfg.MeiliKey)
 	}
 
-	handler.Register(app, pool, cfg.FrontendOrigin, cfg.JWTSecret, cfg.JWTTTL, cfg.CookieSecure, searchClient)
+	// OAuth sign-in is optional: only providers with full credentials are
+	// enabled; the registry may be empty and the server still serves password
+	// auth. Redirect URLs derive from the same-origin frontend origin.
+	oauthProviders := oauth.NewRegistry(cfg.FrontendOrigin, cfg.OAuth)
+
+	handler.Register(app, pool, cfg.FrontendOrigin, cfg.JWTSecret, cfg.JWTTTL, cfg.CookieSecure, oauthProviders, searchClient)
 
 	// Run the server in a goroutine so main can wait for a shutdown signal.
 	// Fiber's Listen returns nil on graceful shutdown, so any error is fatal.

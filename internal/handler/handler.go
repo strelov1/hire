@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/strelov1/freehire/internal/auth"
+	oauthpkg "github.com/strelov1/freehire/internal/auth/oauth"
 	"github.com/strelov1/freehire/internal/db"
 	"github.com/strelov1/freehire/internal/search"
 )
@@ -24,6 +25,11 @@ type Handler struct {
 	queries      *db.Queries
 	issuer       *auth.Issuer
 	cookieSecure bool
+	// oauth maps enabled OAuth provider names to their implementations; empty
+	// when no provider is configured (the routes then 404 / list empty).
+	oauth map[string]oauthpkg.Provider
+	// frontendOrigin is where OAuth callbacks send the browser back to.
+	frontendOrigin string
 	// search is the job-search backend. Nil when Meilisearch is unconfigured —
 	// the search endpoint then reports 503 and the rest of the API is unaffected.
 	search searcher
@@ -60,12 +66,14 @@ func listResponse(c *fiber.Ctx, data any, total int64, limit, offset int) error 
 // under one origin (a dev Vite proxy mirrors the production reverse proxy), so
 // the cookie rides along with no CORS. The CORS allowlist is not credentialed —
 // it only permits non-credentialed cross-origin reads of the public endpoints.
-func Register(app *fiber.App, pool *pgxpool.Pool, frontendOrigin, jwtSecret string, jwtTTL time.Duration, cookieSecure bool, searchClient *search.Client) {
+func Register(app *fiber.App, pool *pgxpool.Pool, frontendOrigin, jwtSecret string, jwtTTL time.Duration, cookieSecure bool, oauthProviders map[string]oauthpkg.Provider, searchClient *search.Client) {
 	h := &Handler{
-		pool:         pool,
-		queries:      db.New(pool),
-		issuer:       auth.NewIssuer(jwtSecret, jwtTTL),
-		cookieSecure: cookieSecure,
+		pool:           pool,
+		queries:        db.New(pool),
+		issuer:         auth.NewIssuer(jwtSecret, jwtTTL),
+		cookieSecure:   cookieSecure,
+		oauth:          oauthProviders,
+		frontendOrigin: frontendOrigin,
 	}
 	// Assign only when configured: a nil *search.Client wrapped in the searcher
 	// interface would be a non-nil interface and defeat the nil check.
@@ -99,4 +107,10 @@ func Register(app *fiber.App, pool *pgxpool.Pool, frontendOrigin, jwtSecret stri
 	authGroup.Post("/login", h.Login)
 	authGroup.Post("/logout", h.Logout)
 	authGroup.Get("/me", auth.RequireAuth(h.issuer), h.Me)
+
+	// OAuth sign-in: provider listing plus the authorization-code start and
+	// callback redirects. All public; the callback sets the session cookie.
+	authGroup.Get("/oauth/providers", h.ListOAuthProviders)
+	authGroup.Get("/oauth/:provider/start", h.OAuthStart)
+	authGroup.Get("/oauth/:provider/callback", h.OAuthCallback)
 }
