@@ -1,6 +1,7 @@
 package sources
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"encoding/xml"
@@ -11,11 +12,13 @@ import (
 )
 
 // HTTPClient is the narrow transport an adapter needs: fetch a URL and decode its
-// JSON (or XML) body into v. Adapters depend on this interface so tests inject a fake
-// and never touch the network; the real client is Client below.
+// JSON (or XML) body into v. PostJSON sends a JSON request body (Workday's listing
+// API is POST-only). Adapters depend on this interface so tests inject a fake and
+// never touch the network; the real client is Client below.
 type HTTPClient interface {
 	GetJSON(ctx context.Context, url string, v any) error
 	GetXML(ctx context.Context, url string, v any) error
+	PostJSON(ctx context.Context, url string, body, v any) error
 }
 
 // Client is the real HTTPClient: a timeout-bounded GET with a project User-Agent and
@@ -40,7 +43,7 @@ func NewClient() *Client {
 
 // GetJSON fetches url and decodes its JSON body into v.
 func (c *Client) GetJSON(ctx context.Context, url string, v any) error {
-	return c.get(ctx, url, "application/json", func(r io.Reader) error {
+	return c.do(ctx, http.MethodGet, url, nil, "application/json", func(r io.Reader) error {
 		return json.NewDecoder(r).Decode(v)
 	})
 }
@@ -48,15 +51,28 @@ func (c *Client) GetJSON(ctx context.Context, url string, v any) error {
 // GetXML fetches url and decodes its XML body into v (used by adapters whose platform
 // publishes an XML feed, e.g. Personio).
 func (c *Client) GetXML(ctx context.Context, url string, v any) error {
-	return c.get(ctx, url, "application/xml", func(r io.Reader) error {
+	return c.do(ctx, http.MethodGet, url, nil, "application/xml", func(r io.Reader) error {
 		return xml.NewDecoder(r).Decode(v)
 	})
 }
 
-// get fetches url with the given Accept header and applies decode to a successful
-// response body, retrying transient failures (5xx / network) up to maxRetries times
-// with a fixed backoff. A 4xx is not retried — it will not recover on its own.
-func (c *Client) get(ctx context.Context, url, accept string, decode func(io.Reader) error) error {
+// PostJSON marshals body to JSON, POSTs it to url, and decodes the JSON response into
+// v (used by adapters whose listing API is POST-only, e.g. Workday).
+func (c *Client) PostJSON(ctx context.Context, url string, body, v any) error {
+	payload, err := json.Marshal(body)
+	if err != nil {
+		return fmt.Errorf("sources: marshal request %s: %w", url, err)
+	}
+	return c.do(ctx, http.MethodPost, url, payload, "application/json", func(r io.Reader) error {
+		return json.NewDecoder(r).Decode(v)
+	})
+}
+
+// do issues an HTTP request (optionally with a JSON body) and applies decode to a
+// successful response body, retrying transient failures (5xx / network) up to
+// maxRetries times with a fixed backoff. A 4xx is not retried — it will not recover
+// on its own. A non-nil body is re-sent on each attempt.
+func (c *Client) do(ctx context.Context, method, url string, body []byte, accept string, decode func(io.Reader) error) error {
 	var lastErr error
 	for attempt := 0; attempt <= c.maxRetries; attempt++ {
 		if attempt > 0 && c.retryDelay > 0 {
@@ -67,7 +83,11 @@ func (c *Client) get(ctx context.Context, url, accept string, decode func(io.Rea
 			}
 		}
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+		var reqBody io.Reader
+		if body != nil {
+			reqBody = bytes.NewReader(body)
+		}
+		req, err := http.NewRequestWithContext(ctx, method, url, reqBody)
 		if err != nil {
 			return fmt.Errorf("sources: build request %s: %w", url, err)
 		}
@@ -75,6 +95,9 @@ func (c *Client) get(ctx context.Context, url, accept string, decode func(io.Rea
 			req.Header.Set("User-Agent", c.userAgent)
 		}
 		req.Header.Set("Accept", accept)
+		if body != nil {
+			req.Header.Set("Content-Type", "application/json")
+		}
 
 		resp, err := c.httpClient.Do(req)
 		if err != nil {

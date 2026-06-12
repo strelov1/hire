@@ -30,3 +30,11 @@ func (f *fakeHTTP) GetXML(_ context.Context, url string, v any) error {
 	}
 	return xml.Unmarshal([]byte(f.body), v)
 }
+
+func (f *fakeHTTP) PostJSON(_ context.Context, url string, _, v any) error {
+	f.gotURL = url
+	if f.err != nil {
+		return f.err
+	}
+	return json.Unmarshal([]byte(f.body), v)
+}
