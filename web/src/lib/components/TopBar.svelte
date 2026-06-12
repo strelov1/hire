@@ -13,14 +13,15 @@
     { href: '/companies', label: 'Companies', match: ['companies', 'company'] },
   ];
 
-  // The auth dialog lives at the layout level; the top bar buttons open it in
-  // the requested mode. Open state is separate from mode so `mode` stays a
-  // non-null value the dialog can two-way bind for its sign-in/register toggle.
+  // The auth dialog lives at the layout level; it always opens in sign-in
+  // mode, and its own footer toggle switches to register. Open state is
+  // separate from mode so `mode` stays a non-null value the dialog can
+  // two-way bind for that toggle.
   let dialogOpen = $state(false);
   let dialogMode = $state<'login' | 'register'>('login');
 
-  function open(mode: 'login' | 'register') {
-    dialogMode = mode;
+  function openDialog() {
+    dialogMode = 'login';
     dialogOpen = true;
   }
 </script>
@@ -48,8 +49,7 @@
         <span class="text-sm text-muted-foreground">{authStore.user?.email}</span>
         <Button variant="ghost" size="sm" onclick={() => void authStore.logout()}>Log out</Button>
       {:else}
-        <Button variant="ghost" size="sm" onclick={() => open('login')}>Sign in</Button>
-        <Button variant="primary" size="sm" onclick={() => open('register')}>Register</Button>
+        <Button variant="primary" size="sm" onclick={openDialog}>Sign in</Button>
       {/if}
       <ThemeToggle />
     </div>
