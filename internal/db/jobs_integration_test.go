@@ -155,3 +155,35 @@ func TestEnqueueJobEnrichmentGating(t *testing.T) {
 		}
 	})
 }
+
+func TestListJobsOrdersByNewestAdded(t *testing.T) {
+	pool := startPostgres(t)
+	q := New(pool)
+	ctx := context.Background()
+	truncate(t, pool)
+
+	// "older" is ingested first but carries a NEWER platform posted_at than
+	// "newer" — under posted_at ordering it would wrongly stay on top.
+	older := ingestParams("order-a", "Older addition")
+	older.PostedAt = pgtype.Timestamptz{Time: time.Now(), Valid: true}
+	if _, err := q.UpsertJob(ctx, older); err != nil {
+		t.Fatal(err)
+	}
+	newer := ingestParams("order-b", "Newer addition")
+	newer.PostedAt = pgtype.Timestamptz{Time: time.Now().Add(-30 * 24 * time.Hour), Valid: true}
+	if _, err := q.UpsertJob(ctx, newer); err != nil {
+		t.Fatal(err)
+	}
+
+	jobs, err := q.ListJobs(ctx, ListJobsParams{Limit: 10, Offset: 0})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(jobs) != 2 {
+		t.Fatalf("jobs = %d, want 2", len(jobs))
+	}
+	if jobs[0].ExternalID != "order-b" || jobs[1].ExternalID != "order-a" {
+		t.Errorf("order = [%s, %s], want newest-added first [order-b, order-a]",
+			jobs[0].ExternalID, jobs[1].ExternalID)
+	}
+}

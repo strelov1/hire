@@ -175,8 +175,8 @@ func indexSettings() *meilisearch.Settings {
 			"enrichment.salary_min", "enrichment.salary_max", "enrichment.experience_years_min",
 			"enrichment.relocation", "enrichment.english_level", "enrichment.posting_language",
 		},
-		// posted_at is an RFC3339 UTC string and sorts chronologically as text.
-		SortableAttributes: []string{"posted_at", "enrichment.salary_min", "enrichment.salary_max"},
+		// posted_at / created_at are RFC3339 UTC strings and sort chronologically as text.
+		SortableAttributes: []string{"posted_at", "created_at", "enrichment.salary_min", "enrichment.salary_max"},
 		RankingRules:       []string{"words", "sort", "typo", "proximity", "attribute", "exactness"},
 		// Typo tolerance is left at Meilisearch's defaults (on, with sensible min
 		// word sizes). We deliberately do not send a TypoTolerance struct: the SDK

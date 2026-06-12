@@ -1,8 +1,11 @@
 -- name: ListJobs :many
+-- Newest-added first: created_at is when the job entered the catalogue (stable
+-- across re-ingests), so fresh ingests surface on top regardless of how old the
+-- platform's posted_at is. id breaks ties within one ingest batch.
 SELECT *
 FROM jobs
 WHERE closed_at IS NULL
-ORDER BY posted_at DESC NULLS LAST, id DESC
+ORDER BY created_at DESC, id DESC
 LIMIT $1 OFFSET $2;
 
 -- name: ListJobsByIDAfter :many
@@ -43,7 +46,7 @@ WHERE closed_at IS NULL;
 SELECT *
 FROM jobs
 WHERE company_slug = $1 AND closed_at IS NULL
-ORDER BY posted_at DESC NULLS LAST, id DESC
+ORDER BY created_at DESC, id DESC
 LIMIT $2 OFFSET $3;
 
 -- name: UpsertJob :one

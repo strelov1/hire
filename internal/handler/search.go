@@ -48,6 +48,7 @@ var searchStringFacets = map[string]string{
 // searchSortable is the allowlist of sort params mapped to their index attribute;
 // anything else is ignored so a bad param cannot make Meilisearch reject the query.
 var searchSortable = map[string]string{
+	"created_at": "created_at",
 	"posted_at":  "posted_at",
 	"salary_min": "enrichment.salary_min",
 	"salary_max": "enrichment.salary_max",
@@ -88,10 +89,15 @@ func (h *Handler) SearchJobs(c *fiber.Ctx) error {
 }
 
 // searchSort builds the Meilisearch sort directive from ?sort=<field>&order=<dir>.
-// Returns nil (relevance order) when no valid sortable field is given.
+// Without a valid sort param, a no-text browse defaults to newest-added first
+// (created_at desc) — relevance is meaningless for an empty query — while a text
+// query keeps relevance order (nil).
 func searchSort(c *fiber.Ctx) []string {
 	attr, ok := searchSortable[c.Query("sort")]
 	if !ok {
+		if c.Query("q") == "" {
+			return []string{"created_at:desc"}
+		}
 		return nil
 	}
 	order := c.Query("order", "desc")

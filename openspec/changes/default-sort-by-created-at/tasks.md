@@ -1,11 +1,11 @@
 ## 1. Search default ordering
 
-- [ ] 1.1 Failing handler test: empty `q` + no `sort` → search called with `created_at:desc`; non-empty `q` + no `sort` → nil sort (relevance); explicit `?sort=created_at&order=asc` honored
-- [ ] 1.2 Implement: `created_at` in `searchSortable`, default in `searchSort` (gated on empty q), `created_at` in index SortableAttributes; green
+- [x] 1.1 Failing handler test: empty `q` + no `sort` → search called with `created_at:desc`; non-empty `q` + no `sort` → nil sort (relevance); explicit `?sort=created_at&order=asc` honored
+- [x] 1.2 Implement: `created_at` in `searchSortable`, default in `searchSort` (gated on empty q), `created_at` in index SortableAttributes; green
 
 ## 2. DB list ordering
 
-- [ ] 2.1 ListJobs orders by `created_at DESC, id DESC`; regenerate sqlc; adjust/extend integration test if one asserts order
+- [x] 2.1 ListJobs orders by `created_at DESC, id DESC`; regenerate sqlc; adjust/extend integration test if one asserts order
 
 ## 3. Verify
 

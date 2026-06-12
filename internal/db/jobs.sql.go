@@ -158,7 +158,7 @@ const listJobs = `-- name: ListJobs :many
 SELECT id, source, external_id, url, title, company, location, remote, description, posted_at, created_at, updated_at, company_slug, enrichment, enriched_at, enrichment_version, public_slug, last_seen_at, closed_at
 FROM jobs
 WHERE closed_at IS NULL
-ORDER BY posted_at DESC NULLS LAST, id DESC
+ORDER BY created_at DESC, id DESC
 LIMIT $1 OFFSET $2
 `
 
@@ -167,6 +167,9 @@ type ListJobsParams struct {
 	Offset int32 `json:"offset"`
 }
 
+// Newest-added first: created_at is when the job entered the catalogue (stable
+// across re-ingests), so fresh ingests surface on top regardless of how old the
+// platform's posted_at is. id breaks ties within one ingest batch.
 func (q *Queries) ListJobs(ctx context.Context, arg ListJobsParams) ([]Job, error) {
 	rows, err := q.db.Query(ctx, listJobs, arg.Limit, arg.Offset)
 	if err != nil {
@@ -211,7 +214,7 @@ const listJobsByCompany = `-- name: ListJobsByCompany :many
 SELECT id, source, external_id, url, title, company, location, remote, description, posted_at, created_at, updated_at, company_slug, enrichment, enriched_at, enrichment_version, public_slug, last_seen_at, closed_at
 FROM jobs
 WHERE company_slug = $1 AND closed_at IS NULL
-ORDER BY posted_at DESC NULLS LAST, id DESC
+ORDER BY created_at DESC, id DESC
 LIMIT $2 OFFSET $3
 `
 

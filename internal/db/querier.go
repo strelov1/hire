@@ -67,6 +67,9 @@ type Querier interface {
 	// serves both the full list and a name search (`search` is a case-insensitive
 	// substring of the name).
 	ListCompanies(ctx context.Context, arg ListCompaniesParams) ([]ListCompaniesRow, error)
+	// Newest-added first: created_at is when the job entered the catalogue (stable
+	// across re-ingests), so fresh ingests surface on top regardless of how old the
+	// platform's posted_at is. id breaks ties within one ingest batch.
 	ListJobs(ctx context.Context, arg ListJobsParams) ([]Job, error)
 	ListJobsByCompany(ctx context.Context, arg ListJobsByCompanyParams) ([]Job, error)
 	// Keyset scan for the reindex command: pages by the immutable primary key, so
