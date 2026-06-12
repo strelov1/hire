@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"bytes"
 	"fmt"
 	"strconv"
 	"strings"
@@ -23,7 +24,7 @@ type Post struct {
 // preview is disabled or the markup drifted, and the caller must fail the channel
 // loudly rather than treat it as empty.
 func ParsePreview(channel string, page []byte) ([]Post, error) {
-	doc, err := html.Parse(strings.NewReader(string(page)))
+	doc, err := html.Parse(bytes.NewReader(page))
 	if err != nil {
 		return nil, fmt.Errorf("telegram: parse preview html for %s: %w", channel, err)
 	}

@@ -30,7 +30,6 @@ type fakeExtractStore struct {
 	pending   []PendingPost
 	completed []completion
 	failures  []string
-	failErr   error
 }
 
 func (s *fakeExtractStore) Claim(_ context.Context, _ int32, batch int32) ([]PendingPost, error) {
@@ -50,7 +49,7 @@ func (s *fakeExtractStore) Complete(_ context.Context, post PendingPost, jobs []
 
 func (s *fakeExtractStore) Fail(_ context.Context, post PendingPost, msg string) error {
 	s.failures = append(s.failures, post.Channel+": "+msg)
-	return s.failErr
+	return nil
 }
 
 func pendingPost() PendingPost {
