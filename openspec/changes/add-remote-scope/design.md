@@ -18,61 +18,56 @@ needed to add fields. MVP stage: no persistent data, architecture stays fluid.
 ## Goals / Non-Goals
 
 **Goals:**
-- Make `global`, `regional`, `national` reach first-class and distinguishable
-  from `unknown`.
-- Back a single curated "Remote type" SPA facet that mixes levels (global /
-  region / country).
-- Collapse the public notion of "remote" to one source of truth
-  (`work_mode` + `remote_scope`), removing the parallel raw flag.
+- Make a remote role's reach (`global`, regions, key countries) explicit and
+  distinguishable from `unknown`.
+- Back one curated reach facet ("Region") with one field, filtered the same way
+  every other enrichment facet is.
+- Collapse the public notion of "remote" to one source of truth — `work_mode`
+  (the format) + `regions` (the reach) — removing the parallel raw flag.
 
 **Non-Goals:**
 - Changing the `jobs.remote` column, the source/pipeline `Remote` field, or the
   LLM hint path (all kept).
 - A DB migration or `enrich.Version` bump (no persistent data at MVP).
-- Reworking the granular `countries` facet (stays) or UI localization (labels
-  stay English).
-- Hard cross-field consistency enforcement in validation.
+- Reworking the granular `countries` eligibility facet (stays) or UI localization.
 
 ## Decisions
 
-### 1. Normalized contract (`remote_scope` + `regions`) over a flat enum
+### 1. One reach field: `regions` (flat, mixed-level vocabulary)
 
-Add to `enrich.Enrichment`: `RemoteScope string` (vocab `global`/`regional`/
-`national`) and `Regions []string` (vocab EU, EMEA, EEA, UK, AMERICAS,
-NORTH_AMERICA, LATAM, APAC, MENA, AFRICA). `countries` stays for national reach.
+Add a single `Regions []string` to `enrich.Enrichment`. Its vocabulary mixes
+levels deliberately, because that is how reach is actually expressed and filtered:
 
-| `remote_scope` | `regions` | `countries` | Meaning |
-|----------------|-----------|-------------|---------|
-| `global`   | empty       | empty        | open anywhere |
-| `regional` | non-empty   | usually empty| open within a region |
-| `national` | empty       | non-empty    | open in specific countries |
-| `""`       | —           | —            | unknown / not enriched |
+- `global` — open anywhere (an explicit value, never inferred)
+- macro-regions — `eu`, `emea`, `eea`, `uk`, `americas`, `north_america`,
+  `latam`, `apac`, `mena`, `africa`
+- select countries as reach areas — `us`, `ru` (extensible)
 
-**Why an explicit `remote_scope` and not derivation:** `global` cannot be
-inferred from "no countries" — that is exactly the unknown case. The discriminator
-must be stored, set to `global` only on an explicit signal.
+Empty `regions` = **unknown**; `global` present = open-anywhere. That single
+explicit value is what makes global ≠ unknown — no discriminator field is needed.
+`regions` is meaningful only when `work_mode = remote`. "remote" itself is just
+the `work_mode` format.
 
-*Alternative — single flat `remote_type[]` enum* (global + regions + ISO
-countries in one field): fewer fields and a 1:1 facet map, but mixes levels in
-one place, complicates validation (region codes vs ISO codes), and partly
-duplicates `countries`. Rejected in favor of a clean normalized contract.
+**Why one field, not a `remote_scope` + `regions` + derived `remote_type` triple:**
+the normalized version stored the reach across three fields and then flattened it
+back into one derived field for the actual facet — a "decompose then recompose"
+round-trip whose only payoff (global ≠ unknown) is achieved more simply by making
+`global` an explicit vocabulary value. One field is the thing we store *and*
+filter on.
 
-### 2. Derived, index-only `remote_type` for the curated facet
+*Trade-off — `us`/`ru` live in both `regions` (as reach) and `countries` (as ISO
+eligibility):* accepted. They are distinct facets with distinct purposes (curated
+reach quick-filter vs full-ISO eligibility), and the duplication is small and
+explicit.
 
-The facet panel binds one pill group to one query param, but the mockup's "Remote
-type" mixes levels. So the backend exposes a single derived multi-valued field
-rather than making the frontend juggle three params.
+### 2. Filter `regions` directly (no derived field)
 
-`search.JobDocument` gains a sibling `RemoteType []string` (NOT inside the
-`enrichment` object, keeping the contract clean), computed in `search.FromJob`:
-`work_mode != remote` → none; `global` → `["global"]`; `regional` → lowercased
-regions; `national` → lowercased countries; else none. Registered filterable
-(top-level `remote_type`). It lives only in the index — the regular
-`/api/v1/jobs` list/detail responses never carry it, and the SPA reads canonical
-`remote_scope`/`regions`/`countries` for display.
-
-Curated facet values are lowercased codes that match the derived field
-(`global`, `eu`, `us`, `ru`), extensible without backend change.
+`regions` is nested under enrichment, so the search layer filters it via the dot
+path `enrichment.regions` — exactly like `countries`, `skills`, `domains`. Add
+`enrichment.regions` to the index filterable attributes and map a `regions`
+search param to it. The curated SPA facet (Global / Russia / Europe / USA → codes
+`global`/`ru`/`eu`/`us`) is a frontend curation over that one param; the field's
+vocabulary can hold more than the facet surfaces.
 
 ### 3. Demote `jobs.remote` to an internal enrichment hint
 
@@ -87,41 +82,28 @@ Curated facet values are lowercased codes that match the derived field
 
 The column, the source/pipeline/provider `Remote` field, and the prompt line stay
 as the channel that persists the source's remote signal across the async
-ingest→enrich boundary. After removal, public "remote" = `work_mode` (+
-`remote_scope`) only.
-
-### 4. Soft cross-field validation
-
-`Validate` enforces vocabulary membership for `remote_scope` and `regions`
-(out-of-vocab → retry-once → dead-letter, matching existing enum handling) but
-does **not** reject cross-field inconsistency (e.g. `regional` with empty
-`regions`). Vocabulary violations are objectively wrong; a soft miss is still a
-usable payload, and hard-rejecting it would inflate the dead-letter queue.
-Consistency is guided by the prompt.
+ingest→enrich boundary. After removal, public "remote" = `work_mode` (+ `regions`
+for reach) only.
 
 ## Risks / Trade-offs
 
 - **Losing the explicit remote boolean as a public/filter signal** → mitigated:
   it is kept as an enrichment input; public filtering moves to `work_mode`, which
   the SPA already exposes.
-- **Soft validation lets `regional`-without-`regions` through** → mitigated by
-  prompt guidance; acceptable because the payload is still usable and the
-  alternative inflates dead-letters. Seam: add a non-fatal normalize pass if soft
-  misses prove common.
-- **Unenriched jobs show no remote reach** → acceptable and consistent: every
-  other enrichment field already behaves this way; the facet simply won't match
-  them, same as seniority/category filters.
-- **`remote_type` echoed in search responses but unused by the SPA** → harmless;
-  display uses the canonical fields, and the field is `omitempty`.
+- **`us`/`ru` duplicated between `regions` and `countries`** → accepted (see
+  Decision 1); the two back different facets.
+- **Unenriched jobs show no reach** → acceptable and consistent: every other
+  enrichment facet behaves this way; the facet simply won't match them, same as
+  seniority/category filters.
 
 ## Migration Plan
 
 No DB migration and no `enrich.Version` bump. Deploy code; the next ingest +
-enrich run populates `remote_scope`/`regions` from the updated prompt. Recreate
-the dev volume (`docker compose down -v && make up`) if a DB holds stale
-enrichments. Rollback = revert the code; the unchanged column and JSONB tolerate
-absent fields.
+enrich run populates `regions` from the updated prompt. Recreate the dev volume
+(`docker compose down -v && make up`) if a DB holds stale enrichments. Rollback =
+revert the code; the unchanged column and JSONB tolerate absent fields.
 
 ## Open Questions
 
-None — design approved during brainstorming.
+None — design simplified and approved mid-implementation (collapse to a single
+`regions` field).

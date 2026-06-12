@@ -56,7 +56,7 @@ func TestSearchJobs_PassesParamsAndShapesResponse(t *testing.T) {
 	}}
 	app := searchApp(fake)
 
-	status, body := doGet(t, app, "/jobs/search?q=golang&limit=10&offset=20&seniority=senior&remote=true&semantic_ratio=0.3")
+	status, body := doGet(t, app, "/jobs/search?q=golang&limit=10&offset=20&seniority=senior&regions=eu&semantic_ratio=0.3")
 	if status != fiber.StatusOK {
 		t.Fatalf("status = %d, want 200", status)
 	}
@@ -75,7 +75,7 @@ func TestSearchJobs_PassesParamsAndShapesResponse(t *testing.T) {
 	if !ok {
 		t.Fatalf("Filter = %#v, want [][]string", fake.got.Filter)
 	}
-	if !filterHas(groups, `enrichment.seniority = "senior"`) || !filterHas(groups, "remote = true") {
+	if !filterHas(groups, `enrichment.seniority = "senior"`) || !filterHas(groups, `enrichment.regions = "eu"`) {
 		t.Errorf("Filter missing facets: %#v", groups)
 	}
 

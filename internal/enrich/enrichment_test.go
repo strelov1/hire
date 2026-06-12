@@ -18,6 +18,7 @@ func TestRoundTripFidelity(t *testing.T) {
 		EmploymentType:     "full_time",
 		Relocation:         "supported",
 		VisaSponsorship:    ptr(true),
+		Regions:            []string{"eu"},
 		Countries:          []string{"US", "DE"},
 		Cities:             []string{"Berlin"},
 		TimezoneNote:       "UTC±2 overlap",
@@ -145,5 +146,48 @@ func TestValidateRejectsMultiEnumElement(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "domains") {
 		t.Errorf("error must identify the offending field, got: %v", err)
+	}
+}
+
+func TestValidateAcceptsRegions(t *testing.T) {
+	valid := []Enrichment{
+		{WorkMode: "remote", Regions: []string{"global"}},
+		{WorkMode: "remote", Regions: []string{"eu", "emea"}},
+		{WorkMode: "remote", Regions: []string{"us", "ru"}},
+	}
+	for i, e := range valid {
+		if err := e.Validate(); err != nil {
+			t.Errorf("case %d: expected valid, got error: %v", i, err)
+		}
+	}
+}
+
+func TestValidateRejectsRegionElement(t *testing.T) {
+	err := Enrichment{Regions: []string{"eu", "europe"}}.Validate()
+	if err == nil {
+		t.Fatal("expected error for invalid region element")
+	}
+	if !strings.Contains(err.Error(), "regions") {
+		t.Errorf("error must identify the offending field, got: %v", err)
+	}
+}
+
+// Global reach must be distinguishable from unknown reach: an explicit "global"
+// region serializes the key, an unknown (empty regions) payload omits it.
+func TestGlobalReachDistinctFromUnknown(t *testing.T) {
+	global, err := json.Marshal(Enrichment{WorkMode: "remote", Regions: []string{"global"}})
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if !strings.Contains(string(global), "regions") {
+		t.Errorf("explicit global must serialize regions, got: %s", global)
+	}
+
+	unknown, err := json.Marshal(Enrichment{WorkMode: "remote"})
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if strings.Contains(string(unknown), "regions") {
+		t.Errorf("unknown reach must omit regions, got: %s", unknown)
 	}
 }

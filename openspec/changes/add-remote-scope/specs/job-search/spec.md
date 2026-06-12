@@ -11,19 +11,15 @@ sortable fields, and the display fields returned to clients.
 The index SHALL declare:
 - **searchable attributes**: title, company, description, location.
 - **filterable attributes**: source, company_slug, work_mode, employment_type,
-  seniority, category, domains, countries, company_type, company_size,
+  seniority, category, domains, regions, countries, company_type, company_size,
   visa_sponsorship, salary_currency, salary_period, skills, salary_min,
-  salary_max, experience_years_min, and the derived `remote_type`. The raw
-  `remote` flag SHALL NOT be a filterable attribute (work_mode subsumes it).
+  salary_max, experience_years_min. The raw `remote` flag SHALL NOT be a
+  filterable attribute (work_mode subsumes it).
 - **sortable attributes**: posted_at, salary_min, salary_max.
 
-The document SHALL carry a derived, multi-valued `remote_type` field computed
-from the enrichment and gated on `work_mode = remote`: `remote_scope = global`
-yields `["global"]`; `regional` yields the lowercased `regions`; `national`
-yields the lowercased `countries`; an unknown scope or a non-remote work mode
-yields no values. `remote_type` SHALL exist only on the search document (it is a
-facet denormalization) and SHALL NOT be added to the enrichment contract or the
-non-search read API.
+Remote reach is filtered through the enrichment's `regions` field directly (the
+dot path `enrichment.regions`), the same way other enrichment facets are
+filtered; there SHALL be no separate derived reach field on the document.
 
 Facets derived from a job's `enrichment` JSONB SHALL be absent (or empty) on the
 document when the job is not yet enriched; an unenriched job SHALL still be
@@ -42,30 +38,22 @@ indexed and findable by its text fields.
 - **THEN** the document is present and matchable by its title/company/description
   text, with its enrichment-derived facets absent or empty
 
-#### Scenario: Remote type is derived for a remote job
+#### Scenario: Reach is filterable via the regions facet
 
-- **WHEN** a job with `work_mode=remote` and `remote_scope=national`,
-  `countries=[US]` is indexed
-- **THEN** its document's `remote_type` includes `us`
-
-#### Scenario: Global reach is derived distinctly from unknown
-
-- **WHEN** a job with `work_mode=remote` and `remote_scope=global` is indexed,
-  and another remote job has no `remote_scope`
-- **THEN** the first document's `remote_type` is `["global"]` and the second
-  document's `remote_type` is absent/empty
+- **WHEN** a job with `work_mode=remote` and `regions=[eu]` is indexed
+- **THEN** it is returned by a filter on `enrichment.regions = "eu"`
 
 ### Requirement: Public job search endpoint
 
 The system SHALL expose `GET /api/v1/jobs/search` as a public (unauthenticated)
 endpoint. It SHALL accept a free-text query `q`, facet filters matching the
 index's filterable attributes, an optional sort, an optional semantic ratio, and
-`limit`/`offset` pagination. Facet filters SHALL include `remote_type` (matching
-the derived field) and SHALL NOT include the removed raw `remote` filter. The
-response SHALL use the standard list envelope `{"data": [...], "meta": {...}}`,
-where `data` is the matched job documents and `meta` carries at least the
-estimated total hit count and the applied `limit`/`offset`. The existing
-`GET /api/v1/jobs` list endpoint SHALL be unchanged.
+`limit`/`offset` pagination. Facet filters SHALL include `regions` (the reach
+facet) and SHALL NOT include the removed raw `remote` filter. The response SHALL
+use the standard list envelope `{"data": [...], "meta": {...}}`, where `data` is
+the matched job documents and `meta` carries at least the estimated total hit
+count and the applied `limit`/`offset`. The existing `GET /api/v1/jobs` list
+endpoint SHALL be unchanged.
 
 Each result SHALL identify its job by `public_slug` and SHALL NOT include the
 internal numeric `id`, consistent with the public-identity contract used by the
@@ -77,12 +65,12 @@ other public job reads.
 - **THEN** the response is `{"data": [...], "meta": {...}}` with jobs matching
   "golang" in `data` and the estimated total and pagination in `meta`
 
-#### Scenario: Faceted filtering by remote type
+#### Scenario: Faceted filtering by region
 
 - **WHEN** a client requests
-  `GET /api/v1/jobs/search?q=engineer&seniority=senior&remote_type=eu`
-- **THEN** only jobs whose facets satisfy seniority=senior AND whose
-  `remote_type` includes `eu` are returned
+  `GET /api/v1/jobs/search?q=engineer&seniority=senior&regions=eu`
+- **THEN** only jobs whose facets satisfy seniority=senior AND whose `regions`
+  include `eu` are returned
 
 #### Scenario: Empty query browses with filters
 

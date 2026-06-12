@@ -156,7 +156,6 @@
     </header>
 
     <div class="flex flex-wrap items-center gap-2 border-t border-border pt-4">
-      {#if job.remote && !e.work_mode}<Badge variant="secondary">Remote</Badge>{/if}
       <Badge variant="outline">{job.source}</Badge>
       {#if posted}<span class="text-xs text-muted-foreground">Posted {posted}</span>{/if}
     </div>

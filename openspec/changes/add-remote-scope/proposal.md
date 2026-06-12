@@ -11,31 +11,31 @@ forcing flag-vs-enrichment reconciliation.
 
 ## What Changes
 
-- Add an explicit **remote-scope** dimension to the enrichment contract:
-  `remote_scope` (`global` | `regional` | `national`; empty = unknown) and
-  `regions` (controlled vocabulary: EU, EMEA, EEA, UK, AMERICAS, NORTH_AMERICA,
-  LATAM, APAC, MENA, AFRICA). `remote_scope` is the explicit discriminator that
-  makes **global ≠ unknown** — it cannot be derived from the presence/absence of
-  countries. Both fields are meaningful only when `work_mode = remote`.
-- Validate the new enum fields against their vocabularies (reject out-of-vocab →
-  dead-letter, as today). Cross-field consistency (e.g. `regional` ⇒ `regions`
-  non-empty) is guided by the prompt, **not** hard-enforced, to avoid inflating
-  the dead-letter queue.
-- Extend the LLM extraction prompt to populate `remote_scope`/`regions`
-  (`global` only on an explicit "worldwide/anywhere").
-- Expose a derived, index-only **`remote_type`** multi-valued field on the search
-  document (computed from `remote_scope`/`regions`/`countries`, gated on
-  `work_mode=remote`) so a single curated facet can mix levels. Register it
-  filterable; wire a `remote_type` search-filter param.
-- SPA: add a curated **"Remote type"** pills facet (Global / Russia / Europe /
-  USA, excludable) under "Work format", and display a remote job's reach
-  explicitly (Global / region / countries) instead of showing nothing for global.
+- Capture a remote role's **reach in a single `regions` field** on the enrichment
+  contract — an enum array over one controlled vocabulary that mixes levels:
+  `global` (open anywhere) + macro-regions (`eu`, `emea`, `eea`, `uk`,
+  `americas`, `north_america`, `latam`, `apac`, `mena`, `africa`) + select
+  countries treated as reach areas (`us`, `ru`, extensible). There is **no
+  separate scope discriminator**: empty `regions` = unknown, and `global` is an
+  explicit value (never inferred), so **global ≠ unknown**. `regions` is
+  meaningful only when `work_mode = remote`. "remote" itself stays purely the
+  `work_mode` format — nothing else is hung on it.
+- Validate each `regions` element against the vocabulary (reject out-of-vocab →
+  dead-letter, as today).
+- Extend the LLM extraction prompt to populate `regions` (`global` only on an
+  explicit "worldwide/anywhere"), only when `work_mode = remote`.
+- Register `enrichment.regions` as a filterable search attribute and wire a
+  `regions` search-filter param — filtered directly via its dot path, like every
+  other enrichment facet. **No derived field.**
+- SPA: add a curated **"Region"** pills facet (Global / Russia / Europe / USA,
+  excludable) under "Work format" bound to `regions`, and display a remote job's
+  reach from `regions` instead of showing nothing for global.
 - **BREAKING (internal, pre-launch):** demote `jobs.remote` from a public field
   to an internal enrichment hint. Remove it from the public job wire
   (`jobview.Job.remote`), from the search filter (`?remote=true`) and filterable
   attributes, and from the SPA fallback. The **column stays**, populated by every
   adapter and fed to the LLM as the source's explicit remote signal. Public
-  "remote" is henceforth solely `work_mode` (+ `remote_scope`).
+  "remote" is henceforth solely `work_mode` (+ `regions` for reach).
 - No `enrich.Version` bump and no DB migration: at MVP there is no persistent
   data, so fresh ingest + enrich fills the new fields; recreate the dev volume if
   needed.
@@ -47,30 +47,31 @@ forcing flag-vs-enrichment reconciliation.
      capabilities rather than introducing a new one. -->
 
 ### Modified Capabilities
-- `job-enrichment`: the typed enrichment contract gains the `remote_scope` enum
-  and `regions` enum-array (with vocabularies and validation); the public jobs
-  read API drops the now-redundant raw `remote` field (subsumed by `work_mode`).
-- `job-search`: the index filterable attributes drop `remote` and add the derived
-  `remote_type`; the search endpoint replaces the `remote` filter with
-  `remote_type`.
-- `web-frontend`: list and detail views express a job's remote status (and
-  global/regional/national reach) from `work_mode`/`remote_scope` rather than the
-  raw flag; the filter UI gains a curated "Remote type" facet.
+- `job-enrichment`: the typed enrichment contract gains a single `regions`
+  enum-array reach field (vocabulary incl. `global`, macro-regions, and select
+  countries; validation); the public jobs read API drops the now-redundant raw
+  `remote` field (subsumed by `work_mode`).
+- `job-search`: the index filterable attributes drop `remote` and add
+  `enrichment.regions`; the search endpoint replaces the `remote` filter with a
+  `regions` facet filtered via its dot path.
+- `web-frontend`: list and detail views express a job's remote reach from
+  `enrichment.regions` rather than the raw flag; the filter UI gains a curated
+  "Region" facet.
 
 ## Impact
 
-- **Code (enrichment):** `internal/enrich/enrichment.go` (fields, vocabularies,
-  `Validate`), `internal/enrich/langchain.go` (prompt). No new dependency.
-- **Code (search):** `internal/search/document.go` (derived `remote_type`),
-  `internal/search/client.go` (filterable attrs), `internal/handler/search.go`
-  (param mapping; remove `remote`).
-- **Code (wire):** `internal/jobview/jobview.go` (add scope/regions via embedded
-  Enrichment; remove `remote`); regenerate nothing (sqlc unaffected — column
-  stays).
+- **Code (enrichment):** `internal/enrich/enrichment.go` (the `regions` field +
+  vocabulary + `Validate`), `internal/enrich/langchain.go` (prompt). No new
+  dependency.
+- **Code (search):** `internal/search/client.go` (filterable attrs: −`remote`,
+  +`enrichment.regions`), `internal/handler/search.go` (param mapping: −`remote`,
+  +`regions`). No derived document field.
+- **Code (wire):** `internal/jobview/jobview.go` (`regions` rides the embedded
+  Enrichment; remove `remote`); sqlc unaffected — column stays.
 - **Code (frontend):** `web/src/lib/types.ts`, `web/src/lib/facets.ts`,
   `web/src/lib/enrichment.ts`, `JobView.svelte`/`JobRow.svelte`.
 - **Kept untouched:** `jobs.remote` column, `sources/*` + `pipeline` `Remote`
   field, `enrich.Provider` input, `cmd/ingest`/`cmd/enrich` — the remote hint
   path. No migration, no `enrich.Version` change.
-- **Tests:** `Enrichment.Validate` cases; `remote_type` derivation; search
-  integration + jobview literals lose `remote`; frontend display.
+- **Tests:** `Enrichment.Validate` regions cases; search regions filter; jobview
+  omits `remote`; frontend display.

@@ -30,7 +30,11 @@ type Enrichment struct {
 	Relocation      string `json:"relocation,omitempty"`       // enum: RelocationValues
 	VisaSponsorship *bool  `json:"visa_sponsorship,omitempty"` // pointer: false is meaningful
 
-	// Location / eligibility.
+	// Location / eligibility. Regions is a remote role's geographic reach — a flat,
+	// mixed-level vocabulary (global / macro-region / select country). It is
+	// meaningful only when WorkMode is "remote". Empty means *unknown*; "global"
+	// (open anywhere) is an explicit value, never inferred, so global ≠ unknown.
+	Regions      []string `json:"regions,omitempty"`       // enum[]: RegionValues
 	Countries    []string `json:"countries,omitempty"`     // enum[]: ISO 3166-1 alpha-2
 	Cities       []string `json:"cities,omitempty"`        // free text (not faceted)
 	TimezoneNote string   `json:"timezone_note,omitempty"` // free text (not faceted)
@@ -64,7 +68,13 @@ type Enrichment struct {
 // (countries, salary_currency, posting_language) and the open skills field have
 // no bundled closed vocabulary here and are not enum-validated in this phase.
 var (
-	WorkModeValues       = []string{"remote", "hybrid", "onsite"}
+	WorkModeValues = []string{"remote", "hybrid", "onsite"}
+	// RegionValues is the remote-reach vocabulary: global, macro-regions, and a few
+	// countries treated as reach areas (extend as the curated facet grows).
+	RegionValues = []string{
+		"global", "eu", "emea", "eea", "uk", "americas",
+		"north_america", "latam", "apac", "mena", "africa", "us", "ru",
+	}
 	EmploymentTypeValues = []string{"full_time", "part_time", "contract", "internship"}
 	RelocationValues     = []string{"not_supported", "supported", "required"}
 	SalaryPeriodValues   = []string{"year", "month", "day", "hour"}
@@ -115,11 +125,20 @@ func (e Enrichment) Validate() error {
 		}
 	}
 
-	// Multi-value enum fields. Inline while domains is the only one; promote to
-	// a table (like scalars above) if a second multi-value enum appears.
-	for _, v := range e.Domains {
-		if !slices.Contains(DomainValues, v) {
-			return fmt.Errorf("enrich: invalid domains %q", v)
+	// Multi-value enum fields, in declaration order.
+	multi := []struct {
+		field  string
+		values []string
+		vocab  []string
+	}{
+		{"regions", e.Regions, RegionValues},
+		{"domains", e.Domains, DomainValues},
+	}
+	for _, m := range multi {
+		for _, v := range m.values {
+			if !slices.Contains(m.vocab, v) {
+				return fmt.Errorf("enrich: invalid %s %q", m.field, v)
+			}
 		}
 	}
 

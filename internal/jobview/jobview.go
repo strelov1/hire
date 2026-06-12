@@ -31,7 +31,6 @@ type Job struct {
 	Company           string            `json:"company"`
 	CompanySlug       string            `json:"company_slug"`
 	Location          string            `json:"location"`
-	Remote            bool              `json:"remote"`
 	Description       string            `json:"description"`
 	PostedAt          *string           `json:"posted_at"`
 	CreatedAt         *string           `json:"created_at"`
@@ -61,7 +60,6 @@ func FromRow(j db.Job) (Job, error) {
 		Company:           j.Company,
 		CompanySlug:       j.CompanySlug,
 		Location:          j.Location,
-		Remote:            j.Remote,
 		Description:       j.Description,
 		PostedAt:          rfc3339(j.PostedAt),
 		CreatedAt:         rfc3339(j.CreatedAt),

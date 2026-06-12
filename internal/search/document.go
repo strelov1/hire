@@ -20,7 +20,8 @@ type JobDocument struct {
 
 // FromJob maps a database job row to its index document. An empty or absent
 // enrichment payload yields the zero Enrichment (the job is still fully
-// searchable by its text).
+// searchable by its text). Remote reach rides the embedded enrichment as
+// `enrichment.regions` and is filtered via that dot path.
 func FromJob(j db.Job) (JobDocument, error) {
 	view, err := jobview.FromRow(j)
 	if err != nil {

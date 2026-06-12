@@ -12,7 +12,6 @@ export interface Job {
   company: string;
   company_slug: string;
   location: string;
-  remote: boolean;
   description: string;
   posted_at: string | null;
   created_at: string | null;
@@ -35,7 +34,10 @@ export interface Enrichment {
   relocation?: string;
   visa_sponsorship?: boolean;
 
-  // Location / eligibility.
+  // Location / eligibility. regions is a remote role's reach (meaningful only
+  // when work_mode is remote): 'global' + macro-regions + select countries.
+  // Empty = unknown; 'global' is explicit, distinct from unknown.
+  regions?: string[];
   countries?: string[];
   cities?: string[];
   timezone_note?: string;
