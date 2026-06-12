@@ -87,4 +87,11 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
+  /* Mobile Safari zooms toward any focused input whose text is < 16px, yanking
+     the viewport. 16px on small screens disables that zoom; the denser 14px
+     returns at sm+. Centralized here so every input is covered and no call site
+     has to remember the rule. */
+  input {
+    @apply text-base sm:text-sm;
+  }
 }

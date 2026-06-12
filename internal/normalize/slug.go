@@ -5,17 +5,23 @@ package normalize
 import (
 	"strings"
 	"unicode"
+
+	"github.com/mozillazg/go-unidecode"
 )
 
-// Slug turns a company name into its natural key: lowercased, with each run of
-// non-alphanumeric characters collapsed to a single hyphen and leading/trailing
-// hyphens trimmed. Unicode letters and digits are preserved, so non-Latin names
-// (e.g. "Яндекс") keep their script. An empty or punctuation-only name yields an
-// empty slug, which the write path treats as "no company".
+// Slug turns a name into its natural key, usable verbatim in a URL path:
+// transliterated to ASCII, lowercased, with each run of non-alphanumeric
+// characters collapsed to a single hyphen and leading/trailing hyphens trimmed.
+// Non-Latin names are romanized (e.g. "Яндекс" → "iandeks", "小红书" →
+// "xiao-hong-shu"), so the resulting slug is always ASCII — public_slug and
+// company_slug are URL path segments, and a Cyrillic/CJK slug breaks routing.
+// An empty or untransliterable name yields an empty slug, which the write path
+// treats as "no company".
 //
 // It deliberately does not strip legal suffixes (LLC, Inc, ООО); that is a noted
 // future refinement.
 func Slug(name string) string {
+	name = unidecode.Unidecode(name)
 	var b strings.Builder
 	prevHyphen := false
 	for _, r := range name {

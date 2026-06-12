@@ -5,16 +5,23 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/tmc/langchaingo/llms"
 	"github.com/tmc/langchaingo/llms/openai"
 )
 
+// defaultEnrichTimeout bounds a single LLM call. Without it a stalled gateway hangs
+// the worker indefinitely (a run-once worker holding its cron flock open forever,
+// stalling the whole queue). The lease/retry machinery then reclaims the job.
+const defaultEnrichTimeout = 90 * time.Second
+
 // LangChainProvider implements Provider over any OpenAI-compatible endpoint via
 // langchaingo. The endpoint, credential, and model are injected at construction;
 // the model is asked for a JSON object matching the Enrichment contract.
 type LangChainProvider struct {
-	llm llms.Model
+	llm     llms.Model
+	timeout time.Duration
 }
 
 // NewLangChainProvider builds a provider against an OpenAI-compatible endpoint.
@@ -30,12 +37,19 @@ func NewLangChainProvider(baseURL, apiKey, model string) (*LangChainProvider, er
 	if err != nil {
 		return nil, fmt.Errorf("enrich: build llm client: %w", err)
 	}
-	return &LangChainProvider{llm: llm}, nil
+	return &LangChainProvider{llm: llm, timeout: defaultEnrichTimeout}, nil
 }
 
 // Enrich asks the model for a structured Enrichment for the job and parses the JSON
 // response. It does not validate the result — the caller validates before persisting.
+// The LLM call is bounded by the provider timeout so a stalled gateway cannot hang
+// the worker.
 func (p *LangChainProvider) Enrich(ctx context.Context, job JobInput) (Enrichment, error) {
+	if p.timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, p.timeout)
+		defer cancel()
+	}
 	messages := []llms.MessageContent{
 		llms.TextParts(llms.ChatMessageTypeSystem, systemPrompt),
 		llms.TextParts(llms.ChatMessageTypeHuman, userPrompt(job)),

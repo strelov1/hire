@@ -38,6 +38,6 @@
     bind:value={draft}
     onkeydown={onKeydown}
     {placeholder}
-    class="min-w-[6rem] flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+    class="min-w-[6rem] flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
   />
 </div>

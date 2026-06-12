@@ -4853,3 +4853,9 @@ sources:
   - company: "10web"
     provider: bamboohr
     board: "10web"
+
+  # --- Workday (board = "<host>/<site>", e.g. acme.wd1.myworkdayjobs.com/Careers;
+  # the CXS API tenant is the host's first label) ---
+  - company: "RingCentral"
+    provider: workday
+    board: "ringcentral.wd1.myworkdayjobs.com/RingCentral_Careers"

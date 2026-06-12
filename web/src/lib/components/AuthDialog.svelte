@@ -107,7 +107,7 @@
           bind:value={email}
           required
           autocomplete="email"
-          class="rounded-md border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          class="rounded-md border border-border bg-background px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
       </label>
 
@@ -119,7 +119,7 @@
           required
           minlength={mode === 'register' ? 8 : undefined}
           autocomplete={mode === 'login' ? 'current-password' : 'new-password'}
-          class="rounded-md border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          class="rounded-md border border-border bg-background px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
       </label>
 

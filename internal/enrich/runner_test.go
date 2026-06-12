@@ -92,30 +92,32 @@ func TestRun_validIsWrittenAndDequeued(t *testing.T) {
 	}
 }
 
-func TestRun_invalidTwiceIsFailedNotWritten(t *testing.T) {
+func TestRun_outOfVocabEnumIsSanitizedAndWritten(t *testing.T) {
 	store := &fakeStore{
 		claims: [][]Claimed{{{OutboxID: 7, JobID: 100, TargetVersion: Version}}},
 		jobs:   map[int64]JobInput{100: {Title: "x"}},
 	}
 	prov := &funcProvider{fn: func(JobInput) (Enrichment, error) {
-		return Enrichment{Seniority: "sr"}, nil // not a vocabulary value
+		// "sr" is not a vocabulary value; "frontend" is. The stray value must be
+		// dropped and the rest of the payload written — not dead-lettered.
+		return Enrichment{Seniority: "sr", Category: "frontend"}, nil
 	}}
 
 	stats, err := Runner{Provider: prov, Store: store}.Run(context.Background(), opts())
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
-	if len(store.completed) != 0 {
-		t.Errorf("completed = %v, want none (invalid never written)", store.completed)
+	if len(store.completed) != 1 || store.completed[0] != 7 {
+		t.Errorf("completed = %v, want [7] (sanitized payload written)", store.completed)
 	}
-	if len(store.failed) != 1 || store.failed[0] != 7 {
-		t.Errorf("failed = %v, want [7]", store.failed)
+	if len(store.failed) != 0 {
+		t.Errorf("failed = %v, want none", store.failed)
 	}
-	if prov.calls != 2 {
-		t.Errorf("provider called %d times, want 2 (initial + one retry)", prov.calls)
+	if prov.calls != 1 {
+		t.Errorf("provider called %d times, want 1 (sanitize fixes it, no retry)", prov.calls)
 	}
-	if stats.Failed != 1 || stats.Enriched != 0 {
-		t.Errorf("stats = %+v, want Failed:1", stats)
+	if stats.Enriched != 1 || stats.Failed != 0 {
+		t.Errorf("stats = %+v, want Enriched:1", stats)
 	}
 }
 

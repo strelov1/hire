@@ -38,7 +38,7 @@
 </script>
 
 <header class="border-b border-border">
-  <div class="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4">
+  <div class="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:gap-6">
     <a href="/" class="text-sm font-semibold tracking-tight">FreeHire</a>
 
     <nav class="flex items-center gap-4 text-sm">

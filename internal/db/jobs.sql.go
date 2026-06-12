@@ -349,6 +349,27 @@ func (q *Queries) SetJobEnrichment(ctx context.Context, arg SetJobEnrichmentPara
 	return err
 }
 
+const updateJobSlugs = `-- name: UpdateJobSlugs :exec
+UPDATE jobs
+SET public_slug  = $1,
+    company_slug = $2
+WHERE id = $3
+`
+
+type UpdateJobSlugsParams struct {
+	PublicSlug  string `json:"public_slug"`
+	CompanySlug string `json:"company_slug"`
+	ID          int64  `json:"id"`
+}
+
+// One-off backfill for a deliberate slug-builder change (see the UpsertJob note on
+// why slugs are otherwise immutable). public_slug/company_slug are deterministic
+// from the row's immutable fields, so recomputing and rewriting them is idempotent.
+func (q *Queries) UpdateJobSlugs(ctx context.Context, arg UpdateJobSlugsParams) error {
+	_, err := q.db.Exec(ctx, updateJobSlugs, arg.PublicSlug, arg.CompanySlug, arg.ID)
+	return err
+}
+
 const upsertJob = `-- name: UpsertJob :one
 WITH company_upsert AS (
     INSERT INTO companies (slug, name)

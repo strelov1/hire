@@ -32,24 +32,45 @@
 
 <svelte:window onclick={onClick} onpopstate={() => router.syncFromLocation()} />
 
-<TopBar />
+<!-- Column layout with min-h-svh (small-viewport height, so the mobile address
+     bar never forces extra scroll) keeps the footer pinned to the bottom on
+     sparse pages while letting main grow. -->
+<div class="flex min-h-svh flex-col">
+  <TopBar />
 
-<!-- The outer container is the same width on every page so the header never
-     jumps between routes; narrow reading views center themselves inside it. -->
-<main class="mx-auto max-w-6xl px-4 py-6">
-  {#if route.name === 'jobs'}
-    <JobsView />
-  {:else}
-    <div class="mx-auto max-w-3xl">
-      {#if route.name === 'job'}
-        <JobView slug={route.slug} />
-      {:else if route.name === 'companies'}
-        <CompaniesView />
-      {:else if route.name === 'company'}
-        <CompanyView slug={route.slug} />
-      {:else}
-        <p class="py-12 text-center text-sm text-muted-foreground">Page not found.</p>
-      {/if}
+  <!-- The outer container is the same width on every page so the header never
+       jumps between routes; narrow reading views center themselves inside it. -->
+  <main class="mx-auto w-full max-w-6xl flex-1 px-4 py-6">
+    {#if route.name === 'jobs'}
+      <JobsView />
+    {:else}
+      <div class="mx-auto max-w-3xl">
+        {#if route.name === 'job'}
+          <JobView slug={route.slug} />
+        {:else if route.name === 'companies'}
+          <CompaniesView />
+        {:else if route.name === 'company'}
+          <CompanyView slug={route.slug} />
+        {:else}
+          <p class="py-12 text-center text-sm text-muted-foreground">Page not found.</p>
+        {/if}
+      </div>
+    {/if}
+  </main>
+
+  <footer class="border-t border-border">
+    <div
+      class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between"
+    >
+      <p>An open-source aggregator for IT jobs, normalized and deduplicated from company boards.</p>
+      <a
+        href="https://github.com/strelov1/freehire"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="shrink-0 font-medium text-foreground transition-colors hover:text-muted-foreground"
+      >
+        GitHub ↗
+      </a>
     </div>
-  {/if}
-</main>
+  </footer>
+</div>

@@ -82,8 +82,9 @@ var (
 	EnglishLevelValues   = []string{"none", "a1", "a2", "b1", "b2", "c1", "c2", "native"}
 	EducationLevelValues = []string{"none", "bachelor", "master", "phd"}
 	CategoryValues       = []string{
-		"backend", "frontend", "fullstack", "mobile", "devops",
-		"data_engineering", "data_science", "ml_ai", "qa", "security",
+		"backend", "frontend", "fullstack", "mobile", "devops", "sre",
+		"data_engineering", "data_science", "data_analytics", "ml_ai",
+		"qa", "security", "hardware", "embedded", "blockchain",
 		"design", "product", "project_management", "management",
 		"marketing", "sales", "support", "other",
 	}
@@ -143,4 +144,49 @@ func (e Enrichment) Validate() error {
 	}
 
 	return nil
+}
+
+// Sanitize drops enum values the model emitted outside their controlled
+// vocabulary: a scalar field is blanked, a multi-value field keeps only known
+// members. This salvages the rest of an otherwise-good payload instead of
+// dead-lettering the whole job over one stray value (the model occasionally
+// invents a category/region no matter how the vocabulary grows). The invariant
+// "never persist an out-of-vocabulary value" still holds — the value is dropped,
+// not stored — so Validate passes afterwards.
+func (e *Enrichment) Sanitize() {
+	scalars := []struct {
+		value *string
+		vocab []string
+	}{
+		{&e.WorkMode, WorkModeValues},
+		{&e.EmploymentType, EmploymentTypeValues},
+		{&e.Relocation, RelocationValues},
+		{&e.SalaryPeriod, SalaryPeriodValues},
+		{&e.Seniority, SeniorityValues},
+		{&e.EnglishLevel, EnglishLevelValues},
+		{&e.EducationLevel, EducationLevelValues},
+		{&e.Category, CategoryValues},
+		{&e.CompanyType, CompanyTypeValues},
+		{&e.CompanySize, CompanySizeValues},
+	}
+	for _, s := range scalars {
+		if *s.value != "" && !slices.Contains(s.vocab, *s.value) {
+			*s.value = ""
+		}
+	}
+
+	e.Regions = keepKnown(e.Regions, RegionValues)
+	e.Domains = keepKnown(e.Domains, DomainValues)
+}
+
+// keepKnown returns values restricted to those present in vocab, preserving order;
+// it returns nil when nothing survives so the field omits cleanly.
+func keepKnown(values, vocab []string) []string {
+	var kept []string
+	for _, v := range values {
+		if slices.Contains(vocab, v) {
+			kept = append(kept, v)
+		}
+	}
+	return kept
 }

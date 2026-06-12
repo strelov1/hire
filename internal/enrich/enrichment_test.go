@@ -191,3 +191,29 @@ func TestGlobalReachDistinctFromUnknown(t *testing.T) {
 		t.Errorf("unknown reach must omit regions, got: %s", unknown)
 	}
 }
+
+func TestSanitizeDropsOutOfVocabValues(t *testing.T) {
+	e := Enrichment{
+		Seniority: "senior",         // valid -> kept
+		Category:  "astrology",      // invalid scalar -> blanked
+		Domains:   []string{"fintech", "bogus"}, // keep only known
+		Regions:   []string{"nope"},            // all unknown -> nil
+	}
+	e.Sanitize()
+
+	if e.Seniority != "senior" {
+		t.Errorf("Seniority = %q, want it kept", e.Seniority)
+	}
+	if e.Category != "" {
+		t.Errorf("Category = %q, want blanked", e.Category)
+	}
+	if len(e.Domains) != 1 || e.Domains[0] != "fintech" {
+		t.Errorf("Domains = %v, want [fintech]", e.Domains)
+	}
+	if e.Regions != nil {
+		t.Errorf("Regions = %v, want nil", e.Regions)
+	}
+	if err := e.Validate(); err != nil {
+		t.Errorf("Validate after Sanitize = %v, want nil", err)
+	}
+}

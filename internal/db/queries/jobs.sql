@@ -103,6 +103,15 @@ SET closed_at  = now(),
 WHERE closed_at IS NULL
   AND last_seen_at < sqlc.arg(cutoff);
 
+-- name: UpdateJobSlugs :exec
+-- One-off backfill for a deliberate slug-builder change (see the UpsertJob note on
+-- why slugs are otherwise immutable). public_slug/company_slug are deterministic
+-- from the row's immutable fields, so recomputing and rewriting them is idempotent.
+UPDATE jobs
+SET public_slug  = sqlc.arg(public_slug),
+    company_slug = sqlc.arg(company_slug)
+WHERE id = sqlc.arg(id);
+
 -- name: EnqueueJobEnrichment :execrows
 -- Transactional-outbox enqueue for the ingest write path: queue this one job for
 -- enrichment, gated on the same condition the backfill uses (unenriched or below the

@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"time"
 )
 
 // Claimed is one outbox entry leased to this run.
@@ -56,9 +58,11 @@ type Runner struct {
 // Run enqueues pending jobs and drains the queue until no claimable entries remain.
 // A failure on a single entry is recorded and never aborts the run.
 func (r Runner) Run(ctx context.Context, opt RunOptions) (Stats, error) {
-	if _, err := r.Store.Enqueue(ctx, opt.TargetVersion); err != nil {
+	enqueued, err := r.Store.Enqueue(ctx, opt.TargetVersion)
+	if err != nil {
 		return Stats{}, fmt.Errorf("enqueue: %w", err)
 	}
+	log.Printf("enrich: enqueued %d pending, draining (batch=%d)", enqueued, opt.BatchSize)
 
 	rn := &run{provider: r.Provider, store: r.Store, opt: opt}
 	for {
@@ -72,6 +76,9 @@ func (r Runner) Run(ctx context.Context, opt RunOptions) (Stats, error) {
 		for _, entry := range batch {
 			rn.process(ctx, entry)
 		}
+		// A heartbeat per batch so a long drain shows running totals instead of
+		// going silent for hours.
+		log.Printf("enrich: progress enriched=%d failed=%d dead=%d", rn.stats.Enriched, rn.stats.Failed, rn.stats.DeadLettered)
 	}
 }
 
@@ -85,31 +92,39 @@ type run struct {
 }
 
 // process handles one claimed entry. Any failure routes to fail so the run
-// continues with the remaining entries.
+// continues with the remaining entries. Each entry logs its outcome and duration
+// so a long drain is observable in real time.
 func (rn *run) process(ctx context.Context, entry Claimed) {
+	start := time.Now()
+
 	job, err := rn.store.Job(ctx, entry.JobID)
 	if err != nil {
 		rn.fail(ctx, entry, fmt.Errorf("load job: %w", err))
+		log.Printf("enrich: job=%d load failed in %s: %v", entry.JobID, time.Since(start).Round(time.Millisecond), err)
 		return
 	}
 
 	enr, err := rn.enrich(ctx, job)
 	if err != nil {
 		rn.fail(ctx, entry, err)
+		log.Printf("enrich: job=%d FAILED in %s: %v", entry.JobID, time.Since(start).Round(time.Millisecond), err)
 		return
 	}
 
 	payload, err := json.Marshal(enr)
 	if err != nil {
 		rn.fail(ctx, entry, fmt.Errorf("marshal: %w", err))
+		log.Printf("enrich: job=%d marshal failed: %v", entry.JobID, err)
 		return
 	}
 
 	if err := rn.store.Complete(ctx, entry, payload); err != nil {
 		rn.fail(ctx, entry, fmt.Errorf("write back: %w", err))
+		log.Printf("enrich: job=%d write-back failed: %v", entry.JobID, err)
 		return
 	}
 	rn.stats.Enriched++
+	log.Printf("enrich: job=%d ok in %s", entry.JobID, time.Since(start).Round(time.Millisecond))
 }
 
 // enrich asks the provider for a payload and validates it, retrying once. An
@@ -122,6 +137,9 @@ func (rn *run) enrich(ctx context.Context, job JobInput) (Enrichment, error) {
 			lastErr = err
 			continue
 		}
+		// Drop any out-of-vocabulary enum values rather than failing the whole
+		// payload over one stray field; Validate is then a guard that should pass.
+		enr.Sanitize()
 		if err := enr.Validate(); err != nil {
 			lastErr = err
 			continue

@@ -24,6 +24,21 @@ func (q *Queries) CountCompanies(ctx context.Context, search string) (int64, err
 	return count, err
 }
 
+const deleteOrphanCompanies = `-- name: DeleteOrphanCompanies :execrows
+DELETE FROM companies c
+WHERE NOT EXISTS (SELECT 1 FROM jobs j WHERE j.company_slug = c.slug)
+`
+
+// Drop companies no longer referenced by any job — the stale rows left behind
+// when a slug-builder change re-keys jobs onto new slugs.
+func (q *Queries) DeleteOrphanCompanies(ctx context.Context) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteOrphanCompanies)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const getCompany = `-- name: GetCompany :one
 SELECT slug, name, created_at, updated_at
 FROM companies
@@ -88,4 +103,24 @@ func (q *Queries) ListCompanies(ctx context.Context, arg ListCompaniesParams) ([
 		return nil, err
 	}
 	return items, nil
+}
+
+const syncCompaniesFromJobs = `-- name: SyncCompaniesFromJobs :exec
+INSERT INTO companies (slug, name)
+SELECT DISTINCT ON (company_slug) company_slug, company
+FROM jobs
+WHERE company_slug <> ''
+ORDER BY company_slug
+ON CONFLICT (slug) DO UPDATE SET
+    name       = EXCLUDED.name,
+    updated_at = now()
+`
+
+// Rebuild the companies catalogue from jobs. The companies table is derivable
+// from jobs (slug = company_slug, name = company), so after a slug-builder change
+// re-keys jobs, this re-keys companies to match. DISTINCT ON collapses a slug's
+// name variants; ON CONFLICT folds collisions and refreshes existing rows.
+func (q *Queries) SyncCompaniesFromJobs(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, syncCompaniesFromJobs)
+	return err
 }

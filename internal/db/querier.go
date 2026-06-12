@@ -35,6 +35,9 @@ type Querier interface {
 	// primary key rejects a duplicate identity.
 	CreateUserIdentity(ctx context.Context, arg CreateUserIdentityParams) error
 	DeleteEnrichmentEntry(ctx context.Context, id int64) error
+	// Drop companies no longer referenced by any job — the stale rows left behind
+	// when a slug-builder change re-keys jobs onto new slugs.
+	DeleteOrphanCompanies(ctx context.Context) (int64, error)
 	// Transactional-outbox enqueue for the ingest write path: queue this one job for
 	// enrichment, gated on the same condition the backfill uses (unenriched or below the
 	// target schema version), so an already-enriched job is not re-queued. Idempotent via
@@ -105,6 +108,15 @@ type Querier interface {
 	// and the provenance stamp, touching no raw source field. Kept separate from
 	// UpsertJob (the ingest full-upsert path) so ingest and enrichment stay decoupled.
 	SetJobEnrichment(ctx context.Context, arg SetJobEnrichmentParams) error
+	// Rebuild the companies catalogue from jobs. The companies table is derivable
+	// from jobs (slug = company_slug, name = company), so after a slug-builder change
+	// re-keys jobs, this re-keys companies to match. DISTINCT ON collapses a slug's
+	// name variants; ON CONFLICT folds collisions and refreshes existing rows.
+	SyncCompaniesFromJobs(ctx context.Context) error
+	// One-off backfill for a deliberate slug-builder change (see the UpsertJob note on
+	// why slugs are otherwise immutable). public_slug/company_slug are deterministic
+	// from the row's immutable fields, so recomputing and rewriting them is idempotent.
+	UpdateJobSlugs(ctx context.Context, arg UpdateJobSlugsParams) error
 	// Single atomic write: upsert the company (only when the slug is non-empty,
 	// via the WHERE on the SELECT) and the job together, keeping the "one write =
 	// one job" property of the pipeline's write path.

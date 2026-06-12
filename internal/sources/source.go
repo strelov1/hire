@@ -54,6 +54,7 @@ func All(c HTTPClient) map[string]Source {
 		NewPinpoint(c),
 		NewRippling(c),
 		NewBambooHR(c),
+		NewWorkday(c),
 	)
 }
 

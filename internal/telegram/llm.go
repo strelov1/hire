@@ -56,12 +56,52 @@ func parseExtraction(raw string) (Extraction, error) {
 	s = strings.TrimPrefix(s, "```")
 	s = strings.TrimSuffix(s, "```")
 	s = strings.TrimSpace(s)
+	s = repairJSONControlChars(s)
 
 	var e Extraction
 	if err := json.Unmarshal([]byte(s), &e); err != nil {
 		return Extraction{}, fmt.Errorf("telegram: parse response: %w", err)
 	}
 	return e, nil
+}
+
+// repairJSONControlChars escapes raw control characters that appear inside JSON
+// string literals. Some models, even in JSON mode, emit literal newlines or tabs
+// inside string values — multi-line job descriptions are the common case — which
+// violates the JSON spec and makes the strict decoder reject the whole payload.
+// This rewrites those raw control runes into their valid escape sequences,
+// leaving the JSON structure and already-escaped sequences untouched.
+func repairJSONControlChars(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	inString, escaped := false, false
+	for _, r := range s {
+		switch {
+		case escaped:
+			b.WriteRune(r)
+			escaped = false
+		case r == '\\' && inString:
+			b.WriteRune(r)
+			escaped = true
+		case r == '"':
+			b.WriteRune(r)
+			inString = !inString
+		case inString && r < 0x20:
+			switch r {
+			case '\n':
+				b.WriteString(`\n`)
+			case '\t':
+				b.WriteString(`\t`)
+			case '\r':
+				b.WriteString(`\r`)
+			default:
+				fmt.Fprintf(&b, `\u%04x`, r)
+			}
+		default:
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
 }
 
 // extractSystemPrompt instructs the model to classify the post and extract each
@@ -88,6 +128,8 @@ func extractSystemPrompt(kind Kind) string {
 	b.WriteString("- remote (boolean): true only if the post says the role is remote.\n")
 	b.WriteString("- description (required): the post's text relevant to THIS role — responsibilities, requirements, ")
 	b.WriteString("salary, benefits, and how to apply (contacts, links). Plain text, keep the original language. ")
-	b.WriteString("Do not invent anything that is not in the post.\n")
+	b.WriteString("Preserve the original line structure: keep bullet points, numbered lists, and paragraphs on ")
+	b.WriteString("separate lines (use \\n; a blank line between paragraphs). Do NOT collapse the post into one ")
+	b.WriteString("line. Do not invent anything that is not in the post.\n")
 	return b.String()
 }

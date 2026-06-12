@@ -35,6 +35,26 @@ const WORK_MODE: FacetOption[] = [
   { value: 'onsite', label: 'On-site' },
 ];
 
+// The platform a job was ingested from. Unlike the enrichment facets below, this
+// value is always present (the ingest pipeline sets it), so it is the one fully
+// reliable filter. SOURCE OF TRUTH for these values: the Provider() strings of the
+// adapters in internal/sources (sources.All) plus the literal "telegram" set by
+// the tg-extract worker. A new adapter means a new entry here.
+const SOURCE: FacetOption[] = [
+  { value: 'telegram', label: 'Telegram' },
+  { value: 'greenhouse', label: 'Greenhouse' },
+  { value: 'lever', label: 'Lever' },
+  { value: 'ashby', label: 'Ashby' },
+  { value: 'workable', label: 'Workable' },
+  { value: 'recruitee', label: 'Recruitee' },
+  { value: 'smartrecruiters', label: 'SmartRecruiters' },
+  { value: 'personio', label: 'Personio' },
+  { value: 'pinpoint', label: 'Pinpoint' },
+  { value: 'rippling', label: 'Rippling' },
+  { value: 'bamboohr', label: 'BambooHR' },
+  { value: 'workday', label: 'Workday' },
+];
+
 // A curated, extensible subset of the backend's `regions` reach vocabulary. Its
 // values mix levels by design (global / region / country); the field's full
 // vocabulary holds more than these pills surface.
@@ -140,6 +160,7 @@ const DOMAINS: FacetOption[] = [
 ];
 
 export const FACETS: FacetDef[] = [
+  { param: 'source', label: 'Source', control: 'pills', options: SOURCE, excludable: true },
   { param: 'work_mode', label: 'Work format', control: 'pills', options: WORK_MODE, excludable: true },
   { param: 'regions', label: 'Region', control: 'pills', options: REGION, excludable: true },
   { param: 'seniority', label: 'Seniority', control: 'pills', options: SENIORITY, excludable: true },

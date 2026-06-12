@@ -32,6 +32,10 @@ func (r *routedHTTP) GetXML(_ context.Context, url string, v any) error {
 	return r.decode(url, xml.Unmarshal, v)
 }
 
+func (r *routedHTTP) PostJSON(_ context.Context, url string, _, v any) error {
+	return r.decode(url, json.Unmarshal, v)
+}
+
 func (r *routedHTTP) decode(url string, unmarshal func([]byte, any) error, v any) error {
 	r.mu.Lock()
 	r.calls++
