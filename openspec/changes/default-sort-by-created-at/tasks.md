@@ -9,4 +9,4 @@
 
 ## 3. Verify
 
-- [ ] 3.1 build/vet/test green; reindex against dev Meili applies new sortable settings; SPA list shows newest-added first
+- [x] 3.1 build/vet/test green; reindex against dev Meili applies new sortable settings; SPA list shows newest-added first
