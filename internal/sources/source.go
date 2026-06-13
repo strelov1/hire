@@ -55,6 +55,8 @@ func All(c HTTPClient) map[string]Source {
 		NewRippling(c),
 		NewBambooHR(c),
 		NewWorkday(c),
+		NewHuntflow(c),
+		NewGem(c),
 	)
 }
 
@@ -91,9 +93,11 @@ func fetchDetails[P any](postings []P, workers int, fetch func(P) (Job, bool)) [
 }
 
 // isRemote infers a job's remote flag from its location text. Adapters share it so
-// the heuristic stays consistent across platforms.
+// the heuristic stays consistent across platforms. It matches the English "remote" and
+// the Russian "удал…" (удалённо/удалённая/удалёнка) so RU-segment boards flag correctly.
 func isRemote(location string) bool {
-	return strings.Contains(strings.ToLower(location), "remote")
+	l := strings.ToLower(location)
+	return strings.Contains(l, "remote") || strings.Contains(l, "удал")
 }
 
 // parseLayout parses a platform timestamp with the given layout into a posted_at,
@@ -140,6 +144,16 @@ func parseEpochMillis(ms int64) *time.Time {
 		return nil
 	}
 	t := time.UnixMilli(ms).UTC()
+	return &t
+}
+
+// parseEpochSeconds converts a Unix-second timestamp into a posted_at, returning nil for
+// a zero value (treated as "no date"). Gem dates postings with firstPublishedTsSec.
+func parseEpochSeconds(s int64) *time.Time {
+	if s == 0 {
+		return nil
+	}
+	t := time.Unix(s, 0).UTC()
 	return &t
 }
 
