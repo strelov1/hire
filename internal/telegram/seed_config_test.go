@@ -5,10 +5,10 @@ import (
 	"testing"
 )
 
-// The committed channels.yml must always load and validate — a broken seed file
-// would otherwise only surface at the next scheduled crawl.
+// The committed sources/telegram.yml must always load and validate — a broken seed
+// file would otherwise only surface at the next scheduled crawl.
 func TestSeedChannelsFileIsValid(t *testing.T) {
-	path, err := filepath.Abs(filepath.Join("..", "..", "channels.yml"))
+	path, err := filepath.Abs(filepath.Join("..", "..", "sources", "telegram.yml"))
 	if err != nil {
 		t.Fatal(err)
 	}

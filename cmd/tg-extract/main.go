@@ -23,10 +23,10 @@ func main() {
 		log.Fatalf("config: %v", err)
 	}
 
-	// channels.yml supplies each channel's kind, steering the extraction prompt.
+	// sources/telegram.yml supplies each channel's kind, steering the extraction prompt.
 	path := os.Getenv("CHANNELS_FILE")
 	if path == "" {
-		path = "channels.yml"
+		path = "sources/telegram.yml"
 	}
 	chanCfg, err := telegram.LoadConfig(path)
 	if err != nil {
