@@ -52,6 +52,7 @@ func Parse(location string) Geo {
 		if tok == "" {
 			continue
 		}
+		tok = stripCityPrefix(tok)
 		if code, ok := nameToCountry[tok]; ok {
 			countrySet[code] = struct{}{}
 			if r, ok := countryToRegion[code]; ok {
@@ -71,6 +72,24 @@ func Parse(location string) Geo {
 	}
 }
 
+// cityMarkerPrefixes are the Russian "city" abbreviations that RU-segment ATS
+// data prepends to a bare city name ("г Москва", "город Самара"). Stripped from a
+// token before lookup so the city resolves; checked longest-first so "город "
+// wins over "г ". A city whose name merely starts with "г" ("Грозный") is
+// untouched — every prefix ends in a separator the name doesn't.
+var cityMarkerPrefixes = []string{"город ", "г. ", "г.", "г "}
+
+// stripCityPrefix removes a leading Russian city marker from an already-lowercased,
+// trimmed token, returning the bare city name (or the token unchanged).
+func stripCityPrefix(tok string) string {
+	for _, p := range cityMarkerPrefixes {
+		if rest, ok := strings.CutPrefix(tok, p); ok {
+			return strings.TrimSpace(rest)
+		}
+	}
+	return tok
+}
+
 // workModeMarkers maps a work mode to the substrings that signal it, checked in
 // priority order: hybrid (most specific) beats a remote marker in the same
 // string, and an explicit onsite marker is the last resort. A location with no
@@ -79,8 +98,8 @@ var workModeMarkers = []struct {
 	mode    string
 	markers []string
 }{
-	{"hybrid", []string{"hybrid"}},
-	{"remote", []string{"remote", "work from home", "wfh", "anywhere", "worldwide", "distributed"}},
+	{"hybrid", []string{"hybrid", "гибрид"}},
+	{"remote", []string{"remote", "work from home", "wfh", "anywhere", "worldwide", "distributed", "удал"}},
 	{"onsite", []string{"on-site", "onsite", "on site", "in office", "in-office"}},
 }
 

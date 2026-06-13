@@ -111,6 +111,92 @@ func TestParse(t *testing.T) {
 	}
 }
 
+// TestParseCyrillic covers the RU-segment ATS data, whose location fields are in
+// Cyrillic ("Москва"), sometimes prefixed with the Russian city marker "г"
+// ("г Москва"), and which name a remote/hybrid mode in Russian ("Удалённо").
+func TestParseCyrillic(t *testing.T) {
+	tests := []struct {
+		name     string
+		location string
+		want     Geo
+	}{
+		{
+			name:     "Cyrillic city Moscow",
+			location: "Москва",
+			want:     Geo{Countries: []string{"ru"}, Regions: []string{"ru"}},
+		},
+		{
+			name:     "city marker prefix is stripped",
+			location: "г Москва",
+			want:     Geo{Countries: []string{"ru"}, Regions: []string{"ru"}},
+		},
+		{
+			name:     "hyphenated Cyrillic city",
+			location: "Санкт-Петербург",
+			want:     Geo{Countries: []string{"ru"}, Regions: []string{"ru"}},
+		},
+		{
+			name:     "multi-word Cyrillic city",
+			location: "Нижний Новгород",
+			want:     Geo{Countries: []string{"ru"}, Regions: []string{"ru"}},
+		},
+		{
+			name:     "country token Россия resolves even past an unknown city",
+			location: "Энск, Россия",
+			want:     Geo{Countries: []string{"ru"}, Regions: []string{"ru"}},
+		},
+		{
+			name:     "abbreviation РФ",
+			location: "РФ",
+			want:     Geo{Countries: []string{"ru"}, Regions: []string{"ru"}},
+		},
+		{
+			name:     "Россия with parenthesised remote marker",
+			location: "Россия (удалённо)",
+			want:     Geo{Countries: []string{"ru"}, Regions: []string{"ru"}, WorkMode: "remote"},
+		},
+		{
+			name:     "bare Удалённо yields remote mode, no geography",
+			location: "Удалённо",
+			want:     Geo{WorkMode: "remote"},
+		},
+		{
+			name:     "Cyrillic hybrid marker with city",
+			location: "Москва, гибрид",
+			want:     Geo{Countries: []string{"ru"}, Regions: []string{"ru"}, WorkMode: "hybrid"},
+		},
+		{
+			name:     "CIS: Minsk maps to Belarus / cis",
+			location: "Минск",
+			want:     Geo{Countries: []string{"by"}, Regions: []string{"cis"}},
+		},
+		{
+			name:     "Central Asia: Tashkent maps to Uzbekistan",
+			location: "Ташкент",
+			want:     Geo{Countries: []string{"uz"}, Regions: []string{"central_asia"}},
+		},
+		{
+			name:     "Ukrainian spelling Київ maps to Ukraine / eu",
+			location: "Київ",
+			want:     Geo{Countries: []string{"ua"}, Regions: []string{"eu"}},
+		},
+		{
+			name:     "city starting with г is not mistaken for the marker",
+			location: "Грозный",
+			want:     Geo{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Parse(tt.location)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Parse(%q) = %+v, want %+v", tt.location, got, tt.want)
+			}
+		})
+	}
+}
+
 // TestParseEmitsOnlyKnownVocabulary guards the controlled-vocabulary invariant:
 // every region the parser emits is a member of enrich.RegionValues and every
 // work mode a member of enrich.WorkModeValues — the parser never invents a value

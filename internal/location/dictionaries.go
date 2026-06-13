@@ -90,6 +90,44 @@ var nameToCountry = map[string]string{
 	"armenia": "am", "yerevan": "am",
 	"azerbaijan": "az", "baku": "az",
 	"tbilisi": "ge",
+
+	// Cyrillic, for the RU-segment ATS sources (sber, mts, alfabank, tbank, vk,
+	// huntflow, …) whose location fields are in Russian. Seeded from the
+	// high-frequency unresolved strings observed in production; grow by
+	// observation. "россия"/"рф" are the country catch-all (the comma tokenizer
+	// resolves "Самара, Россия" via the country token even when the city is
+	// unknown). The "г "/"город " city-marker prefix is stripped before lookup
+	// (stripCityPrefix), so only the bare city name is keyed.
+	"россия": "ru", "рф": "ru",
+	"москва": "ru", "санкт-петербург": "ru", "спб": "ru", "питер": "ru",
+	"екатеринбург": "ru", "новосибирск": "ru", "нижний новгород": "ru",
+	"казань": "ru", "самара": "ru", "краснодар": "ru", "ростов-на-дону": "ru",
+	"воронеж": "ru", "уфа": "ru", "пермь": "ru", "челябинск": "ru",
+	"волгоград": "ru", "красноярск": "ru", "омск": "ru", "тюмень": "ru",
+	"саратов": "ru", "тольятти": "ru", "ижевск": "ru", "ульяновск": "ru",
+	"барнаул": "ru", "владивосток": "ru", "хабаровск": "ru", "иркутск": "ru",
+	"ярославль": "ru", "томск": "ru", "оренбург": "ru", "кемерово": "ru",
+	"рязань": "ru", "набережные челны": "ru", "пенза": "ru", "липецк": "ru",
+	"тула": "ru", "киров": "ru", "чебоксары": "ru", "калининград": "ru",
+	"ставрополь": "ru", "сочи": "ru", "иваново": "ru", "брянск": "ru",
+	"белгород": "ru", "сургут": "ru", "владимир": "ru", "архангельск": "ru",
+	"калуга": "ru", "смоленск": "ru", "волжский": "ru", "курск": "ru",
+	"орёл": "ru", "череповец": "ru", "вологда": "ru", "магнитогорск": "ru",
+	"тамбов": "ru", "мурманск": "ru", "тверь": "ru", "новокузнецк": "ru",
+	"астрахань": "ru", "великий новгород": "ru", "псков": "ru", "чита": "ru",
+	"улан-удэ": "ru", "якутск": "ru", "норильск": "ru", "новороссийск": "ru",
+	"таганрог": "ru", "сарапул": "ru", "майкоп": "ru", "подольск": "ru",
+	"химки": "ru", "мытищи": "ru", "балашиха": "ru", "курган": "ru",
+	"саранск": "ru", "йошкар-ола": "ru", "благовещенск": "ru", "кисловодск": "ru",
+	"петропавловск-камчатский": "ru", "комсомольск-на-амуре": "ru",
+	"новый уренгой": "ru",
+
+	// CIS / Central Asia / Ukraine in Cyrillic, mirroring their Latin entries.
+	"минск": "by", "беларусь": "by",
+	"ташкент": "uz", "узбекистан": "uz",
+	"алматы": "kz", "астана": "kz", "казахстан": "kz",
+	"ереван": "am", "баку": "az", "бишкек": "kg",
+	"киев": "ua", "київ": "ua",
 }
 
 // nameToRegion resolves macro-region names (and explicit open-anywhere markers)
