@@ -1,0 +1,337 @@
+# lever boards. Provider is the filename; each entry is company + board.
+# board = platform-specific id (see internal/sources/lever.go).
+
+- company: AccelData
+  board: acceldata
+- company: Actian
+  board: actian
+- company: Aera Technology
+  board: aeratechnology
+- company: Age of Learning
+  board: aofl
+- company: AIFund
+  board: AIFund
+- company: Aledade
+  board: aledade
+- company: Amanotes
+  board: amanotes
+- company: AnalogFolk
+  board: analogfolk
+- company: Anavation
+  board: anavationllc
+- company: Animoca Brands
+  board: animocabrands
+- company: AppFollow
+  board: appfollow
+- company: appzen
+  board: appzen
+- company: Arootah
+  board: arootah
+- company: Athena Education
+  board: athena-education
+- company: Avalanche Studios Group
+  board: avalanchestudios
+- company: Azul
+  board: azul
+- company: Balbix
+  board: balbix
+- company: Bazaar Voice
+  board: bazaarvoice
+- company: beghou consulting
+  board: beghouconsulting
+- company: Behaviour Interactive
+  board: bhvr
+- company: Bento Box Entertainment LLC
+  board: bentoboxent
+- company: binance
+  board: binance
+- company: Blackbird Interactive
+  board: blackbirdinteractive
+- company: Blink UX
+  board: blinkux
+- company: Bold Orange
+  board: bold-orange
+- company: bounteous
+  board: bounteous
+- company: Bright Edge
+  board: brightedge
+- company: Bright Machines
+  board: brightmachines
+- company: Brillio
+  board: brillio-2
+- company: Bumble
+  board: bumbleinc
+- company: Cambium Networks
+  board: cambiumnetworks
+- company: Coda
+  board: Coda
+- company: Converse.AI
+  board: ConverseNow
+- company: Coupa
+  board: coupa
+- company: Cred
+  board: cred
+- company: Crytek
+  board: crytek
+- company: cyara
+  board: cyara
+- company: Cypher games
+  board: cypher-games
+- company: Daily Wire
+  board: dailywire
+- company: Demiurge Studios
+  board: demiurgestudios
+- company: Doola
+  board: doola
+- company: Doxel
+  board: doxel
+- company: Dream Games
+  board: dreamgames
+- company: Dream Sports
+  board: dreamsports
+- company: Drive mode
+  board: drivemode
+- company: Drivetrain
+  board: drivetrain
+- company: dun bradstreet
+  board: dnb
+- company: Easybrain
+  board: easybrain
+- company: Echtra Games
+  board: echtra
+- company: Egen
+  board: egen
+- company: Employ
+  board: employ
+- company: entrata
+  board: entrata
+- company: Equativ
+  board: equativ
+- company: Esper
+  board: esper
+- company: Everclear Foundation
+  board: connext-network
+- company: Exploding Kittens, Inc.
+  board: explodingkittens
+- company: Extreme Networks
+  board: extremenetworks
+- company: Fanatee
+  board: fanatee
+- company: Fantasy
+  board: fantasy
+- company: Feld Entertainment
+  board: feldinc
+- company: Fi
+  board: epifi
+- company: Filevine
+  board: filevine
+- company: Finch
+  board: finch
+- company: Findem
+  board: findem
+- company: Fliff
+  board: Fliff
+- company: Flow
+  board: flowlife
+- company: Gopuff
+  board: gopuff
+- company: GoTo Group
+  board: GoToGroup
+- company: HHA Exchange
+  board: hhaexchange
+- company: Highspot
+  board: highspot
+- company: Illumination
+  board: illumination
+- company: Immutable
+  board: immutable
+- company: Inkittt
+  board: inkitt
+- company: Instrument
+  board: instrument
+- company: Instrumental
+  board: Instrumentl
+- company: Ion
+  board: ion
+- company: Jam City
+  board: jamcity
+- company: JMA
+  board: jmawireless
+- company: JumpCloud
+  board: jumpcloud
+- company: Kabam
+  board: kabam
+- company: Kapwing
+  board: kapwing
+- company: Kolibri Games
+  board: kolibrigames
+- company: Larian Studios
+  board: larian
+- company: level ai
+  board: levelai
+- company: lifechruh
+  board: life
+- company: Lightcast
+  board: economicmodeling
+- company: limit break
+  board: limitbreak
+- company: Loft Orbital
+  board: loftorbital
+- company: Loop games
+  board: loopgames
+- company: magnopus
+  board: magnopus
+- company: Mashgin
+  board: mashgin
+- company: Match Group
+  board: matchgroup
+- company: Mendix
+  board: mendix
+- company: MetLife
+  board: metlife
+- company: Mindtickle
+  board: mindtickle
+- company: Minted
+  board: minted
+- company: Mistplay
+  board: mistplay
+- company: Mistral AI
+  board: mistral
+- company: Modulate
+  board: modulate
+- company: Nahc.io
+  board: nahc
+- company: Netomi
+  board: netomi
+- company: NinjaVan
+  board: ninjavan
+- company: Nium
+  board: nium
+- company: Oliver Wyman
+  board: oliverwyman
+- company: Onehouse
+  board: Onehouse
+- company: Palantir
+  board: palantir
+- company: Parallel Wireless
+  board: parallelwireless
+- company: Payactive
+  board: payactiv
+- company: Paytm
+  board: paytm
+- company: Peak Games
+  board: peakgames
+- company: Penumbrainc
+  board: penumbrainc
+- company: Pine games
+  board: pinegames
+- company: Poki
+  board: poki
+- company: Portcast
+  board: portcast
+- company: Porter
+  board: porter
+- company: PPfa
+  board: ppfa
+- company: Quixel
+  board: quixel
+- company: Rapt studio
+  board: RaptStudio
+- company: realworld one
+  board: rw1
+- company: Redhorse Corp
+  board: redhorsecorp
+- company: Rise
+  board: rise
+- company: Ro
+  board: ro
+- company: RoboMQ
+  board: robomq
+- company: Roof Stacks
+  board: roofstacks
+- company: Rovio
+  board: rovio-2
+- company: Ruby play
+  board: rubyplay
+- company: Safe security
+  board: safe
+- company: Sandbox VR
+  board: sandboxvr
+- company: Saviynt
+  board: saviynt
+- company: seedify
+  board: seedify-fund
+- company: Shield AI
+  board: shieldai
+- company: ShyftLabs
+  board: shyftlabs
+- company: sitetracker
+  board: sitetracker
+- company: skybox labs
+  board: skyboxlabs
+- company: Skydance
+  board: skydance
+- company: smarsh
+  board: smarsh
+- company: Snappr
+  board: snappr
+- company: sofar sounds
+  board: sofarsounds
+- company: Sonar Source
+  board: sonarsource
+- company: Spotify
+  board: spotify
+- company: Spruce Systems
+  board: sprucesystems
+- company: Spyke Games
+  board: spyke-games
+- company: Stackblitz
+  board: stackblitz
+- company: Story Ground
+  board: Storygrounds
+- company: Super.com
+  board: super-com
+- company: SuperAnnotate
+  board: superannotate
+- company: Sword Health
+  board: swordhealth
+- company: Tala
+  board: tala
+- company: Threat Tec
+  board: threattec
+- company: Toku
+  board: toku
+- company: Toptal
+  board: toptal
+- company: Track VFX
+  board: trackvfx
+- company: Trendyol
+  board: trendyol
+- company: Vendavo
+  board: vendavo
+- company: Vidsy
+  board: vidsy
+- company: Voodoo
+  board: voodoo
+- company: WaveApps
+  board: waveapps
+- company: WebFX
+  board: webfx
+- company: Weights & Biases
+  board: wandb
+- company: whoop
+  board: whoop
+- company: world relief
+  board: wr
+- company: XBorg
+  board: swissborg
+- company: Xepelin
+  board: xepelin
+- company: Xsolla
+  board: xsolla
+- company: Zeeco, Inc.
+  board: zeeco
+- company: zeta
+  board: zeta
+- company: zoox
+  board: zoox

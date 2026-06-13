@@ -94,13 +94,16 @@ ON CONFLICT (source, external_id) DO UPDATE SET
 RETURNING *;
 
 -- name: CloseUnseenJobs :execrows
--- Post-ingest sweep (see job-lifecycle spec): close every open job not seen since
--- the cutoff. The caller owns the grace window (cutoff = now() - window) and the
--- "run ingested something" guard, so a failed crawl never mass-closes the catalogue.
+-- Post-ingest sweep (see job-lifecycle spec): close every open job of ONE source not
+-- seen since the cutoff. Scoped by source because ingest runs per provider — a
+-- greenhouse run must not close jobs another provider owns and didn't crawl. The
+-- caller owns the grace window (cutoff = now() - window) and the "run ingested
+-- something" guard, so a failed crawl never mass-closes that source's catalogue.
 UPDATE jobs
 SET closed_at  = now(),
     updated_at = now()
 WHERE closed_at IS NULL
+  AND source = sqlc.arg(source)
   AND last_seen_at < sqlc.arg(cutoff);
 
 -- name: UpdateJobSlugs :exec

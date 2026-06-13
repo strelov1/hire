@@ -1,0 +1,9 @@
+# pinpoint boards. Provider is the filename; each entry is company + board.
+# board = platform-specific id (see internal/sources/pinpoint.go).
+
+- company: Augustine Consulting Inc.
+  board: aciedge
+- company: Anne Arundel Workforce Development Corporation (AAWDC)
+  board: aawdc
+- company: Actica Consulting
+  board: actica

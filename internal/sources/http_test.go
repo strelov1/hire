@@ -99,3 +99,32 @@ func TestClientGetJSONErrorsOnClientError(t *testing.T) {
 		t.Error("expected error on 404, got nil")
 	}
 }
+
+func TestClientRetriesOn429ThenSucceeds(t *testing.T) {
+	var attempts int
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		attempts++
+		if attempts < 2 {
+			w.Header().Set("Retry-After", "0") // ask for an immediate retry
+			w.WriteHeader(http.StatusTooManyRequests)
+			return
+		}
+		_, _ = w.Write([]byte(`{"ok":true}`))
+	}))
+	defer srv.Close()
+
+	c := &Client{httpClient: srv.Client(), maxRetries: 2}
+
+	var out struct {
+		OK bool `json:"ok"`
+	}
+	if err := c.GetJSON(context.Background(), srv.URL, &out); err != nil {
+		t.Fatalf("GetJSON: %v", err)
+	}
+	if !out.OK {
+		t.Error("expected ok=true after a 429 retry")
+	}
+	if attempts != 2 {
+		t.Errorf("attempts = %d, want 2 (429 then 200)", attempts)
+	}
+}

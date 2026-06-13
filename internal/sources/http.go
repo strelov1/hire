@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -69,19 +71,23 @@ func (c *Client) PostJSON(ctx context.Context, url string, body, v any) error {
 }
 
 // do issues an HTTP request (optionally with a JSON body) and applies decode to a
-// successful response body, retrying transient failures (5xx / network) up to
-// maxRetries times with a fixed backoff. A 4xx is not retried — it will not recover
-// on its own. A non-nil body is re-sent on each attempt.
+// successful response body, retrying transient failures (5xx / network / 429 rate
+// limit) up to maxRetries times. The backoff is a fixed delay, except a 429 honors
+// the server's Retry-After hint — busy ATS APIs (SmartRecruiters) throttle by IP
+// under the concurrent crawl and recover on a brief wait. Other 4xx are not retried.
+// A non-nil body is re-sent on each attempt.
 func (c *Client) do(ctx context.Context, method, url string, body []byte, accept string, decode func(io.Reader) error) error {
 	var lastErr error
+	delay := c.retryDelay
 	for attempt := 0; attempt <= c.maxRetries; attempt++ {
-		if attempt > 0 && c.retryDelay > 0 {
+		if attempt > 0 && delay > 0 {
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
-			case <-time.After(c.retryDelay):
+			case <-time.After(delay):
 			}
 		}
+		delay = c.retryDelay
 
 		var reqBody io.Reader
 		if body != nil {
@@ -113,6 +119,11 @@ func (c *Client) do(ctx context.Context, method, url string, body []byte, accept
 				return fmt.Errorf("sources: decode %s: %w", url, err)
 			}
 			return nil
+		case resp.StatusCode == http.StatusTooManyRequests:
+			delay = retryAfter(resp, c.retryDelay) // honor the rate-limit hint
+			resp.Body.Close()
+			lastErr = fmt.Errorf("sources: GET %s: status %d", url, resp.StatusCode)
+			continue // rate limited — transient
 		case resp.StatusCode >= 500:
 			resp.Body.Close()
 			lastErr = fmt.Errorf("sources: GET %s: status %d", url, resp.StatusCode)
@@ -123,4 +134,21 @@ func (c *Client) do(ctx context.Context, method, url string, body []byte, accept
 		}
 	}
 	return fmt.Errorf("sources: GET %s failed after %d attempts: %w", url, c.maxRetries+1, lastErr)
+}
+
+// retryAfter is how long to wait before retrying a 429, honoring the response's
+// Retry-After header (delta-seconds) when present and sane, else the fallback. It
+// is capped so one rate-limited board cannot stall the whole crawl.
+func retryAfter(resp *http.Response, fallback time.Duration) time.Duration {
+	const max = 30 * time.Second
+	if v := strings.TrimSpace(resp.Header.Get("Retry-After")); v != "" {
+		if secs, err := strconv.Atoi(v); err == nil && secs >= 0 {
+			d := time.Duration(secs) * time.Second
+			if d > max {
+				return max
+			}
+			return d
+		}
+	}
+	return fallback
 }

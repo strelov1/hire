@@ -1,0 +1,947 @@
+# greenhouse boards. Provider is the filename; each entry is company + board.
+# board = platform-specific id (see internal/sources/greenhouse.go).
+
+- company: 10Beauty
+  board: 10beauty
+- company: 2K
+  board: 2k
+- company: 2K
+  board: 2kvegas
+- company: 31st Union
+  board: 31stunion
+- company: 5minlab
+  board: 5minlab
+- company: 66degrees
+  board: 66degrees
+- company: 6sense
+  board: 6sense
+- company: Abnormal Security
+  board: abnormalsecurity
+- company: Absurd Ventures
+  board: absurdventures
+- company: Addepar
+  board: addepar1
+- company: Adyen
+  board: Adyen
+- company: AEG Worldwide
+  board: aegworldwide
+- company: AeroSpike
+  board: aerospike
+- company: affinidi
+  board: affinidi
+- company: Affinity
+  board: affinity
+- company: Affirm
+  board: affirm
+- company: Agoda
+  board: agoda
+- company: Airbnb
+  board: airbnb
+- company: Airtable
+  board: airtable
+- company: Aisera
+  board: aiserajobs
+- company: AKQA
+  board: akqa
+- company: Alloy
+  board: alloy
+- company: Alpha Sense
+  board: alphasense
+- company: Alten Technology
+  board: altentechnologyusa
+- company: Amplitude
+  board: amplitude
+- company: Anduril Industries
+  board: andurilindustries
+- company: Anthropic
+  board: anthropic
+- company: Any Desk
+  board: anydesk
+- company: Apollo.io
+  board: apolloio
+- company: appier
+  board: appier
+- company: AppsFlyer
+  board: appsflyer
+- company: Arcadia
+  board: arcadiacareers
+- company: Archipelago
+  board: onarchipelago
+- company: Arize AI
+  board: arizeai
+- company: Arkose Labs
+  board: arkoselabs
+- company: Armada
+  board: armada
+- company: Asana
+  board: asana
+- company: Assembly AI
+  board: assemblyai
+- company: AssetWatch®
+  board: assetwatch
+- company: Astera Labs
+  board: asteralabs
+- company: Atari
+  board: atariinc
+- company: Atomic cartoons
+  board: atomiccartoons
+- company: Attune
+  board: attune
+- company: Augment Code
+  board: augmentcomputing
+- company: Auros Global
+  board: aurosglobal
+- company: Avathon
+  board: avathon
+- company: Aviatrix
+  board: aviatrix
+- company: Axi
+  board: axicorpfinancialservicesptyltd
+- company: Axle
+  board: axle
+- company: Axon
+  board: axon
+- company: Azra Games
+  board: azragames
+- company: Banyan Software
+  board: banyansoftware
+- company: Baton
+  board: baton
+- company: Beautiful.ai
+  board: beautifulai
+- company: Betson Group
+  board: betsson
+- company: Betterment
+  board: betterment
+- company: BigID
+  board: bigid
+- company: Bird Grey
+  board: birdygrey
+- company: BitGo
+  board: bitgo
+- company: Blenheim Chalcot India
+  board: blenheimchalcotindia
+- company: Blinkhealth
+  board: blinkhealth
+- company: bluehole
+  board: bluehole
+- company: Bluevine India
+  board: bluevineindia
+- company: BOLD
+  board: bold
+- company: Boom Entertainment
+  board: boomentertainment
+- company: Brand New School
+  board: brandnewschool
+- company: Brex
+  board: brex
+- company: Britive
+  board: britive
+- company: Brooklinen
+  board: brooklinen
+- company: BSE Global
+  board: bseglobal
+- company: Bungie
+  board: bungie
+- company: C3 IoT
+  board: c3iot
+- company: Calendly
+  board: calendly
+- company: Calm
+  board: calm
+- company: Cambridge Mobile Telematics
+  board: cambridgemobiletelematics
+- company: Canonical
+  board: canonical
+- company: Capco
+  board: capco
+- company: Car Gurus
+  board: cargurus
+- company: cat daddy
+  board: catdaddy
+- company: Cavnue
+  board: cavnue
+- company: Celigo
+  board: celigo
+- company: Cerebras Systems
+  board: cerebrassystems
+- company: ChargePoint
+  board: chargepoint
+- company: Checkr
+  board: checkr
+- company: Chime
+  board: chime
+- company: Christ Fellowship
+  board: christfellowship
+- company: Cialfo
+  board: cialfo
+- company: Click Therapeutics
+  board: clicktherapeutics
+- company: ClickHouse
+  board: clickhouse
+- company: Cloud Chamber
+  board: cloudchamberen
+- company: Cloudflare
+  board: cloudflare
+- company: Clutch
+  board: clutch
+- company: Cockroach Labs
+  board: cockroachlabs
+- company: Code and Theory
+  board: codeandtheory
+- company: Coherent Solutions
+  board: coherentsolutions
+- company: Coinbase
+  board: coinbase
+- company: CommerceIQ
+  board: commerceiq
+- company: conga
+  board: conga
+- company: Contentstack
+  board: contentstack
+- company: Conviva
+  board: conviva
+- company: Convoso
+  board: convoso
+- company: Coursera
+  board: coursera
+- company: CrashPlan
+  board: crashplan
+- company: Critical mass
+  board: criticalmass
+- company: Crunchyroll
+  board: crunchyroll
+- company: Crystal Dynamics
+  board: crystaldynamics
+- company: Databricks
+  board: databricks
+- company: Dataiku
+  board: dataiku
+- company: Decisions
+  board: decisions
+- company: Deepmind
+  board: deepmind
+- company: Definitive Healthcare
+  board: definitivehcindia
+- company: Delasport
+  board: delasport
+- company: DEPT
+  board: dept
+- company: Detroit Lions
+  board: detroitlions
+- company: DevRev
+  board: devrev
+- company: Dexory
+  board: dexory
+- company: Dialpad
+  board: dialpad
+- company: DigiCert
+  board: digicert
+- company: Digital extremes
+  board: digitalextremes
+- company: Diligent Corporation
+  board: diligentcorporation
+- company: DISCO
+  board: disco
+- company: Discord
+  board: discord
+- company: Dots
+  board: dots
+- company: Dropbox
+  board: dropbox
+- company: Druva
+  board: druva
+- company: Duolingo
+  board: duolingo
+- company: Dynamis Inc
+  board: dynamisinc
+- company: EarnIn
+  board: earnin
+- company: easygo
+  board: easygo
+- company: Easyship
+  board: easyship
+- company: eClinical Solutions
+  board: eclinicalsolutions
+- company: Elastic
+  board: elastic
+- company: Embrace
+  board: embrace
+- company: Encore
+  board: encore
+- company: EngagedMD
+  board: engagedmd
+- company: Enterra Solutions
+  board: enterrasolutions
+- company: Entrupy
+  board: entrupy
+- company: Envoy Global
+  board: envoyglobalinc
+- company: EOS IT Solutions
+  board: eositsolutions
+- company: Epic Games
+  board: epicgames
+- company: Eqvilent
+  board: eqvilentjobs
+- company: Esusu
+  board: esusu
+- company: Ethernova
+  board: ethernovia
+- company: Ethos
+  board: ethos
+- company: Ethos Life
+  board: ethoslife
+- company: Everlane
+  board: everlane
+- company: Everlaw
+  board: everlaw
+- company: Everstream Analytics
+  board: everstreamanalytics
+- company: Evoplay
+  board: evoplaygames
+- company: Faire
+  board: faire
+- company: FalconX
+  board: falconx
+- company: Fandom
+  board: fandom
+- company: FanDuel
+  board: fanduel
+- company: Fastly
+  board: fastly
+- company: FC Cincinnati
+  board: fccincinnati
+- company: Fictiv
+  board: fictiv
+- company: Figma
+  board: figma
+- company: Firaxis
+  board: firaxis
+- company: Fireworks AI
+  board: fireworksai
+- company: Fivetran
+  board: fivetran
+- company: Flexport
+  board: flexport
+- company: Flo Health
+  board: flohealth
+- company: Fluxon
+  board: fluxon
+- company: Fora Travel
+  board: foratravel
+- company: Formlabs
+  board: formlabs
+- company: Four Hands
+  board: fourhands
+- company: Fresh Prints
+  board: freshprints
+- company: Gather AI
+  board: gatherai
+- company: Gemini
+  board: gemini
+- company: Genea
+  board: genea
+- company: GHX
+  board: globalhealthcareexchangeinc
+- company: Gismart
+  board: gismart
+- company: GitLab
+  board: gitlab
+- company: Glance
+  board: glance
+- company: Glean
+  board: gleanwork
+- company: Globalization Partners
+  board: globalizationpartners
+- company: Gloss Genius
+  board: glossgenius
+- company: Go Fund Me
+  board: gofundme
+- company: Go guardian
+  board: goguardian
+- company: GOAT Group
+  board: goatgroup
+- company: GoDaddy
+  board: godaddy
+- company: GoMotive
+  board: gomotive
+- company: good job games
+  board: goodjobgames
+- company: goop
+  board: goop
+- company: Govini
+  board: govini
+- company: Grafana Labs
+  board: grafanalabs
+- company: Gram Games
+  board: gramgamescareers
+- company: Gravity Well
+  board: gravitywell
+- company: GreenWave™ Radios
+  board: greenwaveradios
+- company: Greenworks Sunrise Global Marketing
+  board: greenworkssunriseglobalmarketing
+- company: Growe
+  board: growe
+- company: Groww
+  board: groww
+- company: Gruve
+  board: gruve
+- company: Gusto
+  board: gusto
+- company: HackerRank
+  board: hackerrank
+- company: Halcyon
+  board: halcyon
+- company: Hangar 13
+  board: hangar13
+- company: Harmonic
+  board: harmonic
+- company: Hasbro
+  board: hasbro
+- company: Haven Studios Inc
+  board: haven
+- company: HB studios
+  board: hbstudios
+- company: Headout
+  board: headoutlinkedin
+- company: High Drive
+  board: highdive
+- company: high radius
+  board: highradius
+- company: Hightouch
+  board: hightouch
+- company: Housemarque
+  board: housemarque
+- company: hovercraft
+  board: hovercraft
+- company: Hudl
+  board: hudl
+- company: HunterDouglas
+  board: hunterdouglas
+- company: IBKR External
+  board: ibkrexternal
+- company: Imply
+  board: imply
+- company: In The Pocket
+  board: inthepocket
+- company: InMobi
+  board: inmobi
+- company: InnoPhase IoT
+  board: innophaseiot
+- company: Innovecs
+  board: innovecs
+- company: Insomniac
+  board: insomniac
+- company: Inspiren
+  board: inspiren
+- company: Instabase
+  board: instabase
+- company: Instacart
+  board: instacart
+- company: Instawork
+  board: instawork
+- company: Interactive Brokers
+  board: ibkr
+- company: Intercom
+  board: intercom
+- company: Interview Kickstart
+  board: interviewkickstart
+- company: IXL Learning
+  board: ixllearning
+- company: Jane Street
+  board: janestreet
+- company: jetbrains
+  board: jetbrains
+- company: JFrog
+  board: jfrog
+- company: Jumio
+  board: jumio
+- company: JustAnswer
+  board: justanswer
+- company: Kailera
+  board: kailera
+- company: Kalshi
+  board: kalshi
+- company: Kaseya
+  board: kaseya
+- company: KAYAK
+  board: kayak
+- company: Kinetik
+  board: kinetik
+- company: Klaviyo
+  board: klaviyo
+- company: Koch
+  board: koch
+- company: Krafton
+  board: kraftonindia
+- company: Krafton
+  board: kraftonamericas
+- company: Krafton
+  board: studiokraftonboard
+- company: Kulfi Collective
+  board: kulficollective
+- company: LA Clippers
+  board: laclippers
+- company: Landor
+  board: landor
+- company: Lattice
+  board: lattice
+- company: LaunchDarkly
+  board: launchdarkly
+- company: legion
+  board: legion
+- company: LightForce Orthodontics
+  board: lightforceorthodontics
+- company: LILA Sciences
+  board: lilasciences
+- company: Linden lab
+  board: lindenlab
+- company: Lirio
+  board: Lirio
+- company: LivePerson
+  board: liveperson
+- company: LogicMonitor
+  board: logicmonitor
+- company: Lovable
+  board: lovable
+- company: Lyft
+  board: lyft
+- company: Make
+  board: make
+- company: Mangopay
+  board: mangopay
+- company: ManyChat
+  board: manychat
+- company: Mark43
+  board: mark43
+- company: Masterclass
+  board: masterclass
+- company: Matte projects
+  board: matteprojects
+- company: Max Secure Software
+  board: maxsecure
+- company: McAfee
+  board: mcafee
+- company: Mercury
+  board: mercury
+- company: Merqube
+  board: merqube
+- company: Micoworks
+  board: micoworks
+- company: MiQ
+  board: miqdigital
+- company: Mitratech
+  board: mitratech
+- company: Mixpanel
+  board: mixpanel
+- company: Mob entertainment
+  board: mobentertainment
+- company: Mobius
+  board: mobius
+- company: Mojang Studios
+  board: mojangab
+- company: Moloco
+  board: moloco
+- company: MongoDB
+  board: mongodb
+- company: Moniepoint
+  board: moniepoint
+- company: Monks
+  board: monks
+- company: Monster Energy
+  board: monsterenergy
+- company: Monzo
+  board: monzo
+- company: Mozilla
+  board: mozilla
+- company: My Fitness Pal
+  board: myfitnesspal
+- company: N26
+  board: N26
+- company: Nebius
+  board: nebius
+- company: NetBrain
+  board: netbrain
+- company: NetEase Games
+  board: neteasegames
+- company: Netradyne
+  board: netradyne
+- company: Netskope
+  board: netskope
+- company: neuralink
+  board: neuralink
+- company: New Globe
+  board: newglobesandbox
+- company: New Relic
+  board: newrelic
+- company: Nextdoor
+  board: nextdoor
+- company: Nextiva
+  board: nextiva
+- company: Nice
+  board: nice
+- company: night dive studios
+  board: nightdivestudios
+- company: NK Securities Research
+  board: nksecuritiesresearch
+- company: nordeus
+  board: nordeus
+- company: nubank
+  board: nubank
+- company: Octagon
+  board: octagon
+- company: Ogilvy
+  board: ogilvy
+- company: Okta
+  board: okta
+- company: OKX
+  board: okx
+- company: Olipop
+  board: olipop
+- company: Oliver Agency
+  board: oliverseapac
+- company: OneImaging
+  board: oneimaging
+- company: OneTrust
+  board: onetrust
+- company: oportun
+  board: oportun
+- company: Orion Innovation
+  board: orioninnovation
+- company: Oshi Health
+  board: oshihealth
+- company: Oura
+  board: oura
+- company: Outfit7
+  board: outfit7
+- company: Overdare
+  board: overdare
+- company: PagerDuty
+  board: pagerduty
+- company: PandaDoc
+  board: pandadoc
+- company: Panic Button
+  board: panicbutton
+- company: paypay
+  board: paypay
+- company: PayPay India
+  board: pay2dc
+- company: Pelago
+  board: pelago
+- company: Penn Interactive
+  board: penninteractive
+- company: Performio
+  board: performio
+- company: Philo
+  board: philo
+- company: PhonePe
+  board: phonepe
+- company: Ping Identity
+  board: pingidentity
+- company: Pinterest
+  board: pinterest
+- company: PlanetScale
+  board: planetscale
+- company: Playq
+  board: playq
+- company: Pokemon
+  board: pokemoncareers
+- company: PolyAI
+  board: polyai
+- company: Populla
+  board: poppulo
+- company: Postman
+  board: postman
+- company: Power Digital Marketing
+  board: powerdigitalmarketing
+- company: Prodigal
+  board: prodigal
+- company: Profound
+  board: profound
+- company: Prophecy
+  board: prophecysimpledatalabs
+- company: PubMatic
+  board: pubmatic
+- company: Pure Storage
+  board: purestorage
+- company: Putnam
+  board: putnamassociatesllc
+- company: Quilt
+  board: quilt
+- company: Quince
+  board: quince
+- company: QuinStreet
+  board: quinstreet
+- company: Rackner
+  board: rackner
+- company: RAPP
+  board: rapp
+- company: Real Chemistry
+  board: realchemistry
+- company: Reddit
+  board: reddit
+- company: Reltio
+  board: reltio
+- company: Remote
+  board: remotecom
+- company: Robinhood
+  board: robinhood
+- company: Roblox
+  board: roblox
+- company: Rockstar Games
+  board: rockstargames
+- company: Roku
+  board: roku
+- company: ROLLER
+  board: roller
+- company: RTB House
+  board: rtbhouse
+- company: Rubrik
+  board: rubrik
+- company: RunPod
+  board: runpod
+- company: Runway
+  board: runwayml
+- company: Rush down studios
+  board: rushdownstudios
+- company: Rush street interactive
+  board: rushstreetinteractive
+- company: Safari AI
+  board: safariai
+- company: Sagent
+  board: sagent
+- company: SALT XC
+  board: saltxc
+- company: Sama
+  board: samainc
+- company: SambaNova Systems
+  board: sambanovasystems
+- company: Samsara
+  board: samsara
+- company: Samsung Semiconductor
+  board: samsungsemiconductor
+- company: Scale AI
+  board: scaleai
+- company: Scout
+  board: scoutmotors
+- company: Seamount
+  board: seamount
+- company: SHEIN
+  board: shein
+- company: SHIELD
+  board: shield
+- company: ShopMy
+  board: shopmy
+- company: Sigma Computing
+  board: sigmacomputing
+- company: SimpliSafe
+  board: simplisafe
+- company: Single Store
+  board: singlestore
+- company: SirenOpt
+  board: sirenopt
+- company: Sixfold
+  board: sixfold
+- company: Skillsoft
+  board: skillsoft
+- company: Skillz Inc.
+  board: skillzinc
+- company: slice
+  board: slice
+- company: smartbear
+  board: smartbear
+- company: Snap Mobile INC
+  board: snapmobileinc
+- company: Snorkel AI
+  board: snorkelai
+- company: SoFi
+  board: sofi
+- company: Soho House & Co
+  board: sohohouseco
+- company: SonicWall
+  board: sonicwall
+- company: Sony Interactive Entertainment
+  board: sonyinteractiveentertainmentglobal
+- company: Sony Interactive Entertainment
+  board: siei
+- company: Sony Music Career
+  board: sonymusicasiacareers
+- company: Sony Music Entertainment
+  board: sonymusicentertainment
+- company: Sony pictures animation
+  board: sonypicturesanimation
+- company: sound cloud
+  board: soundcloud71
+- company: Sourcegraph Inc.
+  board: sourcegraph91
+- company: SpaceX
+  board: spacex
+- company: Spaulding Ridge
+  board: spauldingridge
+- company: SpecterOps
+  board: specterops
+- company: sphere entertainment
+  board: sphereentertainment
+- company: Splice
+  board: splice
+- company: Squarespace
+  board: squarespace
+- company: Stability AI
+  board: stabilityai
+- company: Stackblitz
+  board: stackblitz
+- company: Stage
+  board: stage
+- company: Starburst
+  board: starburst
+- company: StockX
+  board: stockx
+- company: Stripe
+  board: stripe
+- company: Suki
+  board: suki
+- company: Sumo logic
+  board: sumologic
+- company: Survey Monkey
+  board: surveymonkey
+- company: Sustainable Talent
+  board: sustainabletalent
+- company: Taboola
+  board: taboola
+- company: Take-Two Interactive
+  board: taketwo
+- company: Targetbase
+  board: targetbase
+- company: techholding
+  board: techholding
+- company: Techstars
+  board: techstars57
+- company: TEGNA Inc.
+  board: tegnainc
+- company: Tekion Corp
+  board: tekion
+- company: Tellius
+  board: tellius
+- company: Telnyx
+  board: telnyx54
+- company: Temporal
+  board: temporal
+- company: Temporal Technologies
+  board: temporaltechnologies
+- company: Tenstorrent
+  board: tenstorrent
+- company: That's No Moon
+  board: thatsnomoonentertainment
+- company: The New York Times
+  board: thenewyorktimes
+- company: The Orchard
+  board: theorchard
+- company: Thiess
+  board: thiess
+- company: Think Academy U.S
+  board: thinkacademyus
+- company: Tide
+  board: tide
+- company: Toast
+  board: toast
+- company: Toloka
+  board: toloka
+- company: TOPPAN Edge Inc.
+  board: bottomlinetechnologies
+- company: Tower Research Capital
+  board: towerresearchcapital
+- company: Townsquare Media
+  board: townsquaremedia
+- company: Trade Republic
+  board: traderepublic
+- company: Triple dot studios
+  board: tripledotstudios
+- company: Tripwire
+  board: tripwireinteractive
+- company: Trove
+  board: trove
+- company: Trove Brands
+  board: trovebrands
+- company: true foundry
+  board: truefoundry
+- company: truecaller
+  board: truecaller
+- company: TTC Global
+  board: ttcglobal
+- company: TurboTenant
+  board: turbotenant
+- company: turtle rock studios
+  board: turtlerockstudios
+- company: Twilio
+  board: twilio
+- company: Twitch
+  board: twitch
+- company: Udemy
+  board: udemy
+- company: Undead Labs
+  board: undeadlabsllc
+- company: Unispace
+  board: unispace
+- company: Unknown Worlds
+  board: unknownworlds
+- company: Upgrade
+  board: upgrade
+- company: upwork
+  board: upwork
+- company: Vaco
+  board: vaco
+- company: Valtech
+  board: valtech
+- company: Vast
+  board: vast
+- company: VaynerMedia
+  board: vaynermedia
+- company: VDC
+  board: vdc
+- company: Veeam
+  board: veeamsoftware
+- company: Vercel
+  board: vercel
+- company: Verifone
+  board: verifone
+- company: VGW
+  board: vgw
+- company: Visual Concepts
+  board: visualconcepts
+- company: Wayve
+  board: wayve
+- company: Webflow
+  board: webflow
+- company: WFC LA Inc
+  board: wfclainc
+- company: Whalar
+  board: whalarinc
+- company: Whatwapp
+  board: whatwapp
+- company: Wildlife Studios
+  board: wildlifestudios
+- company: WongDoody
+  board: wongdoody
+- company: Wooga
+  board: wooga
+- company: Workato
+  board: workato
+- company: Wrike
+  board: wrike
+- company: Yext
+  board: yext
+- company: Zenoti
+  board: zenoti
+- company: Zeta Global
+  board: zetaglobal
+- company: Zinnia
+  board: zinnia
+- company: Zocdoc
+  board: zocdoc
+- company: ZoomInfo
+  board: zoominfo
+- company: Zscaler
+  board: zscaler
+- company: Zuora
+  board: zuora

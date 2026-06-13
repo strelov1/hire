@@ -1,0 +1,30 @@
+# huntflow boards. Provider is the filename; each entry is company + board.
+# board = the <board>.huntflow.io subdomain (see internal/sources/huntflow.go).
+# Each subdomain validated live (>0 open vacancies via _payload.json) before adding.
+
+- company: AlumniHub
+  board: alumnihub-career
+- company: Banki.ru
+  board: banki
+- company: Coffeemania
+  board: coffeemaniahr
+- company: Flowwow
+  board: flowwow
+- company: Huntflow Opportunities
+  board: opportunities
+- company: itoolabs
+  board: itoolabs
+- company: karpov.courses
+  board: karpovcourses
+- company: MST
+  board: mst
+- company: Napoleon IT
+  board: napoleonit
+- company: Outlines Tech
+  board: outlines_tech
+- company: Pragmatica
+  board: pragmatica
+- company: Telematika
+  board: telematika
+- company: Tripster
+  board: tripster

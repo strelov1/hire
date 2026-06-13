@@ -1,0 +1,9 @@
+# rippling boards. Provider is the filename; each entry is company + board.
+# board = platform-specific id (see internal/sources/rippling.go).
+
+- company: 360 Fire Flood
+  board: 360-fire-flood
+- company: 3MS Services LLC
+  board: 3msservicesllc
+- company: 11:FS Group Ltd
+  board: 11fs-group-ltd

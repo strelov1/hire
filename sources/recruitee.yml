@@ -1,0 +1,87 @@
+# recruitee boards. Provider is the filename; each entry is company + board.
+# board = platform-specific id (see internal/sources/recruitee.go).
+
+- company: 11 Bit Studios
+  board: 11bitstudios
+- company: apply
+  board: apply
+- company: Better Collective
+  board: bettercollective
+- company: Chaos
+  board: chaos
+- company: Clever
+  board: clever
+- company: Company3
+  board: company3
+- company: Crazy Games
+  board: crazygames
+- company: Curv Group
+  board: curvgroup
+- company: Edelman
+  board: edelman
+- company: Exigent
+  board: exigent
+- company: Focus Entertainment
+  board: focusentertainment
+- company: Focus Home Interactive
+  board: focushomeinteractive
+- company: frames store
+  board: framestore
+- company: Future Works
+  board: futureworks
+- company: Gain.pro
+  board: gainpro
+- company: GRID esports
+  board: grid
+- company: Huuuge Games
+  board: huuuge
+- company: Illuvium
+  board: illuvium
+- company: Immersion Labs
+  board: immersionspzoo
+- company: lucid games
+  board: lucidgames
+- company: Lucid Reality Labs
+  board: lucidrealitylabs
+- company: Mangopay
+  board: mangopay
+- company: Mitsogo
+  board: mitsogo
+- company: MYR Games
+  board: myr
+- company: Pixle Pool
+  board: pixelpool
+- company: Playrix
+  board: playrix
+- company: Propel
+  board: propel
+- company: Reality Games
+  board: realitygames
+- company: RocketWerkz
+  board: rocketwerkz
+- company: SaaS Labs
+  board: saaslabs
+- company: Scorewarrior
+  board: scorewarrior
+- company: Sense
+  board: sense
+- company: Spocket
+  board: spocket
+- company: Squeeze Studio
+  board: squeezestudio
+- company: ten square games
+  board: tensquaregames
+- company: Terra
+  board: terra
+- company: Trackman
+  board: trackman
+- company: TransPerfect
+  board: tgs
+- company: Vibes
+  board: vibes
+- company: Village talkies
+  board: villagetalkies
+- company: Wallarm
+  board: wallarm
+- company: Wonderkind
+  board: wonderkind

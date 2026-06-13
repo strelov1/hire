@@ -1,0 +1,387 @@
+# ashby boards. Provider is the filename; each entry is company + board.
+# board = platform-specific id (see internal/sources/ashby.go).
+
+- company: Abridge
+  board: abridge
+- company: Aerovect
+  board: AeroVect
+- company: Agave Games
+  board: agavegames
+- company: Andela
+  board: andela
+- company: Anyscale
+  board: anyscale
+- company: April
+  board: april
+- company: ARB Interactive
+  board: arb-interactive
+- company: Arketa
+  board: arketa
+- company: Armory
+  board: armory
+- company: Ashby
+  board: ashby
+- company: Astrocade
+  board: astrocade
+- company: Atlas
+  board: atlas
+- company: Attio
+  board: attio
+- company: Authzed
+  board: authzed
+- company: Aviator
+  board: aviator
+- company: Axiom
+  board: axiom
+- company: bad robot games
+  board: badrobotgames
+- company: Base Power
+  board: base-power
+- company: Baseten
+  board: baseten
+- company: Benchling
+  board: benchling
+- company: Bloxd
+  board: bloxd
+- company: BOLD
+  board: bold
+- company: Braintrust
+  board: braintrust
+- company: Browserbase
+  board: browserbase
+- company: Campfire
+  board: campfire
+- company: Cantina
+  board: cantina
+- company: Cape
+  board: cape
+- company: Casium
+  board: casium
+- company: Character.AI
+  board: character
+- company: ChartHop
+  board: charthop
+- company: Chroma
+  board: trychroma
+- company: CircuitHub
+  board: circuithub
+- company: Clay Labs
+  board: claylabs
+- company: CodaMetrix
+  board: codametrix
+- company: Cohere
+  board: cohere
+- company: Constructor
+  board: constructor
+- company: Crusoe
+  board: crusoe
+- company: Curri
+  board: curri
+- company: Cursor
+  board: cursor
+- company: Dash0
+  board: dash0
+- company: Datacurve
+  board: datacurve
+- company: Decagon
+  board: decagon
+- company: Deel
+  board: deel
+- company: Deepgram
+  board: Deepgram
+- company: Deepgram
+  board: deepgram
+- company: Dialogue AI
+  board: dialogueai
+- company: ElevenLabs
+  board: elevenlabs
+- company: Ello
+  board: ello
+- company: EMA
+  board: ema
+- company: Envoy
+  board: envoy
+- company: Felicity
+  board: felicity
+- company: Fiddler AI
+  board: fiddler-ai
+- company: Finch
+  board: finch
+- company: Firecrawl
+  board: firecrawl
+- company: Fireworks AI
+  board: fireworksai
+- company: Flawless
+  board: flawless
+- company: FleetWorks
+  board: fleetworks
+- company: Forge
+  board: forge
+- company: FS Studio
+  board: fs-studio
+- company: Further AI
+  board: furtherai
+- company: GameChanger
+  board: gamechanger
+- company: Givebutter
+  board: givebutter
+- company: Granted
+  board: granted
+- company: GT HQ
+  board: gt-hq
+- company: HackerOne
+  board: hackerone
+- company: Harmonic
+  board: harmonic
+- company: Harvey
+  board: harvey
+- company: Hatch
+  board: hatch
+- company: Hawkeye Innovations
+  board: hawkeyeinnovations
+- company: Hayden AI
+  board: haydenai
+- company: Hedra
+  board: hedra
+- company: Higharc
+  board: higharc
+- company: Hightouch
+  board: hightouch
+- company: Hyperhug
+  board: hyperhug
+- company: Ideogram
+  board: ideogram
+- company: Idler
+  board: idler
+- company: Inngest
+  board: inngest
+- company: Joyteractive
+  board: Joyteractive
+- company: Kalshi
+  board: kalshi
+- company: KAYAK
+  board: kayak
+- company: Keycard Labs
+  board: keycard-labs
+- company: Knock
+  board: knock
+- company: LangChain
+  board: langchain
+- company: Langfuse
+  board: langfuse
+- company: Linear
+  board: linear
+- company: Liven
+  board: liven
+- company: Lovable
+  board: lovable
+- company: Lumilens
+  board: lumilens
+- company: Luminary
+  board: luminary
+- company: Mapbox
+  board: mapbox
+- company: Masabi
+  board: masabi
+- company: Matic Robots
+  board: MaticRobots
+- company: Menlo Security Inc.
+  board: menlosecurity
+- company: Mentava
+  board: mentava
+- company: Mirage
+  board: mirage
+- company: Modal
+  board: modal
+- company: Modern Treasury
+  board: moderntreasury
+- company: Mona
+  board: mona
+- company: Moonshot AI
+  board: moonshot-ai
+- company: multiverse
+  board: multiverse
+- company: Mux
+  board: mux
+- company: n8n
+  board: n8n
+- company: Neon
+  board: neon
+- company: neural concept
+  board: neuralconcept
+- company: Notion
+  board: notion
+- company: OpenAI
+  board: openai
+- company: OpenEvidence
+  board: openevidence
+- company: OpenSea
+  board: opensea
+- company: Outpost
+  board: outpost
+- company: parity
+  board: parity
+- company: Patreon
+  board: patreon
+- company: Periodic Labs
+  board: periodic-labs
+- company: Perplexity
+  board: perplexity
+- company: Pika
+  board: pika
+- company: Pinecone
+  board: pinecone
+- company: Planera
+  board: planera
+- company: playground
+  board: playground
+- company: Polygon Labs
+  board: polygon-labs
+- company: PostHog
+  board: posthog
+- company: Profound
+  board: profound
+- company: Proof of Play
+  board: proofofplay
+- company: Protegrity
+  board: protegrity
+- company: Proxima
+  board: proxima
+- company: quora
+  board: quora
+- company: Reality Defender
+  board: realitydefender
+- company: Red 6
+  board: red6
+- company: Reducto
+  board: reducto
+- company: Reedsy
+  board: reedsy
+- company: Reflection AI
+  board: reflectionai
+- company: Render
+  board: render
+- company: Replit
+  board: replit
+- company: Resend
+  board: resend
+- company: Restream
+  board: restream
+- company: Rocket Science
+  board: rocketsciencegg
+- company: Sardine
+  board: sardine
+- company: Second Dinner
+  board: SecondDinner
+- company: Seneca
+  board: seneca
+- company: series ai
+  board: seriesai
+- company: Serval
+  board: serval
+- company: Sierra
+  board: sierra
+- company: SIFT
+  board: sift
+- company: SimpleClosure
+  board: simpleclosure
+- company: Skydio
+  board: skydio
+- company: Sleeper
+  board: sleeper
+- company: Snowflake
+  board: snowflake
+- company: Solace
+  board: solace
+- company: Sorare
+  board: Sorare
+- company: Speckle
+  board: speckle
+- company: Spellbrush
+  board: spellbrush
+- company: SplitMetrics
+  board: splitmetrics
+- company: Stand
+  board: stand
+- company: Starbridge
+  board: starbridge
+- company: StartPlaying
+  board: startplaying
+- company: Stash
+  board: stash
+- company: Stealth Startup
+  board: stealth-startup
+- company: Strella
+  board: strella
+- company: Substack
+  board: substack
+- company: Suno
+  board: suno
+- company: Supabase
+  board: supabase
+- company: supercell
+  board: supercell
+- company: Survey Monkey
+  board: surveymonkey
+- company: SweatPals
+  board: sweatpals
+- company: Synthesia
+  board: synthesia
+- company: tapblaze
+  board: tapblaze
+- company: Tavus
+  board: tavus
+- company: tempo
+  board: tempo
+- company: Tenjin
+  board: tenjin
+- company: Tennr
+  board: tennr
+- company: TensorWave
+  board: tensorwave
+- company: Thatgamecompany
+  board: Thatgamecompany
+- company: The Believer Company
+  board: believer
+- company: The Global Talent Co.
+  board: the-global-talent-co
+- company: Transfr
+  board: transfr
+- company: Trove
+  board: trove
+- company: Trust Wallet
+  board: trust-wallet
+- company: Tycho.AI
+  board: tycho-ai
+- company: Universe Group
+  board: universe-group
+- company: Valon
+  board: valon
+- company: Vanta
+  board: vanta
+- company: Vapi
+  board: vapi
+- company: Verge Genomics
+  board: verge-genomics
+- company: Voldex
+  board: Voldex
+- company: Watershed
+  board: watershed
+- company: Weaviate
+  board: weaviate
+- company: Welltech
+  board: welltech
+- company: Windranger
+  board: windranger
+- company: wistia
+  board: wistia
+- company: WorkOS
+  board: workos
+- company: Writer
+  board: writer
+- company: Yendo
+  board: yendo
+- company: yubo
+  board: yubo
+- company: Zapier
+  board: zapier

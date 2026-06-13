@@ -1,5 +1,5 @@
 // Command tg-ingest is the standalone Telegram crawl worker. It loads the
-// configured channels from channels.yml, fetches each channel's latest posts from
+// configured channels from sources/telegram.yml, fetches each channel's latest posts from
 // the public t.me web preview, prefilters obvious non-vacancies, and stores new
 // posts in the telegram_posts queue for the extraction worker (cmd/tg-extract).
 // Run it on a schedule (e.g. cron); it crawls every channel once and exits.
@@ -24,7 +24,7 @@ func main() {
 
 	path := os.Getenv("CHANNELS_FILE")
 	if path == "" {
-		path = "channels.yml"
+		path = "sources/telegram.yml"
 	}
 	chanCfg, err := telegram.LoadConfig(path)
 	if err != nil {

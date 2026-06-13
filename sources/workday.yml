@@ -1,0 +1,63 @@
+# workday boards. Provider is the filename; each entry is company + board.
+# board = platform-specific id (see internal/sources/workday.go).
+
+- company: RingCentral
+  board: ringcentral.wd1.myworkdayjobs.com/RingCentral_Careers
+- company: NVIDIA
+  board: nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite
+- company: Salesforce
+  board: salesforce.wd12.myworkdayjobs.com/External_Career_Site
+- company: Adobe
+  board: adobe.wd5.myworkdayjobs.com/external_experienced
+- company: Medtronic
+  board: medtronic.wd1.myworkdayjobs.com/MedtronicCareers
+- company: Mastercard
+  board: mastercard.wd1.myworkdayjobs.com/CorporateCareers
+- company: Gartner
+  board: gartner.wd5.myworkdayjobs.com/EXT
+- company: Pfizer
+  board: pfizer.wd1.myworkdayjobs.com/PfizerCareers
+- company: NXP Semiconductors
+  board: nxp.wd3.myworkdayjobs.com/careers
+- company: CrowdStrike
+  board: crowdstrike.wd5.myworkdayjobs.com/crowdstrikecareers
+- company: Workday
+  board: workday.wd5.myworkdayjobs.com/Workday
+- company: PayPal
+  board: paypal.wd1.myworkdayjobs.com/jobs
+- company: Zoom
+  board: zoom.wd5.myworkdayjobs.com/Zoom
+- company: Silicon Labs
+  board: silabs.wd1.myworkdayjobs.com/SiliconlabsCareers
+- company: Hewlett Packard Enterprise
+  board: hpe.wd5.myworkdayjobs.com/Jobsathpe
+- company: HP
+  board: hp.wd5.myworkdayjobs.com/ExternalCareerSite
+- company: Autodesk
+  board: autodesk.wd1.myworkdayjobs.com/Ext
+- company: eBay
+  board: ebay.wd5.myworkdayjobs.com/apply
+- company: Takeda
+  board: takeda.wd3.myworkdayjobs.com/External
+- company: Novartis
+  board: novartis.wd3.myworkdayjobs.com/Novartis_Careers
+- company: AstraZeneca
+  board: astrazeneca.wd3.myworkdayjobs.com/Careers
+- company: Labcorp
+  board: labcorp.wd1.myworkdayjobs.com/External
+- company: IQVIA
+  board: iqvia.wd1.myworkdayjobs.com/IQVIA
+- company: Target
+  board: target.wd5.myworkdayjobs.com/targetcareers
+- company: Leidos
+  board: leidos.wd5.myworkdayjobs.com/External
+- company: CACI
+  board: caci.wd1.myworkdayjobs.com/External
+- company: Choice Hotels
+  board: choicehotels.wd5.myworkdayjobs.com/External
+- company: Amgen
+  board: amgen.wd1.myworkdayjobs.com/Careers
+- company: Capital One
+  board: capitalone.wd12.myworkdayjobs.com/Capital_One
+- company: 3M
+  board: 3m.wd1.myworkdayjobs.com/Search
