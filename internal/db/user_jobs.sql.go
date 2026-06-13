@@ -44,7 +44,7 @@ func (q *Queries) CountUserJobs(ctx context.Context, userID int64) (CountUserJob
 }
 
 const listUserJobs = `-- name: ListUserJobs :many
-SELECT jobs.id, jobs.source, jobs.external_id, jobs.url, jobs.title, jobs.company, jobs.location, jobs.remote, jobs.description, jobs.posted_at, jobs.created_at, jobs.updated_at, jobs.company_slug, jobs.enrichment, jobs.enriched_at, jobs.enrichment_version, jobs.public_slug, jobs.last_seen_at, jobs.closed_at, uj.viewed_at, uj.saved_at, uj.applied_at
+SELECT jobs.id, jobs.source, jobs.external_id, jobs.url, jobs.title, jobs.company, jobs.location, jobs.remote, jobs.description, jobs.posted_at, jobs.created_at, jobs.updated_at, jobs.company_slug, jobs.enrichment, jobs.enriched_at, jobs.enrichment_version, jobs.public_slug, jobs.last_seen_at, jobs.closed_at, jobs.countries, jobs.regions, jobs.work_mode, uj.viewed_at, uj.saved_at, uj.applied_at
 FROM user_jobs uj
 JOIN jobs ON jobs.id = uj.job_id
 WHERE uj.user_id = $1
@@ -109,6 +109,9 @@ func (q *Queries) ListUserJobs(ctx context.Context, arg ListUserJobsParams) ([]L
 			&i.Job.PublicSlug,
 			&i.Job.LastSeenAt,
 			&i.Job.ClosedAt,
+			&i.Job.Countries,
+			&i.Job.Regions,
+			&i.Job.WorkMode,
 			&i.ViewedAt,
 			&i.SavedAt,
 			&i.AppliedAt,
