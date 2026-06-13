@@ -122,6 +122,53 @@ func TestPersonioFetchFallsBackToDetailWhenFeedDescriptionEmpty(t *testing.T) {
 	}
 }
 
+func TestPersonioFetchFallsBackToEnglishFeedWhenDefaultLocaleEmpty(t *testing.T) {
+	// The default-locale feed omits this posting's body, and its detail page carries no
+	// JobPosting ld+json — but the ?language=en feed does have the body. The adapter
+	// fetches the English feed once and fills the gap from it.
+	defaultFeed := `<?xml version="1.0" encoding="UTF-8"?>
+<workzag-jobs>
+  <position>
+    <id>2632015</id>
+    <office>Hamburg</office>
+    <name>Game Designer</name>
+    <jobDescriptions></jobDescriptions>
+    <createdAt>2026-01-30T16:17:59+00:00</createdAt>
+  </position>
+</workzag-jobs>`
+	enFeed := `<?xml version="1.0" encoding="UTF-8"?>
+<workzag-jobs>
+  <position>
+    <id>2632015</id>
+    <office>Hamburg</office>
+    <name>Game Designer</name>
+    <jobDescriptions>
+      <jobDescription><name>Tasks</name><value><![CDATA[<p>Design the game.</p>]]></value></jobDescription>
+    </jobDescriptions>
+    <createdAt>2026-01-30T16:17:59+00:00</createdAt>
+  </position>
+</workzag-jobs>`
+
+	// Route the English feed before the default one: the ?language=en URL also contains
+	// "/xml", so the more specific match must come first.
+	fake := (&routedHTTP{}).
+		route("language=en", enFeed).
+		route("/xml", defaultFeed)
+
+	jobs, err := NewPersonio(fake).Fetch(context.Background(), CompanyEntry{
+		Company: "Tonies", Provider: "personio", Board: "tonies",
+	})
+	if err != nil {
+		t.Fatalf("Fetch: %v", err)
+	}
+	if len(jobs) != 1 {
+		t.Fatalf("len(jobs) = %d, want 1", len(jobs))
+	}
+	if !strings.Contains(jobs[0].Description, "Design the game.") {
+		t.Errorf("Description = %q, want the English-feed body", jobs[0].Description)
+	}
+}
+
 func TestPersonioFetchEmptyFeed(t *testing.T) {
 	fake := &fakeHTTP{body: `<?xml version="1.0" encoding="UTF-8"?><workzag-jobs></workzag-jobs>`}
 	jobs, err := NewPersonio(fake).Fetch(context.Background(), CompanyEntry{

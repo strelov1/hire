@@ -130,6 +130,58 @@ var nameToCountry = map[string]string{
 	"киев": "ua", "київ": "ua",
 }
 
+// subdivisionToCountry resolves a US state or Canadian province token — a postal
+// abbreviation ("tx", "on") or full name ("texas", "ontario") — to its ISO 3166-1
+// alpha-2 country code, for the "City, ST ZIP" (US) and "City, Province" (Canada)
+// formats that dominate North American ATS data. The region falls out of
+// countryToRegion (us / north_america).
+//
+// Two-letter codes that collide with a country ISO code whose city the parser
+// already keys are deliberately omitted (the country wins, so "Berlin, DE" /
+// "Bangalore, IN" / "Amsterdam, NL" stay Germany / India / Netherlands); those
+// subdivisions resolve via their full name instead. "ca" is the exception: it
+// stays California because "City, CA" is the single most common US location form —
+// the rare "Toronto, CA" mislabel is accepted. The country Georgia is unaffected:
+// the state carries the code "ga", and the name "georgia" is intentionally absent
+// here too (the country resolves via "tbilisi").
+var subdivisionToCountry = map[string]string{
+	// US states (postal codes). de/in/id omitted — they collide with Germany /
+	// India / Indonesia; see delaware/indiana/idaho below.
+	"al": "us", "ak": "us", "az": "us", "ar": "us", "ca": "us", "co": "us",
+	"ct": "us", "fl": "us", "ga": "us", "hi": "us", "ia": "us", "il": "us",
+	"ks": "us", "ky": "us", "la": "us", "ma": "us", "md": "us", "me": "us",
+	"mi": "us", "mn": "us", "mo": "us", "ms": "us", "mt": "us", "nc": "us",
+	"nd": "us", "ne": "us", "nh": "us", "nj": "us", "nm": "us", "nv": "us",
+	"ny": "us", "oh": "us", "ok": "us", "or": "us", "pa": "us", "ri": "us",
+	"sc": "us", "sd": "us", "tn": "us", "tx": "us", "ut": "us", "va": "us",
+	"vt": "us", "wa": "us", "wi": "us", "wv": "us", "wy": "us", "dc": "us",
+	// US states (full names). "georgia" omitted (collides with the country).
+	"alabama": "us", "alaska": "us", "arizona": "us", "arkansas": "us",
+	"california": "us", "colorado": "us", "connecticut": "us", "delaware": "us",
+	"florida": "us", "hawaii": "us", "idaho": "us", "illinois": "us",
+	"indiana": "us", "iowa": "us", "kansas": "us", "kentucky": "us",
+	"louisiana": "us", "maine": "us", "maryland": "us", "massachusetts": "us",
+	"michigan": "us", "minnesota": "us", "mississippi": "us", "missouri": "us",
+	"montana": "us", "nebraska": "us", "nevada": "us", "new hampshire": "us",
+	"new jersey": "us", "new mexico": "us", "new york": "us",
+	"north carolina": "us", "north dakota": "us", "ohio": "us", "oklahoma": "us",
+	"oregon": "us", "pennsylvania": "us", "rhode island": "us",
+	"south carolina": "us", "south dakota": "us", "tennessee": "us",
+	"texas": "us", "utah": "us", "vermont": "us", "virginia": "us",
+	"washington": "us", "west virginia": "us", "wisconsin": "us",
+	"wyoming": "us", "district of columbia": "us",
+	// Canadian provinces (postal codes). "nl" omitted — it collides with the
+	// Netherlands; Newfoundland resolves via its full name below.
+	"on": "ca", "bc": "ca", "qc": "ca", "ab": "ca", "mb": "ca", "sk": "ca",
+	"ns": "ca", "nb": "ca", "pe": "ca", "nt": "ca", "yt": "ca", "nu": "ca",
+	// Canadian provinces (full names).
+	"ontario": "ca", "quebec": "ca", "british columbia": "ca", "alberta": "ca",
+	"manitoba": "ca", "saskatchewan": "ca", "nova scotia": "ca",
+	"new brunswick": "ca", "newfoundland and labrador": "ca",
+	"prince edward island": "ca", "northwest territories": "ca",
+	"yukon": "ca", "nunavut": "ca",
+}
+
 // nameToRegion resolves macro-region names (and explicit open-anywhere markers)
 // directly to a region code, for tokens that name an area rather than a country.
 var nameToRegion = map[string]string{
