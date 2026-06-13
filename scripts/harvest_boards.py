@@ -57,7 +57,7 @@ SLUG_BLOCKLIST = {"embed", "jobs", "job", "j", "o", "share", "en-us", "en-gb"}
 # "logitech.wd5.myworkdayjobs.com/Logitech"), and the site segment sits before
 # /job/ or /details/ in a posting URL, after an optional locale prefix.
 WORKDAY_RE = re.compile(
-    r"https?://([a-z0-9-]+\.wd\d+\.myworkdayjobs\.com)/(?:[a-z]{2}-[A-Z]{2}/)?([^/?\"]+)/(?:job|details)/"
+    r"https?://([a-z0-9-]+\.wd\d+\.myworkdayjobs\.com)/(?:[a-zA-Z]{2}-[a-zA-Z]{2}/)?([^/?\"]+)/(?:job|details)/"
 )
 
 # Validation endpoints — identical to internal/sources/{greenhouse,lever,ashby}.go.
@@ -225,6 +225,38 @@ def workday_names(text: str) -> dict[tuple[str, str], str]:
     return names
 
 
+def github_fragments(query: str, pages: int) -> list[str]:
+    """Run a GitHub code-search query and return the matched text fragments."""
+    frags: list[str] = []
+    for page in range(1, pages + 1):
+        try:
+            raw = subprocess.run(
+                ["gh", "api", "-X", "GET", "search/code",
+                 "-H", "Accept: application/vnd.github.text-match+json",
+                 "-f", f"q={query} in:file", "-f", "per_page=100", "-f", f"page={page}"],
+                capture_output=True, text=True, timeout=60,
+            ).stdout
+            items = json.loads(raw).get("items", [])
+        except Exception as e:
+            print(f"  ! github query failed ({query} p{page}): {e}", file=sys.stderr)
+            break
+        if not items:
+            break
+        for it in items:
+            for m in it.get("text_matches", []):
+                frags.append(m.get("fragment", ""))
+    return frags
+
+
+def harvest_github_workday(pages: int = 5) -> dict[tuple[str, str], str]:
+    """Sweep GitHub code search for Workday board URLs (job lists in READMEs etc.)."""
+    out: dict[tuple[str, str], str] = {}
+    for frag in github_fragments("myworkdayjobs.com", pages):
+        for host, site in WORKDAY_RE.findall(frag):
+            out.setdefault((host, site), host.split(".")[0].title())
+    return out
+
+
 def existing_workday() -> set[str]:
     out: set[str] = set()
     f = SOURCES_DIR / "workday.yml"
@@ -254,9 +286,13 @@ def validate_workday(host: str, site: str) -> int | None:
     return total or None
 
 
-def run_workday(write: bool) -> int:
+def run_workday(write: bool, github: bool) -> int:
     print("== harvesting Workday boards ==", file=sys.stderr)
     cand = harvest_workday()
+    if github:
+        print("== sweeping GitHub code search (myworkdayjobs) ==", file=sys.stderr)
+        for key, name in harvest_github_workday().items():
+            cand.setdefault(key, name)
     have = existing_workday()
     # Collapse case-variants of one board (CXS is case-insensitive), keeping the first
     # spelling seen, and drop anything already tracked.
@@ -299,7 +335,7 @@ def main() -> int:
     args = ap.parse_args()
 
     if args.workday:
-        return run_workday(args.write)
+        return run_workday(args.write, args.github)
 
     print("== harvesting aggregators ==", file=sys.stderr)
     cand = harvest_aggregators()
