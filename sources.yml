@@ -4855,7 +4855,123 @@ sources:
     board: "10web"
 
   # --- Workday (board = "<host>/<site>", e.g. acme.wd1.myworkdayjobs.com/Careers;
-  # the CXS API tenant is the host's first label) ---
+  # the CXS API tenant is the host's first label) — slugs validated live ---
   - company: "RingCentral"
     provider: workday
     board: "ringcentral.wd1.myworkdayjobs.com/RingCentral_Careers"
+
+  - company: "NVIDIA"
+    provider: workday
+    board: "nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite"
+
+  - company: "Salesforce"
+    provider: workday
+    board: "salesforce.wd12.myworkdayjobs.com/External_Career_Site"
+
+  - company: "Adobe"
+    provider: workday
+    board: "adobe.wd5.myworkdayjobs.com/external_experienced"
+
+  - company: "Medtronic"
+    provider: workday
+    board: "medtronic.wd1.myworkdayjobs.com/MedtronicCareers"
+
+  - company: "Mastercard"
+    provider: workday
+    board: "mastercard.wd1.myworkdayjobs.com/CorporateCareers"
+
+  - company: "Gartner"
+    provider: workday
+    board: "gartner.wd5.myworkdayjobs.com/EXT"
+
+  - company: "Pfizer"
+    provider: workday
+    board: "pfizer.wd1.myworkdayjobs.com/PfizerCareers"
+
+  - company: "NXP Semiconductors"
+    provider: workday
+    board: "nxp.wd3.myworkdayjobs.com/careers"
+
+  - company: "CrowdStrike"
+    provider: workday
+    board: "crowdstrike.wd5.myworkdayjobs.com/crowdstrikecareers"
+
+  - company: "Workday"
+    provider: workday
+    board: "workday.wd5.myworkdayjobs.com/Workday"
+
+  - company: "PayPal"
+    provider: workday
+    board: "paypal.wd1.myworkdayjobs.com/jobs"
+
+  - company: "Zoom"
+    provider: workday
+    board: "zoom.wd5.myworkdayjobs.com/Zoom"
+
+  - company: "Silicon Labs"
+    provider: workday
+    board: "silabs.wd1.myworkdayjobs.com/SiliconlabsCareers"
+
+  - company: "Hewlett Packard Enterprise"
+    provider: workday
+    board: "hpe.wd5.myworkdayjobs.com/Jobsathpe"
+
+  - company: "HP"
+    provider: workday
+    board: "hp.wd5.myworkdayjobs.com/ExternalCareerSite"
+
+  - company: "Autodesk"
+    provider: workday
+    board: "autodesk.wd1.myworkdayjobs.com/Ext"
+
+  - company: "eBay"
+    provider: workday
+    board: "ebay.wd5.myworkdayjobs.com/apply"
+
+  - company: "Takeda"
+    provider: workday
+    board: "takeda.wd3.myworkdayjobs.com/External"
+
+  - company: "Novartis"
+    provider: workday
+    board: "novartis.wd3.myworkdayjobs.com/Novartis_Careers"
+
+  - company: "AstraZeneca"
+    provider: workday
+    board: "astrazeneca.wd3.myworkdayjobs.com/Careers"
+
+  - company: "Labcorp"
+    provider: workday
+    board: "labcorp.wd1.myworkdayjobs.com/External"
+
+  - company: "IQVIA"
+    provider: workday
+    board: "iqvia.wd1.myworkdayjobs.com/IQVIA"
+
+  - company: "Target"
+    provider: workday
+    board: "target.wd5.myworkdayjobs.com/targetcareers"
+
+  - company: "Leidos"
+    provider: workday
+    board: "leidos.wd5.myworkdayjobs.com/External"
+
+  - company: "CACI"
+    provider: workday
+    board: "caci.wd1.myworkdayjobs.com/External"
+
+  - company: "Choice Hotels"
+    provider: workday
+    board: "choicehotels.wd5.myworkdayjobs.com/External"
+
+  - company: "Amgen"
+    provider: workday
+    board: "amgen.wd1.myworkdayjobs.com/Careers"
+
+  - company: "Capital One"
+    provider: workday
+    board: "capitalone.wd12.myworkdayjobs.com/Capital_One"
+
+  - company: "3M"
+    provider: workday
+    board: "3m.wd1.myworkdayjobs.com/Search"
