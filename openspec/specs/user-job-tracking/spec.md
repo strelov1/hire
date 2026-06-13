@@ -10,15 +10,15 @@ post-Apply "Did you apply?" prompt. Writes require a session; the public job rea
 path is untouched. The model is the thin first slice of a personal application
 tracker: `applied_at` is the entry point for a future stage pipeline, and the
 composite key already guarantees at most one application per `(user, job)`.
-
 ## Requirements
-
 ### Requirement: Recording a job view
 
 The system SHALL let an authenticated user record that they viewed a job, keyed
-by `(user, job)`, idempotently. The first view creates the interaction; a repeat
-view refreshes its timestamp without creating a duplicate. The endpoint SHALL
-return the interaction record, including whether the job has been applied to.
+by `(user, job)`, idempotently. Authentication MAY be by session cookie or by API
+key; either identifies the acting user identically. The first view creates the
+interaction; a repeat view refreshes its timestamp without creating a duplicate.
+The endpoint SHALL return the interaction record, including whether the job has
+been applied to.
 
 #### Scenario: First view by a signed-in user
 
@@ -37,8 +37,16 @@ return the interaction record, including whether the job has been applied to.
 
 #### Scenario: View requires authentication
 
-- **WHEN** a request to `POST /api/v1/jobs/:id/view` carries no valid auth cookie
+- **WHEN** a request to `POST /api/v1/jobs/:id/view` carries neither a valid auth
+  cookie nor a valid API key
 - **THEN** the system responds `401` and records nothing
+
+#### Scenario: View authenticated by an API key
+
+- **WHEN** a request to `POST /api/v1/jobs/:id/view` carries a valid
+  `Authorization: Bearer <key>` and no cookie
+- **THEN** the system records the view for the key's owning user exactly as a
+  cookie session would and responds `200` with the interaction record
 
 #### Scenario: View with a non-numeric id
 
@@ -49,9 +57,10 @@ return the interaction record, including whether the job has been applied to.
 ### Requirement: Marking a job applied
 
 The system SHALL let an authenticated user mark a job as applied, idempotently.
-Marking applied sets `applied_at`; it works whether or not a view was recorded
-first, and repeating it does not create a duplicate or error. The endpoint SHALL
-return the updated interaction record.
+Authentication MAY be by session cookie or by API key; either identifies the
+acting user identically. Marking applied sets `applied_at`; it works whether or
+not a view was recorded first, and repeating it does not create a duplicate or
+error. The endpoint SHALL return the updated interaction record.
 
 #### Scenario: Mark applied after viewing
 
@@ -69,8 +78,16 @@ return the updated interaction record.
 
 #### Scenario: Apply requires authentication
 
-- **WHEN** a request to `POST /api/v1/jobs/:id/apply` carries no valid auth cookie
+- **WHEN** a request to `POST /api/v1/jobs/:id/apply` carries neither a valid auth
+  cookie nor a valid API key
 - **THEN** the system responds `401` and records nothing
+
+#### Scenario: Apply authenticated by an API key
+
+- **WHEN** a request to `POST /api/v1/jobs/:id/apply` carries a valid
+  `Authorization: Bearer <key>` and no cookie
+- **THEN** the system marks the job applied for the key's owning user exactly as a
+  cookie session would and responds `200` with the updated interaction record
 
 #### Scenario: Apply to a non-existent job
 
@@ -124,3 +141,4 @@ view unchanged.
 - **WHEN** a signed-out user opens a job
 - **THEN** the job view behaves exactly as before this change
 - **AND** no view or apply request is sent
+
