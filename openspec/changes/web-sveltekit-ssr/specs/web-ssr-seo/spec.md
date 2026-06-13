@@ -2,7 +2,7 @@
 
 ### Requirement: Public pages are server-rendered
 
-The frontend SHALL render the public read pages — the jobs list (`/`), job
+The frontend SHALL render the public read pages — the jobs list (`/jobs`), job
 detail (`/jobs/:slug`), companies list (`/companies`), and company detail
 (`/companies/:slug`) — on the server, so the initial HTML response contains the
 page's primary content (job titles/descriptions, company info) before any
@@ -19,7 +19,7 @@ authenticated request renders the correct content.
 
 #### Scenario: Listing content is in the initial HTML
 
-- **WHEN** a crawler or client requests `GET /` or `GET /companies`
+- **WHEN** a crawler or client requests `GET /jobs` or `GET /companies`
 - **THEN** the returned HTML body already contains the first page of rendered
   rows
 
@@ -46,7 +46,7 @@ single static `freehire` title used for every URL.
 
 #### Scenario: List pages carry their own metadata
 
-- **WHEN** a public list page (`/`, `/companies`) is requested
+- **WHEN** a public list page (`/jobs`, `/companies`) is requested
 - **THEN** its `<head>` carries a page-appropriate title, description, and
   canonical URL distinct from the job-detail metadata
 

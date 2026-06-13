@@ -14,7 +14,7 @@ hydrate on the client for subsequent interaction.
 
 #### Scenario: Jobs are listed
 
-- **WHEN** a user opens the jobs route `/`
+- **WHEN** a user opens the jobs route `/jobs`
 - **THEN** the server returns HTML already containing the first page of job rows,
   each linking to its job detail
 
