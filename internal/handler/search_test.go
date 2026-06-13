@@ -97,6 +97,37 @@ func TestSearchJobs_PassesParamsAndShapesResponse(t *testing.T) {
 	}
 }
 
+func TestSearchJobs_DeepPaginationRejected(t *testing.T) {
+	fake := &fakeSearcher{}
+	app := searchApp(fake)
+
+	// offset+limit past the window must be refused before the backend is touched.
+	status, body := doGet(t, app, "/jobs/search?offset=10000&limit=100")
+	if status != fiber.StatusBadRequest {
+		t.Fatalf("status = %d, want 400", status)
+	}
+	if fake.got.Limit != 0 {
+		t.Errorf("searcher was called despite deep pagination: %#v", fake.got)
+	}
+	if body["error"] == nil {
+		t.Errorf("expected an error message, got %v", body)
+	}
+}
+
+func TestSearchJobs_PaginationAtWindowBoundaryAllowed(t *testing.T) {
+	fake := &fakeSearcher{}
+	app := searchApp(fake)
+
+	// offset+limit exactly at the window is still allowed and reaches the backend.
+	status, _ := doGet(t, app, "/jobs/search?offset=9900&limit=100")
+	if status != fiber.StatusOK {
+		t.Fatalf("status = %d, want 200", status)
+	}
+	if fake.got.Offset != 9900 || fake.got.Limit != 100 {
+		t.Errorf("offset/limit = %d/%d, want 9900/100 (within window)", fake.got.Offset, fake.got.Limit)
+	}
+}
+
 func TestSearchJobs_DefaultsToHybridSemanticRatio(t *testing.T) {
 	fake := &fakeSearcher{}
 	app := searchApp(fake)

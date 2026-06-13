@@ -22,6 +22,13 @@ type searcher interface {
 // keyword search.
 const defaultSemanticRatio = 0.5
 
+// maxSearchWindow bounds how deep search pagination may reach (offset+limit). It
+// is the explicit pagination guard, decoupled from the index's maxTotalHits
+// (which now only sets how high the reported total may count): the total can read
+// the true filtered count while deep offset paging — the expensive part — stays
+// refused. ~500 pages at the default limit is far beyond any real browsing.
+const maxSearchWindow = 10000
+
 // searchStringFacets maps an equality-facet query param to its index attribute.
 // Enrichment facets live under the nested "enrichment" object, so they filter on
 // a dot path. Geography (regions/countries) and work_mode are resolved facets
@@ -66,6 +73,9 @@ func (h *Handler) SearchJobs(c *fiber.Ctx) error {
 	}
 
 	limit, offset := pageParams(c)
+	if offset+limit > maxSearchWindow {
+		return fiber.NewError(fiber.StatusBadRequest, "pagination too deep")
+	}
 	ratio := min(max(c.QueryFloat("semantic_ratio", defaultSemanticRatio), 0), 1)
 
 	res, err := h.search.Search(c.Context(), search.SearchParams{

@@ -22,9 +22,12 @@ const (
 	// search needs no external API key. Multilingual + CPU-friendly.
 	embedderModel = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
-	// maxTotalHits caps how deep pagination can reach; estimatedTotalHits may
-	// report more.
-	maxTotalHits = 100000
+	// maxTotalHits caps how high a search counts its results: below it,
+	// estimatedTotalHits is the true filtered total, so it is set well above the
+	// index size to keep the reported count honest. It is NOT the pagination guard
+	// — deep offset paging is bounded separately by maxSearchWindow in the search
+	// handler — so a large value here costs nothing beyond an accurate total.
+	maxTotalHits = 1000000
 
 	taskPollInterval = 50 * time.Millisecond
 )
