@@ -158,16 +158,17 @@ again on the next run.
 ### Requirement: Default ordering is newest-added first
 
 A search request with no query text and no valid `sort` parameter SHALL return
-jobs ordered by the time they entered the catalogue (`created_at`), newest
-first. A request with query text and no `sort` SHALL keep relevance order. An
-explicit valid `sort` parameter SHALL always take precedence. `created_at`
-SHALL be a sortable attribute of the index and an accepted `sort` value. The
-DB-backed jobs list SHALL use the same newest-added-first ordering.
+jobs ordered by the source's posting date (`posted_at`), newest first. A request
+with query text and no `sort` SHALL keep relevance order. An explicit valid
+`sort` parameter SHALL always take precedence. Both `posted_at` and `created_at`
+SHALL be sortable attributes of the index and accepted `sort` values. The
+DB-backed jobs list keeps its own stable default (`created_at` descending) and is
+no longer required to match the search default.
 
-#### Scenario: Browsing without a query shows newest additions first
+#### Scenario: Browsing without a query shows freshest postings first
 
 - **WHEN** the search endpoint is called with empty `q` and no `sort`
-- **THEN** results are ordered `created_at` descending
+- **THEN** results are ordered `posted_at` descending
 
 #### Scenario: A text query keeps relevance order
 
@@ -176,6 +177,6 @@ DB-backed jobs list SHALL use the same newest-added-first ordering.
 
 #### Scenario: Explicit sort wins
 
-- **WHEN** the search endpoint is called with `sort=posted_at&order=asc`
-- **THEN** results are ordered by `posted_at` ascending regardless of `q`
+- **WHEN** the search endpoint is called with `sort=created_at&order=desc`
+- **THEN** results are ordered by `created_at` descending regardless of `q`
 
