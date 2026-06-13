@@ -1,9 +1,9 @@
 ## 1. Database schema & queries
 
-- [ ] 1.1 Add `migrations/0013_api_keys.sql`: `api_keys` table (`id` identity PK, `user_id` BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE, `name` TEXT NOT NULL, `token_hash` TEXT NOT NULL, `token_prefix` TEXT NOT NULL, `created_at` TIMESTAMPTZ NOT NULL DEFAULT now(), `last_used_at` TIMESTAMPTZ, `expires_at` TIMESTAMPTZ), a UNIQUE index on `token_hash`, and an index on `user_id`.
-- [ ] 1.2 Add `internal/db/queries/api_keys.sql`: `CreateAPIKey` (:one, RETURNING display fields, no hash), `ListAPIKeysByUser` (:many, metadata only, newest first), `AuthenticateAPIKey` (:one, `UPDATE … SET last_used_at = now() WHERE token_hash = $1 AND (expires_at IS NULL OR expires_at > now()) RETURNING user_id`), `DeleteAPIKey` (:execrows, `WHERE id = $1 AND user_id = $2`).
-- [ ] 1.3 Run `make sqlc`; commit the regenerated `internal/db` code. Confirm `*db.Queries` gains `AuthenticateAPIKey(ctx, tokenHash string) (int64, error)`.
-- [ ] 1.4 Recreate the dev volume (`docker compose down -v && make up`) so initdb applies `0013`; confirm the `api_keys` table exists (migrations apply on first volume init only).
+- [x] 1.1 Add `migrations/0013_api_keys.sql`: `api_keys` table (`id` identity PK, `user_id` BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE, `name` TEXT NOT NULL, `token_hash` TEXT NOT NULL, `token_prefix` TEXT NOT NULL, `created_at` TIMESTAMPTZ NOT NULL DEFAULT now(), `last_used_at` TIMESTAMPTZ, `expires_at` TIMESTAMPTZ), a UNIQUE index on `token_hash`, and an index on `user_id`.
+- [x] 1.2 Add `internal/db/queries/api_keys.sql`: `CreateAPIKey` (:one, RETURNING display fields, no hash), `ListAPIKeysByUser` (:many, metadata only, newest first), `AuthenticateAPIKey` (:one, `UPDATE … SET last_used_at = now() WHERE token_hash = $1 AND (expires_at IS NULL OR expires_at > now()) RETURNING user_id`), `DeleteAPIKey` (:execrows, `WHERE id = $1 AND user_id = $2`).
+- [x] 1.3 Run `make sqlc`; commit the regenerated `internal/db` code. Confirm `*db.Queries` gains `AuthenticateAPIKey(ctx, tokenHash string) (int64, error)`.
+- [ ] 1.4 Recreate the dev volume (`docker compose down -v && make up`) so initdb applies `0013`; confirm the `api_keys` table exists (migrations apply on first volume init only). _Deferred: destructive/env-affecting manual step for e2e (group 6); the `0013` schema is validated automatically by the group-4 testcontainers tests._
 
 ## 2. Auth: token primitives & dual-auth middleware (internal/auth)
 

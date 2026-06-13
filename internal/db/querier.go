@@ -9,6 +9,10 @@ import (
 )
 
 type Querier interface {
+	// Resolve a presented token (by its SHA-256 hash) to the owning user id, enforcing
+	// expiry and touching last_used_at in one atomic statement. No row means the key is
+	// unknown, revoked, or expired; the caller treats pgx.ErrNoRows as 401.
+	AuthenticateAPIKey(ctx context.Context, tokenHash string) (int64, error)
 	// Claim a batch of live, unleased entries by stamping claimed_at. SKIP LOCKED lets
 	// concurrent workers take disjoint rows; the lease predicate reclaims entries whose
 	// worker died (stale claimed_at), so no separate reaper process is needed.
@@ -32,12 +36,21 @@ type Querier interface {
 	// every interaction row; "viewed" is the view-only subset (neither saved nor
 	// applied), matching the ListUserJobs filter.
 	CountUserJobs(ctx context.Context, userID int64) (CountUserJobsRow, error)
+	// Create an API key for a user. The caller passes the SHA-256 token_hash and the
+	// display token_prefix; the plaintext token is shown once and never stored.
+	// expires_at NULL means the key never expires. Returns display fields only, never
+	// the hash.
+	CreateAPIKey(ctx context.Context, arg CreateAPIKeyParams) (CreateAPIKeyRow, error)
 	// Register a new account. email is stored as given (the handler lowercases it);
 	// the unique index on lower(email) rejects duplicates regardless of case.
 	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
 	// Link a provider identity to an account (first OAuth sign-in). The composite
 	// primary key rejects a duplicate identity.
 	CreateUserIdentity(ctx context.Context, arg CreateUserIdentityParams) error
+	// Revoke (delete) a key, scoped to its owner so a user can only delete their own.
+	// Returns the affected row count: 0 means the key does not exist or is not the
+	// caller's (the handler maps that to 404).
+	DeleteAPIKey(ctx context.Context, arg DeleteAPIKeyParams) (int64, error)
 	DeleteEnrichmentEntry(ctx context.Context, id int64) error
 	// Drop companies no longer referenced by any job — the stale rows left behind
 	// when a slug-builder change re-keys jobs onto new slugs.
@@ -72,6 +85,8 @@ type Querier interface {
 	// never reset. extracted_at is non-NULL when the ingest prefilter already
 	// decided the post holds no vacancy, so it is recorded but never queued.
 	InsertTelegramPost(ctx context.Context, arg InsertTelegramPostParams) (int64, error)
+	// A user's API keys, newest first. Metadata only — never the token_hash.
+	ListAPIKeysByUser(ctx context.Context, userID int64) ([]ListAPIKeysByUserRow, error)
 	// Catalog page: companies with their job counts. The job count is computed on
 	// the fly (no denormalized counter yet). This is the one acknowledged place a
 	// join to jobs is acceptable; LEFT JOIN keeps companies with zero jobs visible.
