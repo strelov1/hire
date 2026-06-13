@@ -19,6 +19,7 @@ type tbankHTTP struct {
 	pages     map[int]string    // offset -> canned getVacancies payload
 	detail    map[string]string // urlSlug -> canned getVacancyDescription payload
 	failSlugs map[string]bool   // urlSlugs whose detail request errors
+	listCalls int               // number of getVacancies requests served (loop-termination guard)
 }
 
 func (f *tbankHTTP) GetJSON(context.Context, string, any) error {
@@ -43,6 +44,10 @@ func (f *tbankHTTP) PostJSON(_ context.Context, url string, body, v any) error {
 		req, ok := body.(tbankListRequest)
 		if !ok {
 			return errors.New("tbankHTTP: list body is not a tbankListRequest")
+		}
+		f.listCalls++
+		if f.listCalls > 8 { // a non-advancing loop would spin forever; bound the test
+			return errors.New("tbankHTTP: too many list calls (pagination did not terminate)")
 		}
 		raw, ok := f.pages[req.Pagination.Publisher.Offset]
 		if !ok {
@@ -194,6 +199,29 @@ func TestTBankFailedDetailDropsOnlyThatPosting(t *testing.T) {
 	}
 	if len(jobs) != 1 || jobs[0].ExternalID != "ok" {
 		t.Fatalf("got %v, want only the ok posting", jobs)
+	}
+}
+
+// A stale gateway can return isFinished=false while no longer advancing the offset; the
+// loop must terminate on a non-advancing offset rather than spin forever.
+func TestTBankListTerminatesWhenOffsetStopsAdvancing(t *testing.T) {
+	fake := &tbankHTTP{
+		pages: map[int]string{
+			// next offset 0 == current offset, never finished: the server is not advancing.
+			0: tbankListPage(0, false, tbankVacancy("Stuck", "Москва", "c", "s1", "stuck")),
+		},
+		detail: map[string]string{"s1": `{"resultCode":"OK","payload":{"description":[{"key":"k","content":"<p>x</p>"}]}}`},
+	}
+
+	jobs, err := NewTBank(fake).Fetch(context.Background(), CompanyEntry{Company: "T-Bank"})
+	if err != nil {
+		t.Fatalf("Fetch: %v", err)
+	}
+	if fake.listCalls != 1 {
+		t.Errorf("listCalls = %d, want 1 (loop must stop when offset does not advance)", fake.listCalls)
+	}
+	if len(jobs) != 1 {
+		t.Fatalf("len(jobs) = %d, want 1", len(jobs))
 	}
 }
 

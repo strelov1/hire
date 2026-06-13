@@ -97,10 +97,14 @@ func (b tbank) list(ctx context.Context) ([]tbankVacancyItem, error) {
 			return nil, fmt.Errorf("tbank: list offset %d: %w", offset, err)
 		}
 		items = append(items, resp.Payload.Vacancies...)
-		if resp.Payload.NextPagination.Publisher.IsFinished {
+		next := resp.Payload.NextPagination.Publisher.Offset
+		// Terminate on the server's isFinished flag, but also guard against a stale gateway
+		// that keeps isFinished=false without advancing the offset — otherwise the loop would
+		// re-issue the same request forever.
+		if resp.Payload.NextPagination.Publisher.IsFinished || next <= offset {
 			break
 		}
-		offset = resp.Payload.NextPagination.Publisher.Offset
+		offset = next
 	}
 	return items, nil
 }
