@@ -6,9 +6,7 @@ Capture AI-derived, additive metadata for each job — seniority, work mode,
 skills, salary, location descriptors, and company descriptors — in a typed,
 versioned enrichment payload, so jobs can be filtered and presented richly
 without altering the raw source fields ingested by parsers.
-
 ## Requirements
-
 ### Requirement: Jobs store an additive enrichment payload
 
 The system SHALL store a structured enrichment payload per job in a
@@ -38,16 +36,21 @@ fields SHALL accept only their defined vocabulary values; `skills`, `cities`,
 lowercase tokens. The contract SHALL provide validation of a payload against the
 vocabularies.
 
-The contract SHALL capture a remote role's geographic reach in a single `regions`
-field — an enum array of reach codes drawn from one controlled vocabulary that
-mixes levels: `global` (open anywhere), macro-regions (`eu`, `emea`, `eea`, `uk`,
-`americas`, `north_america`, `latam`, `apac`, `mena`, `africa`), and select
-countries treated as reach areas (e.g. `us`, `ru`). There SHALL be no separate
-remote-scope discriminator field: an absent/empty `regions` means *unknown*, and
-`global` is an explicit value (never inferred from the absence of other reach
-codes), so open-anywhere is distinct from unknown. `regions` is meaningful only
-when `work_mode` is `remote`. Validation SHALL check each `regions` element
-against the vocabulary.
+The contract SHALL capture a job's geographic area in a single `regions` field —
+an enum array of codes drawn from one controlled vocabulary that mixes levels:
+`global` (open anywhere), macro-regions (`eu`, `emea`, `eea`, `uk`, `americas`,
+`north_america`, `latam`, `apac`, `mena`, `africa`), and select countries treated
+as area codes (e.g. `us`, `ru`). `regions` denotes the geographic area of the job
+and is meaningful for any `work_mode` (for a remote role its reach, for an onsite
+role its office area); the prior restriction to remote roles is removed. There
+SHALL be no separate scope discriminator field: an absent/empty `regions` means
+*unknown*, and `global` is an explicit value (never inferred from the absence of
+other codes), so open-anywhere is distinct from unknown. Validation SHALL check
+each `regions` element against the vocabulary. The enrichment-derived `regions`,
+`countries`, and `work_mode` are an *additive* source: at read time they fold into
+the top-level job geography facet (see the job-geography capability) — geography by
+union, `work_mode` by precedence (the LLM value winning over the ingest one) —
+rather than being served as independent enrichment fields.
 
 #### Scenario: Payload round-trips through the typed contract
 
@@ -82,7 +85,7 @@ against the vocabulary.
 - **WHEN** one job's enrichment has `regions=[global]`, and another's has empty
   `regions`
 - **THEN** the two payloads are distinguishable: the first denotes open-anywhere,
-  the second denotes unknown reach
+  the second denotes unknown
 
 ### Requirement: Enrichment provenance is tracked per job
 
@@ -119,10 +122,14 @@ Writing them SHALL NOT alter any `companies` row.
 The system SHALL include `enrichment`, `enriched_at`, and `enrichment_version` in
 the job objects returned by the jobs read endpoints (`GET /api/v1/jobs`,
 `GET /api/v1/jobs/:id`, and jobs nested under a company). The public job object
-SHALL NOT include the raw `remote` boolean: the public notion of "remote" is
-expressed solely through `enrichment.work_mode` (and `enrichment.regions` for
-reach), which subsume it. The `jobs.remote` column itself SHALL be retained as an
-internal enrichment input and SHALL NOT be removed.
+SHALL expose geography as top-level `regions` and `countries` fields (the union of
+the parsed-location columns and the enrichment-derived values) and `work_mode` as
+a top-level field (the LLM value when present, else the ingest-derived one); these
+fields SHALL NOT additionally appear as independent fields under `enrichment`. The
+public job object SHALL NOT include the raw `remote` boolean: the public notion of
+"remote" is expressed solely through the top-level `work_mode` (and the top-level
+geography for area), which subsume it. The `jobs.remote` column itself SHALL be
+retained as an internal enrichment input and SHALL NOT be removed.
 
 #### Scenario: Job detail includes enrichment and provenance
 
@@ -135,7 +142,15 @@ internal enrichment input and SHALL NOT be removed.
 - **WHEN** a job that has not been enriched is returned by a read endpoint
 - **THEN** its `enrichment` is serialized as an empty object (`{}`), not null
 
+#### Scenario: Geography and work mode are served top-level, not duplicated under enrichment
+
+- **WHEN** a client reads a job whose enrichment contained
+  `regions`/`countries`/`work_mode`
+- **THEN** the returned object carries top-level `regions`/`countries`/`work_mode`
+  and its `enrichment` object does not separately repeat those fields
+
 #### Scenario: The raw remote flag is absent from the public job object
 
 - **WHEN** a client requests any jobs read endpoint
 - **THEN** the returned job objects do not contain a top-level `remote` field
+

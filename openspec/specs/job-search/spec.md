@@ -20,13 +20,17 @@ The index SHALL declare:
   filterable attribute (work_mode subsumes it).
 - **sortable attributes**: posted_at, salary_min, salary_max.
 
-Remote reach is filtered through the enrichment's `regions` field directly (the
-dot path `enrichment.regions`), the same way other enrichment facets are
-filtered; there SHALL be no separate derived reach field on the document.
+Geography and work mode are filtered through the document's **top-level**
+`regions`, `countries`, and `work_mode` fields — the resolved union/precedence of
+the location-derived columns and the enrichment-derived values — not through the
+`enrichment.*` dot paths. There SHALL be no separate
+`enrichment.regions`/`enrichment.countries`/`enrichment.work_mode` facet on the
+document.
 
 Facets derived from a job's `enrichment` JSONB SHALL be absent (or empty) on the
 document when the job is not yet enriched; an unenriched job SHALL still be
-indexed and findable by its text fields.
+indexed and findable by its text fields, and SHALL still carry any geography
+parsed from its location.
 
 #### Scenario: A job is represented as one searchable document
 
@@ -35,16 +39,17 @@ indexed and findable by its text fields.
 - **THEN** the `jobs` index holds one document keyed by that job's `id` whose
   searchable text includes the title, company, and description
 
-#### Scenario: Unenriched job is still indexed
+#### Scenario: Unenriched job is still indexed with its parsed geography
 
-- **WHEN** a job with no enrichment is indexed
-- **THEN** the document is present and matchable by its title/company/description
-  text, with its enrichment-derived facets absent or empty
+- **WHEN** a job with no enrichment but location `Remote - USA` is indexed
+- **THEN** the document is present and matchable by its text, with its
+  enrichment-derived facets absent or empty and its top-level `regions`/
+  `countries` carrying the parsed geography
 
-#### Scenario: Reach is filterable via the regions facet
+#### Scenario: Geography is filterable via the top-level regions facet
 
-- **WHEN** a job with `work_mode=remote` and `regions=[eu]` is indexed
-- **THEN** it is returned by a filter on `enrichment.regions = "eu"`
+- **WHEN** a job whose unioned geography includes `eu` is indexed
+- **THEN** it is returned by a filter on `regions = "eu"`
 
 ### Requirement: Hybrid keyword and semantic search
 
@@ -72,7 +77,7 @@ independent of the embedder.
 The system SHALL expose `GET /api/v1/jobs/search` as a public (unauthenticated)
 endpoint. It SHALL accept a free-text query `q`, facet filters matching the
 index's filterable attributes, an optional sort, an optional semantic ratio, and
-`limit`/`offset` pagination. Facet filters SHALL include `regions` (the reach
+`limit`/`offset` pagination. Facet filters SHALL include `regions` (the geography
 facet) and SHALL NOT include the removed raw `remote` filter. The response SHALL
 use the standard list envelope `{"data": [...], "meta": {...}}`, where `data` is
 the matched job documents and `meta` carries at least the estimated total hit
@@ -93,8 +98,8 @@ other public job reads.
 
 - **WHEN** a client requests
   `GET /api/v1/jobs/search?q=engineer&seniority=senior&regions=eu`
-- **THEN** only jobs whose facets satisfy seniority=senior AND whose `regions`
-  include `eu` are returned
+- **THEN** only jobs whose facets satisfy seniority=senior AND whose top-level
+  `regions` include `eu` are returned
 
 #### Scenario: Empty query browses with filters
 
