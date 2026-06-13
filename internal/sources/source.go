@@ -56,6 +56,7 @@ func All(c HTTPClient) map[string]Source {
 		NewBambooHR(c),
 		NewWorkday(c),
 		NewHuntflow(c),
+		NewGem(c),
 	)
 }
 
@@ -143,6 +144,16 @@ func parseEpochMillis(ms int64) *time.Time {
 		return nil
 	}
 	t := time.UnixMilli(ms).UTC()
+	return &t
+}
+
+// parseEpochSeconds converts a Unix-second timestamp into a posted_at, returning nil for
+// a zero value (treated as "no date"). Gem dates postings with firstPublishedTsSec.
+func parseEpochSeconds(s int64) *time.Time {
+	if s == 0 {
+		return nil
+	}
+	t := time.Unix(s, 0).UTC()
 	return &t
 }
 

@@ -1,0 +1,70 @@
+# gem boards. Provider is the filename; each entry is company + board.
+# board = the jobs.gem.com vanity path (see internal/sources/gem.go).
+# Each board validated live (>0 open postings via the public GraphQL) before adding.
+
+- company: 11x
+  board: 11x-ai
+- company: Atla
+  board: atla-ai-com
+- company: Basalt Health
+  board: basalt-health
+- company: Blue J
+  board: blue-j
+- company: Bluesky
+  board: bluesky
+- company: Cadre AI
+  board: go-cadre
+- company: Charta Health
+  board: chartahealth
+- company: Converge
+  board: converge
+- company: Fireflies
+  board: fireflies
+- company: Firestorm
+  board: firestorm
+- company: Friday Harbor
+  board: fridayharbor-ai
+- company: Function Health
+  board: function-health
+- company: Gem
+  board: gem
+- company: Getro
+  board: getro
+- company: Groq
+  board: groq
+- company: Hacktron AI
+  board: hacktron
+- company: Hallow
+  board: hallow
+- company: Knight Electric
+  board: knight-electric-inc-
+- company: Luma AI
+  board: lumalabs-ai
+- company: Modular
+  board: modular
+- company: Narmi
+  board: narmi
+- company: Nue
+  board: nue
+- company: Photon
+  board: photon
+- company: Piq Energy
+  board: piqenergy
+- company: PromptQL
+  board: promptql
+- company: Raylu
+  board: raylu-ai
+- company: Silkline
+  board: silkline
+- company: StockApp
+  board: stockapp-com
+- company: Supio
+  board: supio
+- company: TensorStax
+  board: tensorstax-com
+- company: Transluce
+  board: transluce
+- company: UP.Labs
+  board: up-labs
+- company: Veho
+  board: veho-technologies
