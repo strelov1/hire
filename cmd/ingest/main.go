@@ -83,8 +83,9 @@ func main() {
 	}
 }
 
-// staleAfter is the grace window before an unseen job is closed: ~8 crawl cycles
-// at the 6h cadence, so a board failing a few runs in a row keeps its jobs open.
+// staleAfter is the grace window before an unseen job is closed: many crawl cycles
+// at the hourly per-provider cadence, so a board failing several runs in a row keeps
+// its jobs open.
 const staleAfter = 48 * time.Hour
 
 // shouldSweep reports whether the run saw enough of the world to justify closing
