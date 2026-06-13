@@ -16,3 +16,7 @@ hire
 .agents/
 skills-lock.json
 docs/superpowers/
+
+# Python
+__pycache__/
+*.pyc
