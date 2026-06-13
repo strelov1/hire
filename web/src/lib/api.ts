@@ -23,11 +23,6 @@ import type {
   CreatedApiKey,
 } from './types';
 
-// Relative base: the SPA and API share one origin (a dev Vite proxy / prod nginx
-// forwards /api to the backend), so the httpOnly auth cookie rides along with
-// every request. No absolute URL, no CORS.
-const BASE = '';
-
 /** A page of list items, optionally the total matching the query (endpoints that
  *  report one), and whether more remain. */
 export interface Slice<T> {
@@ -63,14 +58,18 @@ function toSlice<T>(page: Page<T>, offset: number): Slice<T> {
   };
 }
 
-/** Build an API client bound to a specific fetch. In the browser use the default
- *  `api` (global fetch); in a SvelteKit server `load` pass `event.fetch` so the
- *  request's auth cookie is forwarded and relative URLs resolve. */
-export function createApi(fetchImpl: typeof fetch = fetch) {
+/** Build an API client bound to a specific fetch and base URL.
+ *
+ *  - Browser: the default `api` uses global fetch and an empty base, so requests
+ *    are relative and same-origin (the auth cookie rides along; see SPA-era note).
+ *  - SvelteKit server `load`: pass `event.fetch` and the internal API origin
+ *    (`serverApi`), because a server-side relative `/api` would hit the Node app
+ *    itself, not nginx→Go. `baseUrl` resolves that to a real server-to-server call. */
+export function createApi(fetchImpl: typeof fetch = fetch, baseUrl = '') {
   /** The single place this module touches fetch. Always sends credentials so the
    *  auth cookie rides along, and turns a non-2xx into an ApiError. */
   async function call(path: string, init?: RequestInit): Promise<Response> {
-    const res = await fetchImpl(`${BASE}${path}`, { credentials: 'include', ...init });
+    const res = await fetchImpl(`${baseUrl}${path}`, { credentials: 'include', ...init });
     if (!res.ok) {
       throw new ApiError(res.status, `${res.status} ${res.statusText}`);
     }

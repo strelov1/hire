@@ -15,11 +15,11 @@ Detail pages load by slug and have no dependency on the filter/search state, so
 they port cleanly ahead of the lists. Interactive bits (record-view, save,
 apply) hydrate client-side over the server-rendered article.
 
-- [ ] 2.1 `src/routes/jobs/[slug]/+page.svelte` + `+page.server.ts`: job detail
+- [x] 2.1 `src/routes/jobs/[slug]/+page.svelte` + `+page.server.ts`: job detail
   server-rendered from the public job API via `event.fetch`; a 404 yields an
   error page with a not-found status; closed-job state and Apply link preserved;
   save/apply/record-view hydrate client-side, gated on auth.
-- [ ] 2.2 `src/routes/companies/[slug]/+page.svelte` + `+page.server.ts`: company
+- [x] 2.2 `src/routes/companies/[slug]/+page.svelte` + `+page.server.ts`: company
   detail server-rendered, reusing the job-row presentation.
 
 ## 3. List routes + interactive state (SSR) — Slice B
@@ -47,6 +47,10 @@ pure `filtersFromParams`/`filtersToParams` helpers are reused unchanged in
 - [ ] 4.1 Root `+layout.svelte` + `+layout.server.ts`: resolve the current user
   from `/me` (cookie forwarded) so signed-in chrome renders server-side without a
   post-mount flash; client hydrates from layout data; TopBar/footer chrome.
+  **Must re-wire `initAuth()`** — it lived in the deleted `main.ts`, so until the
+  layout calls it (or the server resolves the user), all per-user interactions
+  (Save, Apply prompt, record-view, "You applied") are inert. The server-resolve
+  approach supersedes a bare client `initAuth`.
 - [ ] 4.2 Theme: persist the choice in a cookie so SSR sets the `.dark` class on
   `<html>`; keep the system-mode inline fallback in `app.html`; no theme FOUC.
 - [ ] 4.3 Port `/my/jobs` and `/my/api-keys` routes (auth-guarded); retire

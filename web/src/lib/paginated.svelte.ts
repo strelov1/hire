@@ -29,6 +29,16 @@ export class Paginator<T> {
     this.#limit = limit;
   }
 
+  /** Seed the first page from data already fetched (e.g. server-rendered) so the
+   *  view renders it immediately and only fetches on `loadMore`. Use instead of
+   *  `start()` when the route's `load` has already produced page one. */
+  seed(slice: Slice<T>) {
+    this.items = slice.items;
+    this.total = slice.total ?? 0;
+    this.hasMore = slice.hasMore;
+    this.status = 'ready';
+  }
+
   /** Load the first page. Call once from the view's onMount (or an effect). */
   async start() {
     try {
