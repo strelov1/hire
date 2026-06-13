@@ -9,10 +9,13 @@ RETURNING *;
 
 -- name: MarkJobApplied :one
 -- Mark a job as applied for a user. Idempotent and independent of a prior view:
--- it inserts the row (viewed_at defaults) or updates applied_at in place.
-INSERT INTO user_jobs (user_id, job_id, applied_at)
-VALUES ($1, $2, now())
-ON CONFLICT (user_id, job_id) DO UPDATE SET applied_at = now()
+-- it inserts the row (viewed_at defaults) or updates applied_at in place, and
+-- seeds stage='applied' only when the stage is unset (an advanced stage survives
+-- a re-apply, via COALESCE).
+INSERT INTO user_jobs (user_id, job_id, applied_at, stage)
+VALUES ($1, $2, now(), 'applied')
+ON CONFLICT (user_id, job_id) DO UPDATE
+  SET applied_at = now(), stage = COALESCE(user_jobs.stage, 'applied')
 RETURNING *;
 
 -- name: SaveJob :one
@@ -32,13 +35,25 @@ SET saved_at = NULL
 WHERE user_id = $1 AND job_id = $2
 RETURNING *;
 
+-- name: TrackJob :one
+-- Set an application's stage and/or notes for a user, idempotently. Upserts the
+-- (user, job) row (viewed_at defaults). Partial update: a NULL param leaves that
+-- column unchanged (COALESCE keeps the existing value), so the caller can set the
+-- stage, the notes, or both in one call. Returns the row.
+INSERT INTO user_jobs (user_id, job_id, stage, notes)
+VALUES ($1, $2, $3, $4)
+ON CONFLICT (user_id, job_id) DO UPDATE
+  SET stage = COALESCE(EXCLUDED.stage, user_jobs.stage),
+      notes = COALESCE(EXCLUDED.notes, user_jobs.notes)
+RETURNING *;
+
 -- name: ListUserJobs :many
 -- A user's job interactions joined with the job rows, most recently touched
 -- first (GREATEST ignores NULLs; viewed_at is always set). filter narrows to
 -- viewed-only/saved/applied subsets; 'all' is every interaction, 'viewed' is
 -- the passive history (rows neither saved nor applied). Closed jobs stay
 -- listed: a user's history must not shrink when a posting closes.
-SELECT sqlc.embed(jobs), uj.viewed_at, uj.saved_at, uj.applied_at
+SELECT sqlc.embed(jobs), uj.viewed_at, uj.saved_at, uj.applied_at, uj.stage, uj.notes
 FROM user_jobs uj
 JOIN jobs ON jobs.id = uj.job_id
 WHERE uj.user_id = $1

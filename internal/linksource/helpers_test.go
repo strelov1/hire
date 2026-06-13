@@ -2,6 +2,7 @@ package linksource
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -54,4 +55,12 @@ func (c *fakeClient) GetHTMLResolved(_ context.Context, url string) (*html.Node,
 	}
 	n, err := html.Parse(strings.NewReader(r.body))
 	return n, final, err
+}
+
+func (c *fakeClient) GetJSON(_ context.Context, url string, v any) error {
+	r, ok := c.find(url)
+	if !ok {
+		return fmt.Errorf("fakeClient: no route for %s", url)
+	}
+	return json.Unmarshal([]byte(r.body), v)
 }

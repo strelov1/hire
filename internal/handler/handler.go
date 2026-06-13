@@ -103,6 +103,7 @@ func Register(app *fiber.App, pool *pgxpool.Pool, frontendOrigin, jwtSecret stri
 	api.Post("/jobs/:slug/apply", keyAuth, h.MarkApplied)
 	api.Post("/jobs/:slug/save", keyAuth, h.SaveJob)
 	api.Delete("/jobs/:slug/save", keyAuth, h.UnsaveJob)
+	api.Patch("/jobs/:slug/track", keyAuth, h.TrackJob)
 
 	// User-scoped reads live under /me (consistent with /auth/me): the my-jobs
 	// listing joins the caller's interactions with the jobs they touch.

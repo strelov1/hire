@@ -107,6 +107,9 @@ export interface UserJob {
   viewed_at: string;
   saved_at: string | null;
   applied_at: string | null;
+  // Application pipeline stage + free-text notes; null until set via `track`.
+  stage: string | null;
+  notes: string | null;
 }
 
 /** One item of the my-jobs listing: the job in the shared wire shape with the
@@ -116,6 +119,8 @@ export interface MyJob {
   viewed_at: string;
   saved_at: string | null;
   applied_at: string | null;
+  stage: string | null;
+  notes: string | null;
 }
 
 /** Per-tab row counts for the my-jobs page, from the listing's meta. `viewed`

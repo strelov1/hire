@@ -94,6 +94,9 @@ func (l lamoda) detail(ctx context.Context, e CompanyEntry, it lamodaItem) (Job,
 				Duties       string `json:"duties"`
 				Requirements string `json:"requirements"`
 				Conditions   string `json:"conditions"`
+				// Retail vacancies leave the four fields above empty and carry the whole
+				// body here instead.
+				Common string `json:"common"`
 			} `json:"attributes"`
 		} `json:"data"`
 	}
@@ -103,6 +106,9 @@ func (l lamoda) detail(ctx context.Context, e CompanyEntry, it lamodaItem) (Job,
 
 	a := d.Data.Attributes
 	body := a.Introduction + a.Duties + a.Requirements + a.Conditions
+	if body == "" {
+		body = a.Common
+	}
 
 	return Job{
 		ExternalID:  strconv.FormatInt(it.ID, 10),

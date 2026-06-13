@@ -52,6 +52,7 @@ func Parse(location string) Geo {
 		if tok == "" {
 			continue
 		}
+		tok = stripCityPrefix(tok)
 		if code, ok := nameToCountry[tok]; ok {
 			countrySet[code] = struct{}{}
 			if r, ok := countryToRegion[code]; ok {
@@ -61,6 +62,13 @@ func Parse(location string) Geo {
 		}
 		if r, ok := nameToRegion[tok]; ok {
 			regionSet[r] = struct{}{}
+			continue
+		}
+		if code, ok := resolveSubdivision(tok); ok {
+			countrySet[code] = struct{}{}
+			if r, ok := countryToRegion[code]; ok {
+				regionSet[r] = struct{}{}
+			}
 		}
 	}
 
@@ -71,6 +79,80 @@ func Parse(location string) Geo {
 	}
 }
 
+// cityMarkerPrefixes are the Russian "city" abbreviations that RU-segment ATS
+// data prepends to a bare city name ("г Москва", "город Самара"). Stripped from a
+// token before lookup so the city resolves; checked longest-first so "город "
+// wins over "г ". A city whose name merely starts with "г" ("Грозный") is
+// untouched — every prefix ends in a separator the name doesn't.
+var cityMarkerPrefixes = []string{"город ", "г. ", "г.", "г "}
+
+// stripCityPrefix removes a leading Russian city marker from an already-lowercased,
+// trimmed token, returning the bare city name (or the token unchanged).
+func stripCityPrefix(tok string) string {
+	for _, p := range cityMarkerPrefixes {
+		if rest, ok := strings.CutPrefix(tok, p); ok {
+			return strings.TrimSpace(rest)
+		}
+	}
+	return tok
+}
+
+// resolveSubdivision resolves a US-state / Canadian-province token to its ISO
+// country code, covering the "City, ST ZIP" and "City, Province" ATS formats. It
+// tries, in order: a direct match ("tx", "texas", "ontario"); a trailing US ZIP
+// preceded by a state code ("tx 76135" -> "tx"); a bare trailing code in a
+// multi-word token ("austin tx"); and a standalone US ZIP ("94105") as a us
+// signal. It returns ("", false) for anything it cannot resolve — it never
+// guesses past the curated subdivision table.
+func resolveSubdivision(tok string) (string, bool) {
+	if code, ok := subdivisionToCountry[tok]; ok {
+		return code, true
+	}
+	fields := strings.Fields(tok)
+	switch len(fields) {
+	case 0:
+		return "", false
+	case 1:
+		if isUSZip(fields[0]) {
+			return "us", true
+		}
+		return "", false
+	}
+	last := fields[len(fields)-1]
+	if isUSZip(last) {
+		if code, ok := subdivisionToCountry[fields[len(fields)-2]]; ok {
+			return code, true
+		}
+		return "us", true
+	}
+	if code, ok := subdivisionToCountry[last]; ok {
+		return code, true
+	}
+	return "", false
+}
+
+// isUSZip reports whether s is a US ZIP code: five digits, optionally followed by
+// a "-" and the four-digit ZIP+4 extension ("76135" or "76135-1234").
+func isUSZip(s string) bool {
+	switch len(s) {
+	case 5:
+		return allDigits(s)
+	case 10:
+		return s[5] == '-' && allDigits(s[:5]) && allDigits(s[6:])
+	default:
+		return false
+	}
+}
+
+func allDigits(s string) bool {
+	for _, r := range s {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return s != ""
+}
+
 // workModeMarkers maps a work mode to the substrings that signal it, checked in
 // priority order: hybrid (most specific) beats a remote marker in the same
 // string, and an explicit onsite marker is the last resort. A location with no
@@ -79,8 +161,8 @@ var workModeMarkers = []struct {
 	mode    string
 	markers []string
 }{
-	{"hybrid", []string{"hybrid"}},
-	{"remote", []string{"remote", "work from home", "wfh", "anywhere", "worldwide", "distributed"}},
+	{"hybrid", []string{"hybrid", "гибрид"}},
+	{"remote", []string{"remote", "work from home", "wfh", "anywhere", "worldwide", "distributed", "удал"}},
 	{"onsite", []string{"on-site", "onsite", "on site", "in office", "in-office"}},
 }
 

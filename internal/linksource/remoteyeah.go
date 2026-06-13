@@ -36,13 +36,7 @@ type remoteYeahPosting struct {
 	HiringOrganization struct {
 		Name string `json:"name"`
 	} `json:"hiringOrganization"`
-	BaseSalary struct {
-		Currency string `json:"currency"`
-		Value    struct {
-			MinValue float64 `json:"minValue"`
-			MaxValue float64 `json:"maxValue"`
-		} `json:"value"`
-	} `json:"baseSalary"`
+	BaseSalary monetaryAmount `json:"baseSalary"`
 }
 
 // Resolve fetches the job page and parses its JobPosting ld+json. The slug from the link
@@ -67,7 +61,7 @@ func (r remoteYeah) Resolve(ctx context.Context, raw string) (sources.Job, bool,
 	}
 
 	desc := sources.SanitizeHTML(p.Description)
-	if salary := remoteYeahSalary(p); salary != "" {
+	if salary := salaryParagraph(p.BaseSalary); salary != "" {
 		// Sanitize the salary fragment too: its currency is third-party JSON-LD text and
 		// the description is rendered with {@html}, so an unsanitized prefix is stored XSS.
 		desc = sources.SanitizeHTML(salary) + desc
@@ -78,26 +72,7 @@ func (r remoteYeah) Resolve(ctx context.Context, raw string) (sources.Job, bool,
 		Title:       p.Title,
 		Company:     p.HiringOrganization.Name,
 		Description: desc,
-		Remote:      strings.EqualFold(p.JobLocationType, "TELECOMMUTE"),
+		Remote:      isTelecommute(p.JobLocationType),
 		PostedAt:    parseRFC3339(p.DatePosted),
 	}, true, nil
-}
-
-// remoteYeahSalary renders a structured baseSalary range as a leading paragraph, or "" when
-// the page states no amount. Folding it into the description keeps it visible and lets
-// enrichment pick it up (sources.Job has no dedicated salary field).
-func remoteYeahSalary(p remoteYeahPosting) string {
-	min, max := p.BaseSalary.Value.MinValue, p.BaseSalary.Value.MaxValue
-	if min <= 0 && max <= 0 {
-		return ""
-	}
-	cur := p.BaseSalary.Currency
-	switch {
-	case min > 0 && max > 0:
-		return fmt.Sprintf("<p>Salary: %.0f–%.0f %s</p>", min, max, cur)
-	case min > 0:
-		return fmt.Sprintf("<p>Salary: from %.0f %s</p>", min, cur)
-	default:
-		return fmt.Sprintf("<p>Salary: up to %.0f %s</p>", max, cur)
-	}
 }

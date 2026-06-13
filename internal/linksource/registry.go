@@ -14,12 +14,14 @@ import (
 	"github.com/strelov1/freehire/internal/sources"
 )
 
-// Client is the narrow transport a LinkSource needs: fetch a server-rendered detail page,
-// optionally following a shortener redirect to learn the canonical URL. *sources.Client
+// Client is the transport a LinkSource needs: a server-rendered detail page (optionally
+// following a shortener redirect to learn the canonical URL) or a structured JSON API
+// (multi-tenant ATS adapters read the platform's public per-job endpoint). *sources.Client
 // satisfies it.
 type Client interface {
 	GetHTML(ctx context.Context, url string) (*html.Node, error)
 	GetHTMLResolved(ctx context.Context, url string) (*html.Node, string, error)
+	GetJSON(ctx context.Context, url string, v any) error
 }
 
 // LinkSource adapts one destination site reachable from a post link. Source is the key
@@ -41,6 +43,9 @@ func All(c Client) []LinkSource {
 	return []LinkSource{
 		NewHabrCareer(c),
 		NewRemoteYeah(c),
+		NewGeekjob(c),
+		NewGreenhouse(c),
+		NewAshby(c),
 	}
 }
 

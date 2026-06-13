@@ -104,6 +104,33 @@ func TestLamodaFetchPaginatesAndFetchesDetail(t *testing.T) {
 	}
 }
 
+func TestLamodaDetailFallsBackToCommonWhenStructuredFieldsEmpty(t *testing.T) {
+	// Retail vacancies leave the four structured fields empty and carry the whole body in
+	// the "common" HTML attribute instead; the adapter falls back to it.
+	detail := `{"data":{"attributes":{` +
+		`"name":"Менеджер ПВЗ","slug":"lipetsk/menedzher-2414",` +
+		`"externalPublicationDate":"2026-06-11T16:04:39.000Z",` +
+		`"introduction":"","duties":"","requirements":"","conditions":"",` +
+		`"common":"<p>Работа в пункте выдачи заказов.</p>"}}}`
+
+	fake := (&routedHTTP{}).
+		route("start%5D=0", lamodaListPage(0, 2, 1,
+			lamodaListItem(2414, "Менеджер ПВЗ", "lipetsk/menedzher-2414", "Липецк"),
+		)).
+		route("/vacancies/2414", detail)
+
+	jobs, err := NewLamoda(fake).Fetch(context.Background(), CompanyEntry{Company: "Lamoda", Provider: "lamoda"})
+	if err != nil {
+		t.Fatalf("Fetch: %v", err)
+	}
+	if len(jobs) != 1 {
+		t.Fatalf("len(jobs) = %d, want 1", len(jobs))
+	}
+	if !strings.Contains(jobs[0].Description, "Работа в пункте выдачи заказов.") {
+		t.Errorf("Description = %q, want the common-field body", jobs[0].Description)
+	}
+}
+
 func TestLamodaFetchSkipsFailedDetail(t *testing.T) {
 	// 2467 has no detail route -> its detail fetch errors and the posting is skipped,
 	// but 2466 still comes through.

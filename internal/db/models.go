@@ -98,4 +98,6 @@ type UserJob struct {
 	ViewedAt  pgtype.Timestamptz `json:"viewed_at"`
 	AppliedAt pgtype.Timestamptz `json:"applied_at"`
 	SavedAt   pgtype.Timestamptz `json:"saved_at"`
+	Stage     pgtype.Text        `json:"stage"`
+	Notes     pgtype.Text        `json:"notes"`
 }

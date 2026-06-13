@@ -110,7 +110,9 @@ type Querier interface {
 	// listed: a user's history must not shrink when a posting closes.
 	ListUserJobs(ctx context.Context, arg ListUserJobsParams) ([]ListUserJobsRow, error)
 	// Mark a job as applied for a user. Idempotent and independent of a prior view:
-	// it inserts the row (viewed_at defaults) or updates applied_at in place.
+	// it inserts the row (viewed_at defaults) or updates applied_at in place, and
+	// seeds stage='applied' only when the stage is unset (an advanced stage survives
+	// a re-apply, via COALESCE).
 	MarkJobApplied(ctx context.Context, arg MarkJobAppliedParams) (UserJob, error)
 	// Completion: the post was processed (jobs written, or no vacancy found). Run in
 	// the same transaction as the extracted jobs' UpsertJob calls.
@@ -150,6 +152,11 @@ type Querier interface {
 	// re-keys jobs, this re-keys companies to match. DISTINCT ON collapses a slug's
 	// name variants; ON CONFLICT folds collisions and refreshes existing rows.
 	SyncCompaniesFromJobs(ctx context.Context) error
+	// Set an application's stage and/or notes for a user, idempotently. Upserts the
+	// (user, job) row (viewed_at defaults). Partial update: a NULL param leaves that
+	// column unchanged (COALESCE keeps the existing value), so the caller can set the
+	// stage, the notes, or both in one call. Returns the row.
+	TrackJob(ctx context.Context, arg TrackJobParams) (UserJob, error)
 	// Clear a job's saved mark without deleting the interaction row, so view and
 	// apply history survive unsaving. No interaction row -> pgx.ErrNoRows; the
 	// handler treats that as "already not saved", never as a failure.

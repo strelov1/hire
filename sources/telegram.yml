@@ -84,10 +84,9 @@ channels:
     kind: board
 
   # --- Corporate ---
-  - channel: ya_jobs
-    kind: board
-  - channel: ya_jobs_pm
-    kind: board
+  # ya_jobs / ya_jobs_pm dropped: they mirror Yandex's own board, which sources/yandex
+  # already crawls in full — keeping them only produced thin duplicate (source=telegram)
+  # rows of vacancies we ingest canonically as source=yandex.
   - channel: avito_career
     kind: board
   - channel: mtsbankcareer

@@ -44,7 +44,7 @@ func (q *Queries) CountUserJobs(ctx context.Context, userID int64) (CountUserJob
 }
 
 const listUserJobs = `-- name: ListUserJobs :many
-SELECT jobs.id, jobs.source, jobs.external_id, jobs.url, jobs.title, jobs.company, jobs.location, jobs.remote, jobs.description, jobs.posted_at, jobs.created_at, jobs.updated_at, jobs.company_slug, jobs.enrichment, jobs.enriched_at, jobs.enrichment_version, jobs.public_slug, jobs.last_seen_at, jobs.closed_at, jobs.countries, jobs.regions, jobs.work_mode, uj.viewed_at, uj.saved_at, uj.applied_at
+SELECT jobs.id, jobs.source, jobs.external_id, jobs.url, jobs.title, jobs.company, jobs.location, jobs.remote, jobs.description, jobs.posted_at, jobs.created_at, jobs.updated_at, jobs.company_slug, jobs.enrichment, jobs.enriched_at, jobs.enrichment_version, jobs.public_slug, jobs.last_seen_at, jobs.closed_at, jobs.countries, jobs.regions, jobs.work_mode, uj.viewed_at, uj.saved_at, uj.applied_at, uj.stage, uj.notes
 FROM user_jobs uj
 JOIN jobs ON jobs.id = uj.job_id
 WHERE uj.user_id = $1
@@ -68,6 +68,8 @@ type ListUserJobsRow struct {
 	ViewedAt  pgtype.Timestamptz `json:"viewed_at"`
 	SavedAt   pgtype.Timestamptz `json:"saved_at"`
 	AppliedAt pgtype.Timestamptz `json:"applied_at"`
+	Stage     pgtype.Text        `json:"stage"`
+	Notes     pgtype.Text        `json:"notes"`
 }
 
 // A user's job interactions joined with the job rows, most recently touched
@@ -115,6 +117,8 @@ func (q *Queries) ListUserJobs(ctx context.Context, arg ListUserJobsParams) ([]L
 			&i.ViewedAt,
 			&i.SavedAt,
 			&i.AppliedAt,
+			&i.Stage,
+			&i.Notes,
 		); err != nil {
 			return nil, err
 		}
@@ -127,10 +131,11 @@ func (q *Queries) ListUserJobs(ctx context.Context, arg ListUserJobsParams) ([]L
 }
 
 const markJobApplied = `-- name: MarkJobApplied :one
-INSERT INTO user_jobs (user_id, job_id, applied_at)
-VALUES ($1, $2, now())
-ON CONFLICT (user_id, job_id) DO UPDATE SET applied_at = now()
-RETURNING user_id, job_id, viewed_at, applied_at, saved_at
+INSERT INTO user_jobs (user_id, job_id, applied_at, stage)
+VALUES ($1, $2, now(), 'applied')
+ON CONFLICT (user_id, job_id) DO UPDATE
+  SET applied_at = now(), stage = COALESCE(user_jobs.stage, 'applied')
+RETURNING user_id, job_id, viewed_at, applied_at, saved_at, stage, notes
 `
 
 type MarkJobAppliedParams struct {
@@ -139,7 +144,9 @@ type MarkJobAppliedParams struct {
 }
 
 // Mark a job as applied for a user. Idempotent and independent of a prior view:
-// it inserts the row (viewed_at defaults) or updates applied_at in place.
+// it inserts the row (viewed_at defaults) or updates applied_at in place, and
+// seeds stage='applied' only when the stage is unset (an advanced stage survives
+// a re-apply, via COALESCE).
 func (q *Queries) MarkJobApplied(ctx context.Context, arg MarkJobAppliedParams) (UserJob, error) {
 	row := q.db.QueryRow(ctx, markJobApplied, arg.UserID, arg.JobID)
 	var i UserJob
@@ -149,6 +156,8 @@ func (q *Queries) MarkJobApplied(ctx context.Context, arg MarkJobAppliedParams) 
 		&i.ViewedAt,
 		&i.AppliedAt,
 		&i.SavedAt,
+		&i.Stage,
+		&i.Notes,
 	)
 	return i, err
 }
@@ -157,7 +166,7 @@ const recordJobView = `-- name: RecordJobView :one
 INSERT INTO user_jobs (user_id, job_id)
 VALUES ($1, $2)
 ON CONFLICT (user_id, job_id) DO UPDATE SET viewed_at = now()
-RETURNING user_id, job_id, viewed_at, applied_at, saved_at
+RETURNING user_id, job_id, viewed_at, applied_at, saved_at, stage, notes
 `
 
 type RecordJobViewParams struct {
@@ -177,6 +186,8 @@ func (q *Queries) RecordJobView(ctx context.Context, arg RecordJobViewParams) (U
 		&i.ViewedAt,
 		&i.AppliedAt,
 		&i.SavedAt,
+		&i.Stage,
+		&i.Notes,
 	)
 	return i, err
 }
@@ -185,7 +196,7 @@ const saveJob = `-- name: SaveJob :one
 INSERT INTO user_jobs (user_id, job_id, saved_at)
 VALUES ($1, $2, now())
 ON CONFLICT (user_id, job_id) DO UPDATE SET saved_at = now()
-RETURNING user_id, job_id, viewed_at, applied_at, saved_at
+RETURNING user_id, job_id, viewed_at, applied_at, saved_at, stage, notes
 `
 
 type SaveJobParams struct {
@@ -204,6 +215,48 @@ func (q *Queries) SaveJob(ctx context.Context, arg SaveJobParams) (UserJob, erro
 		&i.ViewedAt,
 		&i.AppliedAt,
 		&i.SavedAt,
+		&i.Stage,
+		&i.Notes,
+	)
+	return i, err
+}
+
+const trackJob = `-- name: TrackJob :one
+INSERT INTO user_jobs (user_id, job_id, stage, notes)
+VALUES ($1, $2, $3, $4)
+ON CONFLICT (user_id, job_id) DO UPDATE
+  SET stage = COALESCE(EXCLUDED.stage, user_jobs.stage),
+      notes = COALESCE(EXCLUDED.notes, user_jobs.notes)
+RETURNING user_id, job_id, viewed_at, applied_at, saved_at, stage, notes
+`
+
+type TrackJobParams struct {
+	UserID int64       `json:"user_id"`
+	JobID  int64       `json:"job_id"`
+	Stage  pgtype.Text `json:"stage"`
+	Notes  pgtype.Text `json:"notes"`
+}
+
+// Set an application's stage and/or notes for a user, idempotently. Upserts the
+// (user, job) row (viewed_at defaults). Partial update: a NULL param leaves that
+// column unchanged (COALESCE keeps the existing value), so the caller can set the
+// stage, the notes, or both in one call. Returns the row.
+func (q *Queries) TrackJob(ctx context.Context, arg TrackJobParams) (UserJob, error) {
+	row := q.db.QueryRow(ctx, trackJob,
+		arg.UserID,
+		arg.JobID,
+		arg.Stage,
+		arg.Notes,
+	)
+	var i UserJob
+	err := row.Scan(
+		&i.UserID,
+		&i.JobID,
+		&i.ViewedAt,
+		&i.AppliedAt,
+		&i.SavedAt,
+		&i.Stage,
+		&i.Notes,
 	)
 	return i, err
 }
@@ -212,7 +265,7 @@ const unsaveJob = `-- name: UnsaveJob :one
 UPDATE user_jobs
 SET saved_at = NULL
 WHERE user_id = $1 AND job_id = $2
-RETURNING user_id, job_id, viewed_at, applied_at, saved_at
+RETURNING user_id, job_id, viewed_at, applied_at, saved_at, stage, notes
 `
 
 type UnsaveJobParams struct {
@@ -232,6 +285,8 @@ func (q *Queries) UnsaveJob(ctx context.Context, arg UnsaveJobParams) (UserJob, 
 		&i.ViewedAt,
 		&i.AppliedAt,
 		&i.SavedAt,
+		&i.Stage,
+		&i.Notes,
 	)
 	return i, err
 }

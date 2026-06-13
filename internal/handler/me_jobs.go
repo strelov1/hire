@@ -17,6 +17,8 @@ type myJobResponse struct {
 	ViewedAt  pgtype.Timestamptz `json:"viewed_at"`
 	SavedAt   pgtype.Timestamptz `json:"saved_at"`
 	AppliedAt pgtype.Timestamptz `json:"applied_at"`
+	Stage     pgtype.Text        `json:"stage"`
+	Notes     pgtype.Text        `json:"notes"`
 }
 
 // ListMyJobs returns the authenticated user's job interactions joined with the
@@ -62,6 +64,8 @@ func (h *Handler) ListMyJobs(c *fiber.Ctx) error {
 			ViewedAt:  row.ViewedAt,
 			SavedAt:   row.SavedAt,
 			AppliedAt: row.AppliedAt,
+			Stage:     row.Stage,
+			Notes:     row.Notes,
 		})
 	}
 

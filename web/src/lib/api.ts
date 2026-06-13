@@ -214,6 +214,17 @@ export function createApi(
     return jobInteraction(slug, 'save');
   }
 
+  /** Set a job's application stage and/or notes (partial update — omit a field to
+   *  leave it unchanged). Returns the updated interaction. */
+  async function trackJob(slug: string, patch: { stage?: string; notes?: string }): Promise<UserJob> {
+    const res = await request<{ data: UserJob }>(`/api/v1/jobs/${slug}/track`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch),
+    });
+    return res.data;
+  }
+
   /** Clear a job's saved mark. Idempotent: "already not saved" is success. */
   function unsaveJob(slug: string): Promise<UserJob> {
     return jobInteraction(slug, 'save', 'DELETE');
@@ -275,6 +286,7 @@ export function createApi(
     markJobApplied,
     saveJob,
     unsaveJob,
+    trackJob,
     listMyJobs,
     listApiKeys,
     createApiKey,
@@ -307,6 +319,7 @@ export const {
   markJobApplied,
   saveJob,
   unsaveJob,
+  trackJob,
   listMyJobs,
   listApiKeys,
   createApiKey,

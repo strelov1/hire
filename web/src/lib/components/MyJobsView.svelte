@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { listMyJobs, type MyJobsFilter } from '$lib/api';
+  import { listMyJobs, trackJob, type MyJobsFilter } from '$lib/api';
   import { isAuthenticated } from '$lib/auth.svelte';
   import { Paginator } from '$lib/paginated.svelte';
-  import type { MyJobCounts } from '$lib/types';
+  import type { MyJob, MyJobCounts } from '$lib/types';
+  import { STAGES, humanizeStage } from '$lib/stages';
   import { Badge } from '$lib/ui';
   import { cn, timeAgo } from '$lib/utils';
   import JobRow from './JobRow.svelte';
@@ -50,6 +51,37 @@
     applied: 'No applications yet. Confirm "Did you apply?" on a job to track it here.',
   };
   const emptyMessage = $derived(emptyMessages[filter]);
+
+  // Optimistic per-job stage/notes overrides (keyed by slug) so an edit shows
+  // immediately without refetching the paginator. oninput keeps the override in
+  // sync as the user types (a controlled value otherwise reverts mid-keystroke).
+  let edits = $state<Record<string, { stage?: string; notes?: string }>>({});
+
+  const stageOf = (item: MyJob) => edits[item.job.public_slug]?.stage ?? item.stage ?? '';
+  const notesOf = (item: MyJob) => edits[item.job.public_slug]?.notes ?? item.notes ?? '';
+
+  function patch(slug: string, p: { stage?: string; notes?: string }) {
+    edits[slug] = { ...edits[slug], ...p };
+  }
+
+  async function setStage(item: MyJob, stage: string) {
+    if (!stage) return; // the "Set stage…" placeholder, not a real change
+    patch(item.job.public_slug, { stage });
+    try {
+      await trackJob(item.job.public_slug, { stage });
+    } catch {
+      // Keep the optimistic value; a transient failure shouldn't drop the edit.
+    }
+  }
+
+  async function saveNotes(item: MyJob, notes: string) {
+    if (notes === (item.notes ?? '')) return; // unchanged since the server value
+    try {
+      await trackJob(item.job.public_slug, { notes });
+    } catch {
+      /* keep the optimistic value */
+    }
+  }
 </script>
 
 {#if !isAuthenticated()}
@@ -93,15 +125,39 @@
         {#each page.items as item (item.job.public_slug)}
           <li class="flex flex-col gap-1">
             <JobRow job={item.job} />
-            <div class="flex items-center gap-2 px-1 text-xs text-muted-foreground">
+            <div class="flex flex-wrap items-center gap-2 px-1 text-xs text-muted-foreground">
               {#if item.applied_at}
                 <Badge variant="secondary">Applied</Badge>
               {/if}
               {#if item.saved_at}
                 <Badge variant="secondary">Saved</Badge>
               {/if}
+              {#if stageOf(item)}
+                <Badge variant="secondary">{humanizeStage(stageOf(item))}</Badge>
+              {/if}
               <span>Viewed {timeAgo(item.viewed_at)}</span>
+              <label class="ml-auto flex items-center gap-1">
+                <span class="sr-only">Application stage</span>
+                <select
+                  value={stageOf(item)}
+                  onchange={(e) => setStage(item, e.currentTarget.value)}
+                  class="rounded-md border border-input bg-transparent px-1.5 py-0.5 text-xs"
+                >
+                  <option value="">Set stage…</option>
+                  {#each STAGES as s (s.value)}
+                    <option value={s.value}>{s.label}</option>
+                  {/each}
+                </select>
+              </label>
             </div>
+            <textarea
+              value={notesOf(item)}
+              oninput={(e) => patch(item.job.public_slug, { notes: e.currentTarget.value })}
+              onblur={(e) => saveNotes(item, e.currentTarget.value)}
+              placeholder="Notes…"
+              rows="1"
+              class="mx-1 resize-y rounded-md border border-input bg-transparent px-2 py-1 text-xs placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+            ></textarea>
           </li>
         {/each}
       </ul>
