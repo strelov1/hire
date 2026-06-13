@@ -111,6 +111,79 @@ func TestParse(t *testing.T) {
 	}
 }
 
+// TestParseNorthAmerica covers the US "City, ST ZIP" and Canadian "City, Province"
+// ATS formats: a trailing US state / Canadian province code or full name resolves
+// the country (and its region) even when the city is unknown, and a US ZIP code is
+// a standalone "us" signal. The country Georgia must never be misread as the US
+// state (the code "ga" carries the state; the name stays out of the dictionary).
+func TestParseNorthAmerica(t *testing.T) {
+	tests := []struct {
+		name     string
+		location string
+		want     Geo
+	}{
+		{
+			name:     "US City, ST ZIP",
+			location: "Lake Worth, TX 76135",
+			want:     Geo{Countries: []string{"us"}, Regions: []string{"us"}},
+		},
+		{
+			name:     "US City, ST",
+			location: "Austin, TX",
+			want:     Geo{Countries: []string{"us"}, Regions: []string{"us"}},
+		},
+		{
+			name:     "US state code CA is California, not Canada",
+			location: "San Francisco, CA",
+			want:     Geo{Countries: []string{"us"}, Regions: []string{"us"}},
+		},
+		{
+			name:     "US full state name",
+			location: "Remote - California",
+			want:     Geo{Countries: []string{"us"}, Regions: []string{"us"}, WorkMode: "remote"},
+		},
+		{
+			name:     "US no-comma City ST",
+			location: "Austin TX",
+			want:     Geo{Countries: []string{"us"}, Regions: []string{"us"}},
+		},
+		{
+			name:     "bare US ZIP is a us signal",
+			location: "94105",
+			want:     Geo{Countries: []string{"us"}, Regions: []string{"us"}},
+		},
+		{
+			name:     "Canadian province code maps to north_america",
+			location: "Toronto, ON",
+			want:     Geo{Countries: []string{"ca"}, Regions: []string{"north_america"}},
+		},
+		{
+			name:     "Canadian full province name",
+			location: "Vancouver, British Columbia",
+			want:     Geo{Countries: []string{"ca"}, Regions: []string{"north_america"}},
+		},
+		{
+			name:     "Washington DC resolves to us",
+			location: "Washington, DC",
+			want:     Geo{Countries: []string{"us"}, Regions: []string{"us"}},
+		},
+		{
+			name:     "country Georgia is never misread as the US state",
+			location: "Tbilisi, Georgia",
+			want:     Geo{Countries: []string{"ge"}, Regions: []string{"cis"}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Parse(tt.location)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Parse(%q) = %+v, want %+v", tt.location, got, tt.want)
+			}
+		})
+	}
+}
+
 // TestParseCyrillic covers the RU-segment ATS data, whose location fields are in
 // Cyrillic ("Москва"), sometimes prefixed with the Russian city marker "г"
 // ("г Москва"), and which name a remote/hybrid mode in Russian ("Удалённо").
