@@ -1,0 +1,9 @@
+# bamboohr boards. Provider is the filename; each entry is company + board.
+# board = platform-specific id (see internal/sources/bamboohr.go).
+
+- company: 321theagency
+  board: 321theagency
+- company: 3clife
+  board: 3clife
+- company: 10web
+  board: 10web

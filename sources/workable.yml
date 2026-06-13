@@ -1,0 +1,159 @@
+# workable boards. Provider is the filename; each entry is company + board.
+# board = platform-specific id (see internal/sources/workable.go).
+
+- company: 1000heads
+  board: 1000heads
+- company: Abzorba Games
+  board: abzorbagames
+- company: Antarctica Global
+  board: antarcticaglobal
+- company: Arkadium
+  board: arkadium-1
+- company: Axes InMotion
+  board: axesinmotion
+- company: BeamNG
+  board: beamng
+- company: Bestex Research
+  board: bestex-research
+- company: Cause and FX
+  board: cause-and-fx-ltd
+- company: Climax Studios
+  board: climax-studios
+- company: CloudLinux
+  board: cloudlinux-1
+- company: Coconut Lizard
+  board: keywords-intl1
+- company: codeninja
+  board: codeninjapk
+- company: ComeOn Group
+  board: comeon-group
+- company: CoolGames
+  board: coolgames
+- company: DataVisor
+  board: datavisor-jobs
+- company: Devoted Studios
+  board: devoted-studios-1
+- company: Double Eleven
+  board: double-eleven
+- company: Drake cooper
+  board: drakecooper
+- company: Electric Square
+  board: electric-square
+- company: Elevation Capital
+  board: elevation-capital-3
+- company: Entain group
+  board: entaingroup
+- company: Escape Velocity Entertainment
+  board: escape-velocity-entertainment-inc
+- company: Euromonitor
+  board: euromonitor
+- company: Forgotten Empires
+  board: forgotten-empires
+- company: fortanix
+  board: fortanix
+- company: Future Colossal
+  board: future-colossal
+- company: Goliath Group
+  board: goliathgroup
+- company: GoReel
+  board: goreel
+- company: Green man gaming
+  board: green-man-gaming
+- company: Hardsuit Labs
+  board: hardsuit-labs-1
+- company: High Voltage Software
+  board: high-voltage-software
+- company: Homa Games
+  board: homa-games
+- company: Hugging Face
+  board: huggingface
+- company: hutch
+  board: hutch
+- company: Impact Theory
+  board: impact-theory
+- company: Integrant
+  board: integrant
+- company: Jagex
+  board: jagex-limited
+- company: KingsIsle Entertainment
+  board: kingsisle-entertainment-inc
+- company: Lakshya Digital
+  board: lakshyadigitalglobal
+- company: Lighthouse Games
+  board: lighthousegames
+- company: Liquid Advertising
+  board: liquidadvertising
+- company: Liquid Development
+  board: liquid-development
+- company: Localsoft games
+  board: localsoft-sl
+- company: Lockwood Publishing Ltd
+  board: lockwood
+- company: logifuture
+  board: logifuture
+- company: Loop
+  board: followloop
+- company: Magic Media
+  board: magic-media
+- company: Moonbug Entertainment
+  board: moonbug-entertainment
+- company: nDreams
+  board: ndreams
+- company: neostella
+  board: neostella
+- company: Newrick Network
+  board: newrich-network
+- company: nextgen-clearing
+  board: nextgen-clearing
+- company: PikPok
+  board: pikpok
+- company: powtoon
+  board: powtoon
+- company: PTW
+  board: sideinc
+- company: Rebellion
+  board: rebellion
+- company: reversing labs
+  board: reversinglabs
+- company: Rive
+  board: rivecareers
+- company: Sawhorse Productions
+  board: sawhorse-productions
+- company: Smoking Gun Interactive
+  board: smoking-gun-interactive-1
+- company: Snowed In Studios
+  board: snowed-in-studios-3
+- company: Sperasoft
+  board: sperasoft
+- company: Square Enix
+  board: square-enix
+- company: Studio Gobo
+  board: studiogobo
+- company: Supermassive Games
+  board: supermassive-games
+- company: Tamatem
+  board: tamatem
+- company: Team17
+  board: team-17-digital
+- company: Tentworks Interactive
+  board: tentworks-interactive
+- company: Testronic
+  board: testronic
+- company: The Mill Adventure
+  board: the-mill-adventure
+- company: Two Circles
+  board: twocircles
+- company: Universally Speaking
+  board: universally-speaking
+- company: Unseen Inc
+  board: unseen-inc
+- company: Velan Studios
+  board: velanstudios
+- company: vizrt
+  board: vizrt
+- company: We are social
+  board: we-are-social-1
+- company: ZeptoLab
+  board: zeptolab
+- company: zipdev
+  board: zipdev

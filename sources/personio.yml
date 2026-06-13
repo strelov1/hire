@@ -1,0 +1,9 @@
+# personio boards. Provider is the filename; each entry is company + board.
+# board = platform-specific id (see internal/sources/personio.go).
+
+- company: 1KOMMA5
+  board: 1komma5grad
+- company: 1NCE
+  board: 1nce
+- company: 4screen
+  board: 4screen

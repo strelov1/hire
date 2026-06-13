@@ -6,8 +6,6 @@ package db
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
@@ -20,10 +18,12 @@ type Querier interface {
 	// worker died (stale claimed_at), so no separate reaper process is needed.
 	// Oldest post first so a backlog drains in posting order.
 	ClaimTelegramPosts(ctx context.Context, arg ClaimTelegramPostsParams) ([]ClaimTelegramPostsRow, error)
-	// Post-ingest sweep (see job-lifecycle spec): close every open job not seen since
-	// the cutoff. The caller owns the grace window (cutoff = now() - window) and the
-	// "run ingested something" guard, so a failed crawl never mass-closes the catalogue.
-	CloseUnseenJobs(ctx context.Context, cutoff pgtype.Timestamptz) (int64, error)
+	// Post-ingest sweep (see job-lifecycle spec): close every open job of ONE source not
+	// seen since the cutoff. Scoped by source because ingest runs per provider — a
+	// greenhouse run must not close jobs another provider owns and didn't crawl. The
+	// caller owns the grace window (cutoff = now() - window) and the "run ingested
+	// something" guard, so a failed crawl never mass-closes that source's catalogue.
+	CloseUnseenJobs(ctx context.Context, arg CloseUnseenJobsParams) (int64, error)
 	// Total companies matching the same optional name filter as ListCompanies, so
 	// search pagination reports the filtered total.
 	CountCompanies(ctx context.Context, search string) (int64, error)

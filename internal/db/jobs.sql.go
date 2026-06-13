@@ -17,14 +17,22 @@ UPDATE jobs
 SET closed_at  = now(),
     updated_at = now()
 WHERE closed_at IS NULL
-  AND last_seen_at < $1
+  AND source = $1
+  AND last_seen_at < $2
 `
 
-// Post-ingest sweep (see job-lifecycle spec): close every open job not seen since
-// the cutoff. The caller owns the grace window (cutoff = now() - window) and the
-// "run ingested something" guard, so a failed crawl never mass-closes the catalogue.
-func (q *Queries) CloseUnseenJobs(ctx context.Context, cutoff pgtype.Timestamptz) (int64, error) {
-	result, err := q.db.Exec(ctx, closeUnseenJobs, cutoff)
+type CloseUnseenJobsParams struct {
+	Source string             `json:"source"`
+	Cutoff pgtype.Timestamptz `json:"cutoff"`
+}
+
+// Post-ingest sweep (see job-lifecycle spec): close every open job of ONE source not
+// seen since the cutoff. Scoped by source because ingest runs per provider — a
+// greenhouse run must not close jobs another provider owns and didn't crawl. The
+// caller owns the grace window (cutoff = now() - window) and the "run ingested
+// something" guard, so a failed crawl never mass-closes that source's catalogue.
+func (q *Queries) CloseUnseenJobs(ctx context.Context, arg CloseUnseenJobsParams) (int64, error) {
+	result, err := q.db.Exec(ctx, closeUnseenJobs, arg.Source, arg.Cutoff)
 	if err != nil {
 		return 0, err
 	}
