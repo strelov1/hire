@@ -138,7 +138,7 @@ def attribute_names(text: str) -> dict[str, str]:
     return names
 
 
-def harvest_github(per_provider_pages: int = 2) -> set[tuple[str, str]]:
+def harvest_github(per_provider_pages: int = 3) -> set[tuple[str, str]]:
     """Sweep GitHub code search for the three ATS host patterns (needs gh)."""
     out: set[tuple[str, str]] = set()
     queries = ["job-boards.greenhouse.io", "jobs.lever.co", "jobs.ashbyhq.com"]
