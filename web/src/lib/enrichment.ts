@@ -5,10 +5,19 @@
 
 import type { Enrichment, Job } from './types';
 
-/** A single label/value pair in the summary meta-row. */
+/** One value within a facet row: its display text and, when the facet maps to a
+ *  job-search filter, the /jobs URL that applies it. */
+export interface FacetValue {
+  text: string;
+  href?: string;
+}
+
+/** A labelled facet row. Most facets carry a single value; the array-valued ones
+ *  (region, country, industry) carry one entry per code, each independently
+ *  clickable. */
 export interface Facet {
   label: string;
-  value: string;
+  values: FacetValue[];
 }
 
 const SENIORITY: Record<string, string> = {
@@ -120,6 +129,12 @@ function label(map: Record<string, string>, value: string): string {
   return map[value] ?? humanize(value);
 }
 
+/** The /jobs URL that filters by a single facet value. Param names match the
+ *  search API (see facets.ts / filters.svelte.ts). */
+export function filterHref(param: string, value: string): string {
+  return `/jobs?${param}=${encodeURIComponent(value)}`;
+}
+
 /** Group thousands with thin spaces, matching the salary line in the design. */
 function groupThousands(n: number): string {
   return n.toLocaleString('en-US').replace(/,/g, ' ');
@@ -200,29 +215,53 @@ export function cardTags(job: Job): string[] {
 export function summaryFacets(job: Job): Facet[] {
   const e = job.enrichment ?? {};
   const facets: Facet[] = [];
-  const push = (name: string, value: string | null | undefined) => {
-    if (value) facets.push({ label: name, value });
+
+  // A scalar facet that maps to a search filter: one clickable value.
+  const link = (
+    name: string,
+    param: string,
+    code: string | null | undefined,
+    text: string | null | undefined,
+  ) => {
+    if (code && text) facets.push({ label: name, values: [{ text, href: filterHref(param, code) }] });
+  };
+  // An array facet (region/country/industry): one clickable value per code.
+  const links = (
+    name: string,
+    param: string,
+    codes: string[] | undefined,
+    toText: (code: string) => string,
+  ) => {
+    if (codes?.length) {
+      facets.push({ label: name, values: codes.map((c) => ({ text: toText(c), href: filterHref(param, c) })) });
+    }
+  };
+  // A facet with no matching filter: plain, non-clickable text.
+  const plain = (name: string, text: string | null | undefined) => {
+    if (text) facets.push({ label: name, values: [{ text }] });
   };
 
-  push('Work format', job.work_mode && label(WORK_MODE, job.work_mode));
-  push('Region', regionLabel(job));
-  push('Work type', e.employment_type && label(EMPLOYMENT, e.employment_type));
-  push('Grade', e.seniority && label(SENIORITY, e.seniority));
-  push(
-    'Experience',
-    e.experience_years_min != null ? `${e.experience_years_min}+ yrs` : null,
-  );
-  push(
+  link('Work format', 'work_mode', job.work_mode, job.work_mode && label(WORK_MODE, job.work_mode));
+  plain('Location', job.location);
+  links('Region', 'regions', job.regions, (r) => label(REGION, r));
+  link('Work type', 'employment_type', e.employment_type, e.employment_type && label(EMPLOYMENT, e.employment_type));
+  link('Grade', 'seniority', e.seniority, e.seniority && label(SENIORITY, e.seniority));
+  plain('Experience', e.experience_years_min != null ? `${e.experience_years_min}+ yrs` : null);
+  link(
     'English',
+    'english_level',
+    e.english_level && e.english_level !== 'none' ? e.english_level : null,
     e.english_level && e.english_level !== 'none' ? label(ENGLISH_LEVEL, e.english_level) : null,
   );
-  push('Category', e.category && label(CATEGORY, e.category));
-  push('Country', job.countries?.length ? job.countries.map((c) => c.toUpperCase()).join(', ') : null);
-  push('Relocation', e.relocation && label(RELOCATION, e.relocation));
-  push('Visa', e.visa_sponsorship === true ? 'Sponsored' : null);
-  push('Company', e.company_type && label(COMPANY_TYPE, e.company_type));
-  push('Size', e.company_size);
-  push('Domains', e.domains?.length ? e.domains.map((d) => label(DOMAINS, d)).join(', ') : null);
+  link('Category', 'category', e.category, e.category && label(CATEGORY, e.category));
+  links('Country', 'countries', job.countries, (c) => c.toUpperCase());
+  link('Relocation', 'relocation', e.relocation, e.relocation && label(RELOCATION, e.relocation));
+  if (e.visa_sponsorship === true) {
+    facets.push({ label: 'Visa', values: [{ text: 'Sponsored', href: filterHref('visa_sponsorship', 'true') }] });
+  }
+  link('Company', 'company_type', e.company_type, e.company_type && label(COMPANY_TYPE, e.company_type));
+  plain('Size', e.company_size);
+  links('Domains', 'domains', e.domains, (d) => label(DOMAINS, d));
 
   return facets;
 }

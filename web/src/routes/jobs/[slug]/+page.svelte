@@ -20,6 +20,6 @@
   {@html jsonLd}
 </svelte:head>
 
-<div class="mx-auto w-full max-w-3xl px-4 py-6">
+<div class="mx-auto w-full max-w-6xl px-4 py-6">
   <JobView job={data.job} />
 </div>

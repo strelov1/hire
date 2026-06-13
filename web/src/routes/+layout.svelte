@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { initTheme } from '$lib/theme.svelte';
   import TopBar from '$lib/components/TopBar.svelte';
+  import ProviderIcon from '$lib/components/ProviderIcon.svelte';
   import '../app.css';
 
   let { children } = $props();
@@ -30,9 +31,9 @@
         href="https://github.com/strelov1/freehire"
         target="_blank"
         rel="noopener noreferrer"
-        class="shrink-0 font-medium text-foreground transition-colors hover:text-muted-foreground"
+        class="inline-flex shrink-0 items-center gap-1.5 font-medium text-foreground transition-colors hover:text-muted-foreground"
       >
-        GitHub ↗
+        <ProviderIcon provider="github" /> GitHub
       </a>
     </div>
   </footer>

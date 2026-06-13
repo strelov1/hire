@@ -3,7 +3,7 @@
   import { ArrowRight, Bookmark, Check } from '@lucide/svelte';
   import { markJobApplied, recordJobView, saveJob, unsaveJob } from '$lib/api';
   import { isAuthenticated } from '$lib/auth.svelte';
-  import { formatSalary, summaryFacets } from '$lib/enrichment';
+  import { filterHref, formatSalary, summaryFacets } from '$lib/enrichment';
   import type { Job, UserJob } from '$lib/types';
   import { Badge, Button } from '$lib/ui';
   import { formatDate } from '$lib/utils';
@@ -75,57 +75,48 @@
   }
 </script>
 
-<article class="flex flex-col gap-6">
-  <header class="flex flex-col gap-4">
-    <div class="flex items-start justify-between gap-4">
-      <div class="flex items-start gap-3">
-        <CompanyLogo name={job.company} size="size-10" />
-        <div class="flex flex-col gap-1">
-          <p class="text-sm text-muted-foreground">
-            {#if job.company_slug}
-              <a href={`/companies/${job.company_slug}`} class="hover:text-foreground hover:underline">
-                {job.company || 'Unknown company'}
-              </a>
-            {:else}
-              {job.company || 'Unknown company'}
-            {/if}
-            {#if job.location}· {job.location}{/if}
-          </p>
-          <h1 class="text-2xl font-semibold tracking-tight">{job.title}</h1>
+<!-- Wide layout mirroring /jobs. The company line spans the very top; below it a
+     sticky left sidebar (salary + actions + metadata) starts level with the title,
+     and the description reads in the right column. On mobile everything stacks:
+     company → title + apply CTA → metadata → description. -->
+<article class="flex flex-col gap-4 lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:gap-x-6 lg:gap-y-4">
+  <div class="flex items-center gap-3 lg:col-start-2 lg:row-start-1">
+    <CompanyLogo name={job.company} size="size-8" />
+    <p class="text-sm text-muted-foreground">
+      {#if job.company_slug}
+        <a href={`/companies/${job.company_slug}`} class="hover:text-foreground hover:underline">
+          {job.company || 'Unknown company'}
+        </a>
+      {:else}
+        {job.company || 'Unknown company'}
+      {/if}
+    </p>
+  </div>
+
+  <header class="flex flex-col gap-4 lg:col-start-2 lg:row-start-2">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+      <h1 class="text-2xl font-semibold tracking-tight">{job.title}</h1>
+
+      {#if !job.closed_at || applied}
+        <div class="flex shrink-0 flex-col gap-2 sm:items-end">
+          {#if !job.closed_at}
+            <Button
+              variant="primary"
+              href={job.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onclick={onApplyClick}
+              class="w-full sm:w-auto"
+            >
+              Show <ArrowRight class="size-4" />
+            </Button>
+          {/if}
+          {#if applied}
+            <Badge variant="secondary"><Check class="mr-1 size-3.5" /> You applied</Badge>
+          {/if}
         </div>
-      </div>
-
-      <div class="flex shrink-0 flex-col items-end gap-2">
-        {#if !job.closed_at}
-          <Button
-            variant="primary"
-            href={job.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            onclick={onApplyClick}
-          >
-            Show <ArrowRight class="size-4" />
-          </Button>
-        {/if}
-        {#if isAuthenticated()}
-          <Button variant="outline" size="sm" onclick={toggleSave} aria-pressed={saved}>
-            <Bookmark class={saved ? 'size-4 fill-current' : 'size-4'} />
-            {saved ? 'Saved' : 'Save'}
-          </Button>
-        {/if}
-        {#if applied}
-          <Badge variant="secondary"><Check class="mr-1 size-3.5" /> You applied</Badge>
-        {/if}
-      </div>
+      {/if}
     </div>
-
-    {#if job.closed_at}
-      {@const closed = formatDate(job.closed_at)}
-      <div class="rounded-md border border-border bg-secondary px-4 py-3 text-sm">
-        This position is no longer accepting applications{#if closed}
-          (closed {closed}){/if}.
-      </div>
-    {/if}
 
     {#if showApplyPrompt && !applied}
       <div
@@ -138,40 +129,82 @@
         </div>
       </div>
     {/if}
-
-    {#if salary}
-      <p class="text-xl font-semibold tabular-nums tracking-tight">{salary}</p>
-    {/if}
-
-    {#if facets.length}
-      <dl class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-        {#each facets as facet (facet.label)}
-          <div class="flex items-baseline gap-1.5">
-            <dt class="text-muted-foreground">{facet.label}</dt>
-            <dd class="font-medium">{facet.value}</dd>
-          </div>
-        {/each}
-      </dl>
-    {/if}
-
-    {#if e.skills?.length}
-      <ul class="flex flex-wrap gap-1.5">
-        {#each e.skills as skill}
-          <li><Badge variant="secondary">{skill}</Badge></li>
-        {/each}
-      </ul>
-    {/if}
   </header>
 
-  <div class="flex flex-wrap items-center gap-2 border-t border-border pt-4">
-    <Badge variant="outline">{job.source}</Badge>
-    {#if posted}<span class="text-xs text-muted-foreground">Posted {posted}</span>{/if}
-  </div>
+  <aside class="w-full shrink-0 lg:col-start-1 lg:row-span-3 lg:row-start-1">
+    <div class="sticky top-6 flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
+      {#if salary}
+        <p
+          class="border-t border-border pt-4 text-xl font-semibold tabular-nums tracking-tight first:border-t-0 first:pt-0"
+        >
+          {salary}
+        </p>
+      {/if}
 
-  {#if job.description}
-    <!-- Description is server-sanitized HTML (see internal/sources), safe to render. -->
-    <div class="job-description text-sm leading-relaxed">{@html job.description}</div>
-  {/if}
+      {#if isAuthenticated()}
+        <div class="border-t border-border pt-4 first:border-t-0 first:pt-0">
+          <Button variant="outline" onclick={toggleSave} aria-pressed={saved} class="w-full">
+            <Bookmark class={saved ? 'size-4 fill-current' : 'size-4'} />
+            {saved ? 'Saved' : 'Save'}
+          </Button>
+        </div>
+      {/if}
+
+      {#if facets.length}
+        <dl class="flex flex-col gap-2 border-t border-border pt-4 text-sm first:border-t-0 first:pt-0">
+          {#each facets as facet (facet.label)}
+            <div class="flex items-baseline justify-between gap-3">
+              <dt class="text-muted-foreground">{facet.label}</dt>
+              <dd class="text-right font-medium"
+                >{#each facet.values as v, i (v.text)}{#if i > 0}, {/if}{#if v.href}<a
+                      href={v.href}
+                      class="hover:text-foreground hover:underline">{v.text}</a
+                    >{:else}{v.text}{/if}{/each}</dd
+              >
+            </div>
+          {/each}
+        </dl>
+      {/if}
+
+      {#if e.skills?.length}
+        <ul class="flex flex-wrap gap-1.5 border-t border-border pt-4 first:border-t-0 first:pt-0">
+          {#each e.skills as skill}
+            <li>
+              <a href={filterHref('skills', skill)}>
+                <Badge variant="secondary" class="transition-colors hover:bg-accent">{skill}</Badge>
+              </a>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+
+      <div
+        class="flex flex-wrap items-center gap-2 border-t border-border pt-4 first:border-t-0 first:pt-0"
+      >
+        <a href={filterHref('source', job.source)}>
+          <Badge variant="outline" class="transition-colors hover:bg-accent hover:text-foreground">
+            {job.source}
+          </Badge>
+        </a>
+        {#if posted}<span class="text-xs text-muted-foreground">Posted {posted}</span>{/if}
+      </div>
+    </div>
+  </aside>
+
+  <div class="flex min-w-0 flex-col gap-6 lg:col-start-2 lg:row-start-3">
+    {#if job.closed_at}
+      {@const closed = formatDate(job.closed_at)}
+      <div class="rounded-md border border-border bg-secondary px-4 py-3 text-sm">
+        This position is no longer accepting applications{#if closed}
+          (closed {closed}){/if}.
+      </div>
+    {/if}
+
+    {#if job.description}
+      <!-- Description is server-sanitized HTML (see internal/sources), safe to render. -->
+      <div class="job-description text-sm leading-relaxed">{@html job.description}</div>
+    {/if}
+  </div>
 </article>
 
 <style>
