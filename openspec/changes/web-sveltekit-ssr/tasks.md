@@ -71,7 +71,7 @@ pure `filtersFromParams`/`filtersToParams` helpers are reused unchanged in
 
 ## 6. Deploy topology
 
-- [ ] 6.1 New `web/Dockerfile` running the `adapter-node` server; update
+- [x] 6.1 New `web/Dockerfile` running the `adapter-node` server; update
   `web/nginx.conf` so nginx fronts `/api`+`/health`→Go and everything else→Node;
   verify the full stack in Docker (`make up`) serves SSR pages. **Set `ORIGIN`**
   (public site URL) and **`API_INTERNAL_URL`** (Go service origin) on the web
@@ -80,7 +80,7 @@ pure `filtersFromParams`/`filtersToParams` helpers are reused unchanged in
 
 ## 7. Verification
 
-- [ ] 7.1 Verify each spec scenario: `curl` `/jobs/:slug`, `/jobs`, `/companies`
+- [x] 7.1 Verify each spec scenario: `curl` `/jobs/:slug`, `/jobs`, `/companies`
   return content-bearing HTML; `JobPosting` JSON-LD validates; `/robots.txt` is
   text/plain; `/sitemap.xml` is valid XML; signed-in SSR renders correct chrome;
   no hydration warnings; `svelte-check` clean.
