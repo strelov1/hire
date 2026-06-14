@@ -97,3 +97,45 @@ def channel_github(host: str, query: str, limit: int, pages: int = 2) -> set[str
     frags = github_fragments(f"{query} {host}", pages)
     out = set(frags)
     return set(list(out)[:limit]) if limit else out
+
+
+_CC_BASE: str | None = None
+
+
+def cc_api_base() -> str | None:
+    """Latest Common Crawl URL-index CDX API base (cached). None if unreachable."""
+    global _CC_BASE
+    if _CC_BASE is None:
+        body = get_text("https://index.commoncrawl.org/collinfo.json")
+        try:
+            _CC_BASE = json.loads(body)[0]["cdx-api"]
+        except Exception:
+            print("  ! common-crawl index list unreachable", file=sys.stderr)
+            _CC_BASE = ""
+    return _CC_BASE or None
+
+
+def parse_cc_jsonl(text: str) -> set[str]:
+    """Collect the `url` field from a Common Crawl CDX JSONL response."""
+    urls: set[str] = set()
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            row = json.loads(line)
+        except Exception:
+            continue
+        if isinstance(row, dict) and row.get("url"):
+            urls.add(row["url"])
+    return urls
+
+
+def channel_cc(host: str, query: str, limit: int) -> set[str]:
+    """Bulk-dump board URLs for <host>/* from Common Crawl. Ignores the keyword."""
+    base = cc_api_base()
+    if not base:
+        return set()
+    cap = (limit or 100) * 5  # over-fetch; many rows collapse to one slug
+    url = f"{base}?url={urllib.parse.quote(host)}/*&output=json&limit={cap}"
+    return parse_cc_jsonl(get_text(url, timeout=60))

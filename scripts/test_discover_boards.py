@@ -60,6 +60,19 @@ def test_channel_github_extracts_from_fragments():
     assert any("jobs.ashbyhq.com/Clipbook" in u for u in urls)
 
 
+def test_parse_cc_jsonl_collects_urls_and_skips_garbage():
+    text = (
+        '{"url":"https://jobs.ashbyhq.com/Clipbook/abc","status":"200"}\n'
+        '{"url":"https://jobs.ashbyhq.com/Other"}\n'
+        'not-json-line\n'
+    )
+    urls = d.parse_cc_jsonl(text)
+    assert urls == {
+        "https://jobs.ashbyhq.com/Clipbook/abc",
+        "https://jobs.ashbyhq.com/Other",
+    }
+
+
 def _run():
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0
