@@ -154,8 +154,8 @@
         <dl class="flex flex-col gap-2 border-t border-border pt-4 text-sm first:border-t-0 first:pt-0">
           {#each facets as facet (facet.label)}
             <div class="flex items-baseline justify-between gap-3">
-              <dt class="text-muted-foreground">{facet.label}</dt>
-              <dd class="text-right font-medium"
+              <dt class="shrink-0 text-muted-foreground">{facet.label}</dt>
+              <dd class="min-w-0 break-words text-right font-medium"
                 >{#each facet.values as v, i (v.text)}{#if i > 0}, {/if}{#if v.href}<a
                       href={v.href}
                       class="hover:text-foreground hover:underline">{v.text}</a

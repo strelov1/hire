@@ -14,14 +14,30 @@
   // The first page is server-rendered (route `load`) and arrives as `initial`,
   // so the rows are in the initial HTML. Filters live in the URL; the list is
   // driven by the search endpoint (an empty query browses everything).
-  let { initial }: { initial: Slice<Job> } = $props();
+  //
+  // `scope` pins extra search params that the user can't change (e.g. the company
+  // page passes `{ company_slug }`): they're merged into every search but kept out
+  // of `filters`/the URL, so they're not user-selectable facets. `excludeFacets`
+  // hides facets that are redundant under that scope (e.g. Source on a company).
+  let {
+    initial,
+    scope = {},
+    excludeFacets = [],
+  }: { initial: Slice<Job>; scope?: Record<string, string>; excludeFacets?: string[] } = $props();
 
   // Seed filters from the current URL so the server and the hydrated client
   // render the same filtered view.
   const filters = new FilterStore(page.url.searchParams);
 
+  // The user's facet filters plus the fixed `scope` params (company_slug, …).
+  const scopedParams = () => {
+    const p = filtersToParams(filters.value);
+    for (const [k, v] of Object.entries(scope)) p.set(k, v);
+    return p;
+  };
+
   const makePaginator = () =>
-    new Paginator<Job>((limit, offset) => api.searchJobs(filtersToParams(filters.value), limit, offset));
+    new Paginator<Job>((limit, offset) => api.searchJobs(scopedParams(), limit, offset));
 
   // Seeded with the server-rendered first page (an intentional one-time snapshot
   // of the initial prop); "load more" and filter changes fetch client-side.
@@ -42,9 +58,12 @@
     'h-9 shrink-0 rounded-lg border border-input bg-transparent px-3 text-sm transition-colors focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 dark:bg-input/30';
 
   // Browser back/forward changes the URL query — pull it back into the filters.
+  // Track only the URL: syncFromUrl reads filters.value internally, so without
+  // untrack this effect would also fire on our own setQuery/#commit writes and
+  // clobber the just-typed value against a not-yet-updated page.url.
   $effect(() => {
     page.url.search; // track
-    filters.syncFromUrl();
+    untrack(() => filters.syncFromUrl());
   });
 
   // Re-run the search when any filter changes, debounced. The first effect run
@@ -66,7 +85,7 @@
 <div class="flex gap-6">
   <aside class="hidden w-72 shrink-0 md:block">
     <div class="sticky top-6 max-h-[calc(100vh-5rem)] overflow-y-auto rounded-xl border border-border bg-card p-4">
-      <FiltersPanel store={filters} />
+      <FiltersPanel store={filters} exclude={excludeFacets} />
     </div>
   </aside>
 
@@ -129,7 +148,7 @@
         <span class="text-sm font-semibold tracking-tight">Filters</span>
         <button type="button" class="text-sm text-muted-foreground hover:text-foreground" onclick={() => (drawerOpen = false)}>Done</button>
       </div>
-      <FiltersPanel store={filters} />
+      <FiltersPanel store={filters} exclude={excludeFacets} />
     </div>
   </div>
 {/if}

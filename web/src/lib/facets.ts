@@ -37,9 +37,12 @@ const WORK_MODE: FacetOption[] = [
 
 // The platform a job was ingested from. Unlike the enrichment facets below, this
 // value is always present (the ingest pipeline sets it), so it is the one fully
-// reliable filter. SOURCE OF TRUTH for these values: the Provider() strings of the
+// reliable filter. Values are the Provider() strings of the multi-tenant ATS
 // adapters in internal/sources (sources.All) plus the literal "telegram" set by
-// the tg-extract worker. A new adapter means a new entry here.
+// the tg-extract worker. Single-company boardless adapters (Yandex, Ozon, Sber,
+// T-Bank, VK, … — those implementing the boardless marker) are deliberately
+// omitted: filtering by a one-company platform is redundant with the company
+// filter and would clutter the list. A new ATS platform means a new entry here.
 const SOURCE: FacetOption[] = [
   { value: 'telegram', label: 'Telegram' },
   { value: 'greenhouse', label: 'Greenhouse' },
@@ -53,18 +56,33 @@ const SOURCE: FacetOption[] = [
   { value: 'rippling', label: 'Rippling' },
   { value: 'bamboohr', label: 'BambooHR' },
   { value: 'workday', label: 'Workday' },
+  { value: 'huntflow', label: 'Huntflow' },
+  { value: 'gem', label: 'Gem' },
+  { value: 'successfactors', label: 'SuccessFactors' },
+  { value: 'teamtailor', label: 'Teamtailor' },
+  { value: 'breezy', label: 'Breezy' },
+  { value: 'join', label: 'Join' },
 ];
 
-// A curated, extensible subset of the backend's `regions` reach vocabulary. Its
-// values mix levels by design (global / region / country); the field's full
-// vocabulary holds more than these pills surface.
+// The backend's full `regions` reach vocabulary (enrich.RegionValues). Values mix
+// levels by design (global / macro-region / country-as-area); keep this in sync
+// with that list so every tagged region is filterable.
 const REGION: FacetOption[] = [
   { value: 'global', label: 'Global' },
+  { value: 'us', label: 'USA' },
+  { value: 'north_america', label: 'North America' },
+  { value: 'latam', label: 'LATAM' },
+  { value: 'americas', label: 'Americas' },
+  { value: 'eu', label: 'Europe' },
+  { value: 'uk', label: 'UK' },
+  { value: 'emea', label: 'EMEA' },
+  { value: 'eea', label: 'EEA' },
+  { value: 'mena', label: 'MENA' },
+  { value: 'africa', label: 'Africa' },
+  { value: 'apac', label: 'APAC' },
   { value: 'ru', label: 'Russia' },
   { value: 'cis', label: 'CIS' },
   { value: 'central_asia', label: 'Central Asia' },
-  { value: 'eu', label: 'Europe' },
-  { value: 'us', label: 'USA' },
 ];
 
 const SENIORITY: FacetOption[] = [
@@ -162,11 +180,10 @@ const DOMAINS: FacetOption[] = [
 ];
 
 export const FACETS: FacetDef[] = [
-  { param: 'source', label: 'Source', control: 'pills', options: SOURCE, excludable: true },
-  { param: 'work_mode', label: 'Work format', control: 'pills', options: WORK_MODE, excludable: true },
   { param: 'regions', label: 'Region', control: 'pills', options: REGION, excludable: true },
-  { param: 'seniority', label: 'Seniority', control: 'pills', options: SENIORITY, excludable: true },
+  { param: 'work_mode', label: 'Work format', control: 'pills', options: WORK_MODE, excludable: true },
   { param: 'category', label: 'Specialization', control: 'select', options: CATEGORY, excludable: true, placeholder: 'Search specializations' },
+  { param: 'seniority', label: 'Seniority', control: 'pills', options: SENIORITY, excludable: true },
   { param: 'skills', label: 'Skills', control: 'tokens', excludable: true, hasAndOr: true, placeholder: 'Add a skill, press Enter' },
   { param: 'domains', label: 'Industry', control: 'select', options: DOMAINS, excludable: true, placeholder: 'Search industries' },
   { param: 'company_type', label: 'Company type', control: 'pills', options: COMPANY_TYPE, excludable: true },
@@ -176,4 +193,5 @@ export const FACETS: FacetDef[] = [
   { param: 'english_level', label: 'English', control: 'pills', options: ENGLISH, excludable: true },
   { param: 'posting_language', label: 'Job language', control: 'pills', options: POSTING_LANGUAGE, excludable: true },
   { param: 'salary_currency', label: 'Currency', control: 'pills', options: CURRENCY, excludable: true },
+  { param: 'source', label: 'Source', control: 'pills', options: SOURCE, excludable: true },
 ];

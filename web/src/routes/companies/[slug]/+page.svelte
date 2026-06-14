@@ -19,9 +19,9 @@
   {@html jsonLd}
 </svelte:head>
 
-<div class="mx-auto w-full max-w-3xl px-4 py-6">
-  <!-- Remount on slug change so the seeded paginator starts fresh per company. -->
+<div class="mx-auto w-full max-w-6xl px-4 py-6">
+  <!-- Remount on slug change so the seeded paginator/filters start fresh per company. -->
   {#key data.slug}
-    <CompanyView company={data.company} jobs={data.jobs} hasMore={data.hasMore} slug={data.slug} />
+    <CompanyView company={data.company} initial={data.initial} slug={data.slug} />
   {/key}
 </div>

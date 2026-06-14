@@ -37,12 +37,27 @@ interface Page<T> {
 }
 
 /** A non-2xx API response. Carries the HTTP status so callers can branch on it
- *  (e.g. 401 invalid credentials, 409 email taken) instead of parsing strings. */
+ *  (e.g. 401 invalid credentials, 409 email taken) instead of parsing strings.
+ *  `message` is the backend's `{ "error": msg }` text when present, so logs and
+ *  any raw-error surface read the real reason rather than a bare status line. */
 export class ApiError extends Error {
   constructor(public readonly status: number, message: string) {
     super(message);
     this.name = 'ApiError';
   }
+}
+
+/** Extract a human-readable message from a failed response. The backend's
+ *  standard error envelope is `{ "error": msg }`; surface that when present,
+ *  falling back to the status line for a non-JSON error (e.g. a proxy 502). */
+async function errorMessage(res: Response): Promise<string> {
+  try {
+    const body = await res.json();
+    if (body && typeof body.error === 'string') return body.error;
+  } catch {
+    // Body was not JSON (proxy/HTML error page) — fall through to the status line.
+  }
+  return `${res.status} ${res.statusText}`;
 }
 
 function query(limit: number, offset: number): string {
@@ -81,7 +96,7 @@ export function createApi(
       headers: { ...defaultHeaders, ...init?.headers },
     });
     if (!res.ok) {
-      throw new ApiError(res.status, `${res.status} ${res.statusText}`);
+      throw new ApiError(res.status, await errorMessage(res));
     }
     return res;
   }

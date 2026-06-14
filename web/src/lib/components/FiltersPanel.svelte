@@ -5,8 +5,11 @@
 
   // The panel is pure presentation over the store: it iterates the facet
   // registry and renders each section, plus the two special controls (visa,
-  // min salary) that aren't multi-value facets.
-  let { store }: { store: FilterStore } = $props();
+  // min salary) that aren't multi-value facets. `exclude` hides facets by param
+  // (e.g. the company page pins one company, so its Source facet is irrelevant).
+  let { store, exclude = [] }: { store: FilterStore; exclude?: string[] } = $props();
+
+  const facets = $derived(FACETS.filter((f) => !exclude.includes(f.param)));
 
   // Slider bounds for the min-salary filter. 0 means "no minimum".
   const SALARY_MAX = 300000;
@@ -27,6 +30,10 @@
       </button>
     {/if}
   </div>
+
+  {#each facets as def (def.param)}
+    <FacetSection {def} {store} />
+  {/each}
 
   <div class="border-b border-border pb-4">
     <div class="mb-2 flex items-center justify-between">
@@ -50,10 +57,6 @@
       <span>{SALARY_MAX.toLocaleString('en-US')}+</span>
     </div>
   </div>
-
-  {#each FACETS as def (def.param)}
-    <FacetSection {def} {store} />
-  {/each}
 
   <div>
     <h3 class="mb-2 text-sm font-semibold tracking-tight">Visa</h3>
