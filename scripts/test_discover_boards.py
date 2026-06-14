@@ -34,6 +34,21 @@ def test_parse_ddg_html_passes_decoded_url_to_extract_slugs():
     assert ("ashby", "Clipbook") in slugs
 
 
+def test_parse_cse_items_extracts_links():
+    obj = {"items": [
+        {"link": "https://jobs.ashbyhq.com/Clipbook/abc"},
+        {"link": "https://jobs.ashbyhq.com/Other"},
+    ]}
+    assert d.parse_cse_items(obj) == {
+        "https://jobs.ashbyhq.com/Clipbook/abc",
+        "https://jobs.ashbyhq.com/Other",
+    }
+
+
+def test_parse_cse_items_empty_on_no_items():
+    assert d.parse_cse_items({}) == set()
+
+
 def _run():
     fns = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failed = 0

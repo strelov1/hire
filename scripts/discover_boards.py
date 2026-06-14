@@ -14,6 +14,8 @@ Stdlib only; the github channel shells out to `gh`; google needs GOOGLE_CSE_KEY/
 
 from __future__ import annotations
 
+import json
+import os
 import re
 import sys
 import urllib.parse
@@ -66,3 +68,25 @@ def channel_ddg(host: str, query: str, limit: int) -> set[str]:
     html = get_text(f"https://html.duckduckgo.com/html/?q={q}")
     urls = parse_ddg_html(html)
     return set(list(urls)[:limit]) if limit else urls
+
+
+def parse_cse_items(obj: dict) -> set[str]:
+    """Extract result links from a Google Custom Search JSON response."""
+    return {it["link"] for it in obj.get("items", []) if it.get("link")}
+
+
+def channel_google(host: str, query: str, limit: int) -> set[str]:
+    """site:<host> <query> via Google Custom Search JSON API (env-gated)."""
+    key, cx = os.environ.get("GOOGLE_CSE_KEY"), os.environ.get("GOOGLE_CSE_CX")
+    if not (key and cx):
+        print("  ! google channel skipped (set GOOGLE_CSE_KEY and GOOGLE_CSE_CX)", file=sys.stderr)
+        return set()
+    q = urllib.parse.quote(f"site:{host} {query}")
+    num = min(limit, 10) if limit else 10
+    body = get_text(
+        f"https://www.googleapis.com/customsearch/v1?key={key}&cx={cx}&q={q}&num={num}"
+    )
+    try:
+        return parse_cse_items(json.loads(body))
+    except Exception:
+        return set()
