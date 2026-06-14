@@ -1,25 +1,27 @@
 ## Context
 
 `internal/sources` holds ~35 adapters over a shared layer (`source.go`, `http.go`,
-`sanitize.go`, `jsonld.go`). Four small duplications have accumulated across the
-adapters. This change pulls them into the shared layer. No behavior changes — same
-input yields the same `Job`.
+`sanitize.go`, `jsonld.go`). A few small duplications have accumulated across the
+adapters. This change pulls the live ones into the shared layer and deletes one that
+turned out to be dead. No behavior changes — same input yields the same `Job`.
 
 ## Goals / Non-Goals
 
-- **Goal:** single-source the four duplicated pieces; keep adapters thinner.
+- **Goal:** single-source the duplicated pieces; keep adapters thinner; delete dead code.
 - **Non-Goal:** any change to crawl behavior, output shape, or the generic
   pagination loop (the offset/skip/page loops vary by envelope and are left as-is —
   a generic helper there would be as long as the duplication).
 
 ## Decisions
 
-- **1.1 NBSP inside `isRemote`.** Fold `strings.ReplaceAll(s, " ", " ")` into
-  `isRemote` rather than keeping a separate `normalizeNBSP`. Rationale: NBSP-folding
-  is only ever used to feed the remote heuristic; making the heuristic robust to NBSP
-  is strictly desirable and removes 7 wrapper calls. Alternative (keep both, just
-  share `normalizeNBSP`) leaves the redundant call at every site — rejected.
-  `normalizeNBSP` is deleted (no other callers).
+- **1.1 Remove `normalizeNBSP` (no fold).** Implementation revealed the wrapper is a
+  no-op: `isRemote` does substring search for "remote"/"udal", neither of which
+  contains a space, so converting a non-breaking space to a normal space never
+  changes the match. A probe confirmed `isRemote(x) == isRemote(normalizeNBSP(x))`
+  for every realistic input. So instead of folding it into `isRemote` (which would
+  add a pointless `ReplaceAll`), the wrapper is deleted from all 7 call sites and the
+  function removed. Behavior is identical, covered by existing adapter tests plus a
+  characterization test on `isRemote` with NBSP input.
 
 - **1.2 `firstNonEmpty(parts ...string) string`.** Sibling to `joinNonEmpty` in
   `source.go`; returns the first non-blank trimmed part, else "". Used for the
@@ -39,9 +41,9 @@ input yields the same `Job`.
 
 ## Risks / Trade-offs
 
-- [Behavior drift from the NBSP fold] → covered by existing adapter tests; the fold
-  only widens what `isRemote` matches (NBSP→space), never narrows it.
-- [Over-applying `firstNonEmpty`] → only replace sites where it is at least as clear;
+- [Removing normalizeNBSP changes behavior] -> proven not to: probe shows identical
+  `isRemote` output; existing adapter tests (ozon NBSP case) stay green.
+- [Over-applying `firstNonEmpty`] -> only replace sites where it is at least as clear;
   leave idiomatic two-line fallbacks that don't fit the variadic shape.
 
 ## Migration Plan
