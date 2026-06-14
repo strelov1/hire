@@ -19,20 +19,21 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import subprocess
 import sys
 import time
 import urllib.error
 import urllib.request
-from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parent.parent
-SOURCES_DIR = REPO / "sources"
-UA = "freehire-harvest/1.0 (+https://freehire.dev)"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from ats_boards import (  # noqa: E402
+    REPO, SOURCES_DIR, UA, SLUG_PATTERNS, SLUG_BLOCKLIST, VALIDATORS,
+    fetch, yaml_name, extract_slugs, existing_slugs, validate,
+    github_fragments, emit_survivors,
+)
 
 # Aggregator JSON files. We sweep the raw text with regex, so the per-file schema
 # (key names) does not matter — only that ATS URLs appear somewhere in the JSON.
@@ -45,84 +46,12 @@ AGGREGATORS = [
     "https://raw.githubusercontent.com/crypto-jobs-fyi/crawler/HEAD/tech_companies.json",
 ]
 
-# (compiled regex, provider). Group 1 is the board slug.
-SLUG_PATTERNS = [
-    (re.compile(r"(?:boards|job-boards)(?:\.eu)?\.greenhouse\.io/(?:embed/job_app\?for=)?([A-Za-z0-9_-]+)"), "greenhouse"),
-    (re.compile(r"jobs\.(?:eu\.)?lever\.co/([A-Za-z0-9_.-]+)"), "lever"),
-    (re.compile(r"jobs\.ashbyhq\.com/([A-Za-z0-9_.-]+)"), "ashby"),
-    (re.compile(r"(?:jobs|careers)\.smartrecruiters\.com/([A-Za-z0-9_-]+)|api\.smartrecruiters\.com/v1/companies/([A-Za-z0-9_-]+)"), "smartrecruiters"),
-    (re.compile(r"apply\.workable\.com/([A-Za-z0-9_-]+)"), "workable"),
-    (re.compile(r"([A-Za-z0-9_-]+)\.recruitee\.com"), "recruitee"),
-    (re.compile(r"([A-Za-z0-9_-]+)\.bamboohr\.com"), "bamboohr"),
-    (re.compile(r"([A-Za-z0-9_-]+)\.breezy\.hr"), "breezy"),
-    (re.compile(r"([A-Za-z0-9_-]+)\.jobs\.personio\.(?:com|de)"), "personio"),
-    # Teamtailor's "slug" is the whole board host — the adapter takes board = hostname.
-    # Only *.teamtailor.com hosts are detectable here; boards on a custom domain
-    # (e.g. jobs.tibber.com) carry no teamtailor marker in the URL and are missed.
-    (re.compile(r"([A-Za-z0-9_-]+\.teamtailor\.com)"), "teamtailor"),
-]
-
-# Slugs that are path segments of the ATS host itself, not real boards.
-SLUG_BLOCKLIST = {
-    "embed", "jobs", "job", "j", "o", "share", "en-us", "en-gb",
-    "api", "widget", "backend", "www", "app", "auth", "referrals", "v1",
-}
-
 # Workday is a separate beast: a board is host + career-site path (e.g.
 # "logitech.wd5.myworkdayjobs.com/Logitech"), and the site segment sits before
 # /job/ or /details/ in a posting URL, after an optional locale prefix.
 WORKDAY_RE = re.compile(
     r"https?://([a-z0-9-]+\.wd\d+\.myworkdayjobs\.com)/(?:[a-zA-Z]{2}-[a-zA-Z]{2}/)?([^/?\"]+)/(?:job|details)/"
 )
-
-# Validation endpoints — each identical to the one its internal/sources/<provider>.go
-# adapter calls, so a board the harvester accepts is one ingest can actually crawl.
-# bamboohr returns JSON, personio XML, teamtailor HTML (see validate()).
-VALIDATORS = {
-    "greenhouse": lambda s: f"https://boards-api.greenhouse.io/v1/boards/{s}/jobs?content=true",
-    "lever": lambda s: f"https://api.lever.co/v0/postings/{s}?mode=json",
-    "ashby": lambda s: f"https://api.ashbyhq.com/posting-api/job-board/{s}",
-    "smartrecruiters": lambda s: f"https://api.smartrecruiters.com/v1/companies/{s}/postings?limit=10",
-    "workable": lambda s: f"https://apply.workable.com/api/v1/widget/accounts/{s}?details=true",
-    "recruitee": lambda s: f"https://{s}.recruitee.com/api/offers/",
-    "bamboohr": lambda s: f"https://{s}.bamboohr.com/careers/list",
-    "breezy": lambda s: f"https://{s}.breezy.hr/json",  # top-level JSON array of positions
-    "personio": lambda s: f"https://{s}.jobs.personio.com/xml",
-    "teamtailor": lambda s: f"https://{s}/jobs",  # s is the board host, not a slug
-}
-
-
-def fetch(url: str, timeout: int = 25) -> bytes | None:
-    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/json"})
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
-            return r.read()
-    except Exception:
-        return None
-
-
-def yaml_name(name: str) -> str:
-    """Quote a company name only when it carries YAML-significant characters."""
-    name = name.strip()
-    if not name or name[0] in "-?:,[]{}#&*!|>'\"%@`" or any(c in name for c in ':#,"'):
-        return '"' + name.replace('\\', '\\\\').replace('"', '\\"') + '"'
-    return name
-
-
-def extract_slugs(text: str) -> set[tuple[str, str]]:
-    """Sweep raw text for ATS board URLs -> {(provider, slug)}.
-
-    Patterns may carry multiple alternation groups (e.g. SmartRecruiters' two host
-    forms), so take the first non-empty group of each match as the slug.
-    """
-    out: set[tuple[str, str]] = set()
-    for pat, provider in SLUG_PATTERNS:
-        for m in pat.finditer(text):
-            slug = next((g for g in m.groups() if g), None)
-            if not slug or slug.lower() in SLUG_BLOCKLIST:
-                continue
-            out.add((provider, slug))
-    return out
 
 
 def harvest_aggregators() -> dict[tuple[str, str], str]:
@@ -198,47 +127,6 @@ def harvest_github(per_provider_pages: int = 3) -> set[tuple[str, str]]:
     return out
 
 
-def existing_slugs() -> dict[str, set[str]]:
-    out: dict[str, set[str]] = defaultdict(set)
-    for prov in VALIDATORS:
-        f = SOURCES_DIR / f"{prov}.yml"
-        if f.exists():
-            for m in re.findall(r"board:\s*\"?([^\"\n]+)\"?", f.read_text()):
-                out[prov].add(m.strip().lower())
-    return out
-
-
-def validate(provider: str, slug: str) -> int | None:
-    """Return active job count if the board is live and non-empty, else None."""
-    body = fetch(VALIDATORS[provider](slug), timeout=20)
-    if not body:
-        return None
-    # personio (XML) and teamtailor (HTML) are not JSON — count off the raw bytes the
-    # same way their adapters do: <position> elements and /jobs/<id> links.
-    if provider == "personio":
-        return body.count(b"<position>") or None
-    if provider == "teamtailor":
-        return len(set(re.findall(rb"/jobs/(\d+)", body))) or None
-    try:
-        data = json.loads(body)
-    except Exception:
-        return None
-    d = data if isinstance(data, dict) else {}
-    if provider in ("lever", "breezy"):  # both return a top-level JSON array
-        count = len(data) if isinstance(data, list) else 0
-    elif provider == "smartrecruiters":
-        count = d.get("totalFound") or len(d.get("content", []))
-    elif provider == "recruitee":
-        count = len(d.get("offers", []))
-    elif provider == "bamboohr":
-        count = len(d.get("result", []))
-    else:  # greenhouse / ashby / workable all expose a "jobs" array
-        count = len(d.get("jobs", []))
-    # is_worth_adding: a board earns a slot only if it currently lists jobs.
-    # Tune here if you want a higher bar (e.g. >= 5 jobs, or tech-only titles).
-    return count or None
-
-
 def harvest_workday() -> dict[tuple[str, str], str]:
     """Return {(host, site): company_name} for Workday boards in the aggregators."""
     out: dict[tuple[str, str], str] = {}
@@ -273,29 +161,6 @@ def workday_names(text: str) -> dict[tuple[str, str], str]:
                 for host, site in WORKDAY_RE.findall(v):
                     names.setdefault((host, site), str(name).strip())
     return names
-
-
-def github_fragments(query: str, pages: int) -> list[str]:
-    """Run a GitHub code-search query and return the matched text fragments."""
-    frags: list[str] = []
-    for page in range(1, pages + 1):
-        try:
-            raw = subprocess.run(
-                ["gh", "api", "-X", "GET", "search/code",
-                 "-H", "Accept: application/vnd.github.text-match+json",
-                 "-f", f"q={query} in:file", "-f", "per_page=100", "-f", f"page={page}"],
-                capture_output=True, text=True, timeout=60,
-            ).stdout
-            items = json.loads(raw).get("items", [])
-        except Exception as e:
-            print(f"  ! github query failed ({query} p{page}): {e}", file=sys.stderr)
-            break
-        if not items:
-            break
-        for it in items:
-            for m in it.get("text_matches", []):
-                frags.append(m.get("fragment", ""))
-    return frags
 
 
 def harvest_github_workday(pages: int = 5) -> dict[tuple[str, str], str]:
@@ -406,47 +271,7 @@ def main() -> int:
         for key in harvest_github():
             cand.setdefault(key, key[1])
 
-    have = existing_slugs()
-    new = {(p, s): n for (p, s), n in cand.items() if s.lower() not in have[p]}
-    print(f"\n{len(cand)} unique candidates, {len(cand) - len(new)} already tracked, "
-          f"{len(new)} new to validate\n", file=sys.stderr)
-
-    # Validate concurrently.
-    items = list(new.items())
-    with ThreadPoolExecutor(max_workers=16) as ex:
-        counts = list(ex.map(lambda kv: validate(kv[0][0], kv[0][1]), items))
-
-    # Collapse case-variant slugs of the same board (e.g. Etched/etched) — they
-    # resolve to one board, so keep the highest-job-count spelling only.
-    best: dict[tuple[str, str], tuple[str, str, int]] = {}
-    for ((prov, slug), name), n in zip(items, counts):
-        if not n:
-            continue
-        key = (prov, slug.lower())
-        if key not in best or n > best[key][2]:
-            best[key] = (name, slug, n)
-    survivors: dict[str, list[tuple[str, str, int]]] = defaultdict(list)
-    for (prov, _), row in best.items():
-        survivors[prov].append(row)
-
-    total = 0
-    for prov in VALIDATORS:
-        rows = sorted(survivors[prov], key=lambda r: -r[2])
-        if not rows:
-            continue
-        total += len(rows)
-        print(f"\n# === {prov}: {len(rows)} new live boards ===")
-        for name, slug, n in rows:
-            print(f"- company: {yaml_name(name)}  # {n} jobs")
-            print(f"  board: {slug}")
-        if args.write:
-            f = SOURCES_DIR / f"{prov}.yml"
-            with f.open("a") as fh:
-                for name, slug, n in rows:
-                    fh.write(f"- company: {yaml_name(name)}\n  board: {slug}\n")
-            print(f"  -> appended {len(rows)} entries to {f.relative_to(REPO)}", file=sys.stderr)
-
-    print(f"\n{total} new validated boards total", file=sys.stderr)
+    emit_survivors(cand, args.write)
     return 0
 
 
