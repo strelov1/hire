@@ -169,16 +169,17 @@ func indexSettings() *meilisearch.Settings {
 	return &meilisearch.Settings{
 		SearchableAttributes: []string{"title", "company", "description", "location"},
 		// Enrichment facets are nested, so they are filtered via dot paths. The
-		// resolved geography facet (regions/countries) and work_mode are served
-		// top-level — the union of parsed-location and enrichment values — so they
-		// are filtered on a bare attribute, not the enrichment dot path.
+		// resolved geography facet (regions/countries), work_mode, and skills are
+		// served top-level — the union of parsed-location/column and enrichment
+		// values — so they are filtered on a bare attribute, not the enrichment
+		// dot path.
 		FilterableAttributes: []string{
 			"source", "company_slug",
-			"work_mode", "regions", "countries",
+			"work_mode", "regions", "countries", "skills",
 			"enrichment.employment_type", "enrichment.seniority",
 			"enrichment.category", "enrichment.domains",
 			"enrichment.company_type", "enrichment.company_size", "enrichment.visa_sponsorship",
-			"enrichment.salary_currency", "enrichment.salary_period", "enrichment.skills",
+			"enrichment.salary_currency", "enrichment.salary_period",
 			"enrichment.salary_min", "enrichment.salary_max", "enrichment.experience_years_min",
 			"enrichment.relocation", "enrichment.english_level", "enrichment.posting_language",
 		},

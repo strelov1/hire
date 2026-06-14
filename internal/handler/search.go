@@ -48,7 +48,7 @@ var searchStringFacets = map[string]string{
 	"company_size":     "enrichment.company_size",
 	"salary_currency":  "enrichment.salary_currency",
 	"salary_period":    "enrichment.salary_period",
-	"skills":           "enrichment.skills",
+	"skills":           "skills",
 	"relocation":       "enrichment.relocation",
 	"english_level":    "enrichment.english_level",
 	"posting_language": "enrichment.posting_language",

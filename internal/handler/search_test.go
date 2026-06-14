@@ -165,7 +165,7 @@ func TestSearchJobs_ExcludeAndAndMode(t *testing.T) {
 	// AND mode: each skill must be its own single-element group (ANDed), not one
 	// OR group of both.
 	for _, skill := range []string{"go", "react"} {
-		expr := `enrichment.skills = "` + skill + `"`
+		expr := `skills = "` + skill + `"`
 		found := false
 		for _, g := range groups {
 			if len(g) == 1 && g[0] == expr {

@@ -187,3 +187,52 @@ func TestIntegration_EnsureIndexIndexAndSearch(t *testing.T) {
 		}
 	})
 }
+
+func TestSearchFiltersBySkillsFacet(t *testing.T) {
+	ctx := context.Background()
+	c := startMeili(t)
+
+	if err := c.EnsureIndex(ctx); err != nil {
+		t.Fatalf("EnsureIndex: %v", err)
+	}
+
+	jobs := []db.Job{
+		{
+			ID: 10, Title: "Go Engineer", Company: "Acme", Location: "Berlin",
+			PublicSlug: "go-engineer-acme-aaa",
+			Skills:     []string{"go", "kubernetes"},
+			PostedAt:   pgtype.Timestamptz{Time: time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC), Valid: true},
+			Enrichment: enrichedJSON(t, enrich.Enrichment{}),
+		},
+		{
+			ID: 11, Title: "Python Developer", Company: "Beta", Location: "Remote",
+			PublicSlug: "python-developer-beta-bbb",
+			Skills:     []string{"python"},
+			PostedAt:   pgtype.Timestamptz{Time: time.Date(2025, 2, 1, 0, 0, 0, 0, time.UTC), Valid: true},
+			Enrichment: enrichedJSON(t, enrich.Enrichment{}),
+		},
+	}
+
+	docs := make([]JobDocument, 0, len(jobs))
+	for _, j := range jobs {
+		d, err := FromJob(j)
+		if err != nil {
+			t.Fatalf("FromJob: %v", err)
+		}
+		docs = append(docs, d)
+	}
+	if err := c.IndexJobs(ctx, docs); err != nil {
+		t.Fatalf("IndexJobs: %v", err)
+	}
+
+	res, err := c.Search(ctx, SearchParams{
+		Filter: Filter([]string{Eq("skills", "go")}),
+		Limit:  10,
+	})
+	if err != nil {
+		t.Fatalf("Search with skills filter: %v", err)
+	}
+	if len(res.Hits) != 1 || res.Hits[0].PublicSlug != "go-engineer-acme-aaa" {
+		t.Fatalf("skills facet filter hits = %+v, want only go-engineer-acme-aaa", res.Hits)
+	}
+}
