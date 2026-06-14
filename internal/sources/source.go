@@ -200,13 +200,15 @@ func joinNonEmpty(parts ...string) string {
 	return strings.Join(kept, ", ")
 }
 
-// firstNonEmpty returns the first part that is not blank (ignoring whitespace-only
-// parts), verbatim, or "" when every part is blank. Adapters use it for the common
-// "this value, else fall back to that one" choice (e.g. a posting's own employer name,
-// else the configured company).
+// firstNonEmpty returns the first part that is not the empty string, or "" when every
+// part is empty. Adapters use it for the common "this value, else fall back to that one"
+// choice (e.g. a posting's own employer name, else the configured company). The check is
+// exact-empty (not whitespace-trimmed), so it is a drop-in for the inline
+// `if x == "" { x = fallback }` idiom it replaces; unlike joinNonEmpty it does not treat a
+// whitespace-only value as blank.
 func firstNonEmpty(parts ...string) string {
 	for _, p := range parts {
-		if strings.TrimSpace(p) != "" {
+		if p != "" {
 			return p
 		}
 	}

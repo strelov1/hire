@@ -97,10 +97,7 @@ func (o ozon) detail(ctx context.Context, e CompanyEntry, it ozonItem) (Job, boo
 		return Job{}, false
 	}
 
-	title := d.Name
-	if title == "" {
-		title = it.Title
-	}
+	title := firstNonEmpty(d.Name, it.Title)
 
 	return Job{
 		ExternalID:  strconv.FormatInt(it.HHID, 10),

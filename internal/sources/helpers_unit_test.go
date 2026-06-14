@@ -10,10 +10,10 @@ func TestFirstNonEmpty(t *testing.T) {
 		{[]string{"a", "b"}, "a"},
 		{[]string{"", "b"}, "b"},
 		{[]string{"", "", "c"}, "c"},
-		{[]string{"  ", "b"}, "b"}, // whitespace-only counts as blank
+		{[]string{"  ", "b"}, "  "}, // exact-empty check: whitespace-only is NOT blank (drop-in for `== ""`)
 		{[]string{"", ""}, ""},
 		{nil, ""},
-		{[]string{" trimmed "}, " trimmed "}, // first non-blank returned verbatim, not trimmed
+		{[]string{" verbatim "}, " verbatim "}, // returned verbatim
 	}
 	for _, c := range cases {
 		if got := firstNonEmpty(c.parts...); got != c.want {
