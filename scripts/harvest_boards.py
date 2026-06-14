@@ -25,7 +25,6 @@ import sys
 import time
 import urllib.error
 import urllib.request
-from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
