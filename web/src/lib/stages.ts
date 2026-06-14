@@ -1,7 +1,7 @@
 // The application-stage vocabulary, in pipeline order (active stages then
-// terminal). STAGE_VALUES is generated from the Go validStages set in
-// internal/handler/user_jobs.go via cmd/gen-contracts. Drift is not fatal:
-// humanizeStage renders an unknown value as a readable label.
+// terminal). STAGE_VALUES is generated from the Go userjob.Stages slice in
+// internal/userjob via cmd/gen-contracts. Drift is not fatal: humanizeStage
+// renders an unknown value as a readable label.
 
 import { STAGE_VALUES } from './generated/contracts';
 
